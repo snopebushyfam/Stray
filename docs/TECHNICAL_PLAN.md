@@ -63,6 +63,23 @@ Schritt 1 ist damit abgeschlossen bis auf: Kleidung/Gesicht der Figur (das Rig i
 Figuren nutzbar). Die Unreal-Fassung kennt die
 Möbel und Shader noch nicht.
 
+**Schritt 2 „Leben auf der Straße“ (2026-11-08, gespielt + getestet):**
+
+| | Umsetzung | Daten |
+|---|---|---|
+| 15 Fußgänger | `src/p001/pedestrians.gd`: Gehweg-Spuren mit fester Richtung, Spurwechsel an den Enden (kein Gegenverkehr in einer Spur), Abstand halten, vor dem Spieler stehen bleiben; Walk/Idle-Animation mit tempo-gekoppelter Schrittfrequenz; 8 Kleidungsfarben, Größe ±7 % | `data/p001/npc_config.json` |
+| NACHTFLUG-Schlange | 5 Wartende an der Absperrung (Idle / Idle_Talking), Kollision | dito |
+| 12 Autos, 4 Spuren, Rechtsverkehr | `src/p001/traffic.gd`: Folgefahrt mit Sicherheits-/Haltabstand, halten vor dem Spieler, fahren von s = −80 bis +165 m über das reale DGM1-Gelände (Straßenoberfläche) und erscheinen danach neu; Höhe per Raycast; Front-/Rücklichter; Räder drehen | dito |
+| Endabsperrung | nur noch auf den Gehwegen; die Fahrbahn bleibt für den Verkehr offen, der Spieler wird weiter von der unsichtbaren Wand gestoppt | — |
+
+Test `street_life_test` 12/12: Autos bewegen sich und liegen auf der Fahrbahn (max. 1 mm Abweichung),
+Abstand in der Spur, Rechtsverkehr, Auto hält 2,9 m vor dem Spieler; Fußgänger bleiben auf dem
+Gehweg, überlappen nicht, halten vor dem Spieler. Kollisionsebenen: Welt 1, Autos 2, Fußgänger 4.
+Beim Lauf gefunden und behoben: Typfehler in `traffic.gd` (Compile-Fehler), und der Test-Runner wertete
+Skriptfehler nicht als Fehlschlag — jetzt zählt jeder `SCRIPT ERROR`, und Godot importiert vorher
+neue Klassen. Noch nicht: Motorgeräusche, Ampelphasen (Ampel bleibt für Autos grün), Fußgänger
+überqueren die Straße nicht.
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

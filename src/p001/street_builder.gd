@@ -653,6 +653,12 @@ func _build_end_barriers() -> void:
 		var i := 0
 		var v := L.sidewalk_west_outer + 0.6
 		while v < L.sidewalk_east_outer - 0.5:
+			if absf(v) < L.kerb_half_width:
+				# Carriageway stays open for through traffic (the player is still blocked
+				# by the invisible end wall below).
+				v += 1.25
+				i += 1
+				continue
 			var bp := L.to_en(s, v)
 			var xf := Transform3D(basis * Basis.from_scale(Vector3(1.2, 1.1, 0.3)), _gp(bp, _g(bp) + 0.55))
 			(white if i % 2 else red).append(xf)

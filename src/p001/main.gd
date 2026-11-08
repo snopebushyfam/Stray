@@ -9,12 +9,15 @@ extends Node3D
 
 const PLAYER_CONFIG := "res://data/p001/player_config.json"
 const AUDIO_CONFIG := "res://data/p001/audio_config.json"
+const NPC_CONFIG := "res://data/p001/npc_config.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
 var player_cfg: Dictionary = {}
 var city_audio: AudioStreamPlayer
 var club_audio: AudioStreamPlayer3D
+var pedestrians: StrayPedestrians
+var traffic: StrayTraffic
 
 
 func _ready() -> void:
@@ -37,6 +40,15 @@ func _ready() -> void:
 	player.camera.make_current()
 	print("STRAY_DIAG spawn pos=%s yaw_deg=%.1f" % [player.global_position, rad_to_deg(builder.layout.spawn_yaw())])
 	_build_audio()
+	var npc_cfg := _load_json(NPC_CONFIG)
+	pedestrians = StrayPedestrians.new()
+	pedestrians.name = "Pedestrians"
+	add_child(pedestrians)
+	pedestrians.setup(builder.layout, npc_cfg, player_cfg.get("character", {}), player)
+	traffic = StrayTraffic.new()
+	traffic.name = "Traffic"
+	add_child(traffic)
+	traffic.setup(builder.layout, npc_cfg, player)
 	_build_hud()
 	if "--autoshots" in OS.get_cmdline_user_args():
 		_run_autoshots.call_deferred()

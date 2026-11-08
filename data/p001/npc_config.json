@@ -1,0 +1,167 @@
+{
+ "schema": "stray.p001.npc/1",
+ "note": "Ambient NPCs for Prototype 001 (GDD: Ambient NPC type). Distances in m, speeds in m/s. Lanes are street-frame v offsets.",
+ "seed": 2207,
+ "pedestrians": {
+  "count_per_lane": 3,
+  "lanes": [
+   {
+    "v": -11.9,
+    "dir": 1
+   },
+   {
+    "v": -13.1,
+    "dir": -1
+   },
+   {
+    "v": 12.6,
+    "dir": 1
+   },
+   {
+    "v": 14.4,
+    "dir": -1
+   },
+   {
+    "v": 16.0,
+    "dir": 1
+   }
+  ],
+  "speed_min": 1.05,
+  "speed_max": 1.55,
+  "turn_margin": 4.0,
+  "follow_gap": 1.6,
+  "yield_radius": 1.4,
+  "height_scale_min": 0.92,
+  "height_scale_max": 1.07,
+  "outfit_colors": [
+   [
+    0.1,
+    0.1,
+    0.11
+   ],
+   [
+    0.32,
+    0.3,
+    0.28
+   ],
+   [
+    0.13,
+    0.18,
+    0.3
+   ],
+   [
+    0.42,
+    0.1,
+    0.1
+   ],
+   [
+    0.55,
+    0.52,
+    0.47
+   ],
+   [
+    0.15,
+    0.25,
+    0.18
+   ],
+   [
+    0.62,
+    0.4,
+    0.18
+   ],
+   [
+    0.24,
+    0.2,
+    0.32
+   ]
+  ],
+  "anim_walk": "Walk",
+  "anim_idle": "Idle",
+  "anim_talk": "Idle_Talking",
+  "walk_natural_speed": 0.97,
+  "lanes_note": "west lanes stay clear of lamp poles (v=-10.0) and the NACHTFLUG queue/ropes (v=-14.1..-14.8)"
+ },
+ "club_queue": {
+  "count": 5,
+  "spacing": 0.9,
+  "start_along": -1.8,
+  "out": 2.7,
+  "anim": "Idle_Talking"
+ },
+ "traffic": {
+  "cars_per_lane": 3,
+  "lanes": [
+   {
+    "v": 2.3,
+    "dir": 1
+   },
+   {
+    "v": 5.6,
+    "dir": 1
+   },
+   {
+    "v": -2.3,
+    "dir": -1
+   },
+   {
+    "v": -5.6,
+    "dir": -1
+   }
+  ],
+  "s_min": -80.0,
+  "s_max": 165.0,
+  "speed_min": 8.0,
+  "speed_max": 12.5,
+  "accel": 2.5,
+  "brake": 6.0,
+  "safe_gap": 8.0,
+  "stop_gap": 4.0,
+  "player_stop_distance": 9.0,
+  "respawn_delay_min": 0.5,
+  "respawn_delay_max": 4.0,
+  "colors": [
+   [
+    0.02,
+    0.02,
+    0.025
+   ],
+   [
+    0.55,
+    0.56,
+    0.58
+   ],
+   [
+    0.85,
+    0.86,
+    0.87
+   ],
+   [
+    0.1,
+    0.12,
+    0.2
+   ],
+   [
+    0.3,
+    0.31,
+    0.33
+   ],
+   [
+    0.45,
+    0.06,
+    0.05
+   ],
+   [
+    0.7,
+    0.68,
+    0.62
+   ],
+   [
+    0.08,
+    0.2,
+    0.32
+   ]
+  ],
+  "headlight_emission": 4.0,
+  "taillight_emission": 3.0
+ }
+}

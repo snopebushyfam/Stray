@@ -3,6 +3,9 @@ STRAY_DIAG furniture {"bike_racks":2,"bins":2,"cars":25,"doors":5,"signals":1,"t
 STRAY_DIAG lighting=night
 STRAY_DIAG build=ok lod2=1 buildings=155 lod2_tris=6028 terrain=1 terrain_tris=27000 street_tris=3028 profile_rows=53 lights=45 shadow_lights=3 street_len_m=150.0
 STRAY_DIAG spawn pos=(-23.221, 0.895296, -24.027) yaw_deg=-11.1
+STRAY_DIAG audio city=true club=true club_pos=(-18.62559, 1.483146, -65.92776) footsteps=5
+STRAY_DIAG pedestrians walkers=15 queue=5
+STRAY_DIAG traffic cars=12 lanes=4
 STRAY_DIAG hud touch_controls=false
 STRAY_DIAG ground_check on_floor=true gap_m=0.000 pos=(-23.221, 0.847268, -24.027)
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_00_player_spawn_night.png err=0 size=(1280, 720)

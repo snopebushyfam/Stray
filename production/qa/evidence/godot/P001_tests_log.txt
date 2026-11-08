@@ -6,8 +6,8 @@ PASS club bass playing at NACHTFLUG
 PASS idle animation when standing (idle)
 PASS walk animation while walking (walk)
 PASS back to idle after stopping (idle)
-PASS 6 footsteps for 4.05 m (stride 0.65 m)
-PASS walked 4.05 m in 3 s (expected ~4.05)
+PASS 5 footsteps for 3.70 m (stride 0.65 m)
+PASS walked 3.70 m in 3 s (expected ~4.05)
 PASS still on the floor after walking
 PASS found a kerb section without a parked car (s=67.0)
 PASS crossed the kerb onto the carriageway (v=-7.63)
@@ -17,4 +17,18 @@ PASS blocked by the facade (v=-16.52, facade -16.82)
 PASS end wall holds (s=104.10 < 105.00)
 PASS never fell through the world
 RESULT walk_test passed=17 failed=0
-OK
+PASS 12 cars spawned
+PASS cars moved (878 m total in 5 s)
+PASS cars sit on the road surface (worst 0.001 m)
+PASS same-lane gap kept (min 55.96 m)
+PASS traffic drives on the right
+PASS approaching car stays clear of the player (2.86 m)
+PASS 1 car(s) stopped and waiting behind the player
+PASS 15 walkers + 5 in the NACHTFLUG queue
+PASS all walkers stay on the sidewalks, clear of kerb and facades
+PASS walkers moved (260.6 m total)
+PASS walkers do not overlap (min 1.67 m)
+PASS walker stops in front of the player (1.42 m)
+RESULT street_life_test passed=12 failed=0
+python data tests: OK
+ALL_TESTS_EXIT=0

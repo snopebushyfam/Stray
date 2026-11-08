@@ -4,9 +4,18 @@ set -u
 GODOT="${GODOT:-godot}"
 cd "$(dirname "$0")/.."
 fail=0
-for t in tests/unit/p001/street_layout_test.gd tests/integration/p001/walk_test.gd; do
-  "$GODOT" --headless --path . --audio-driver Dummy -s "res://$t" 2>&1 | grep -E "^(PASS|FAIL|RESULT)|SCRIPT ERROR|Parse Error" || true
-  "$GODOT" --headless --path . --audio-driver Dummy -s "res://$t" >/dev/null 2>&1 || fail=1
+# Register new class_name scripts / import assets first (otherwise new classes are "not found").
+timeout 900 "$GODOT" --headless --path . --import >/dev/null 2>&1 || true
+for t in tests/unit/p001/street_layout_test.gd tests/integration/p001/walk_test.gd tests/integration/p001/street_life_test.gd; do
+  # A script error leaves Godot running instead of quitting: the timeout turns that into a failure.
+  out=$(timeout 600 "$GODOT" --headless --path . --audio-driver Dummy -s "res://$t" 2>&1); rc=$?
+  echo "$out" | grep -E "^(PASS|FAIL|RESULT)|SCRIPT ERROR|Parse Error" || true
+  [ $rc -eq 0 ] || { echo "EXIT $rc for $t"; fail=1; }
+  # Godot keeps running after many script errors; any SCRIPT ERROR is a failure.
+  if echo "$out" | grep -q "SCRIPT ERROR"; then echo "SCRIPT ERROR in $t"; fail=1; fi
 done
-python3 -m unittest discover -s tools/geodata/tests 2>&1 | tail -1
+py=$(python3 -m unittest discover -s tools/geodata/tests 2>&1 | tail -1)
+echo "python data tests: $py"
+case "$py" in OK*) ;; *) fail=1 ;; esac
+echo "ALL_TESTS_EXIT=$fail"
 exit $fail
