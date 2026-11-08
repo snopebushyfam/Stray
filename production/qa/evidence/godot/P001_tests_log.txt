@@ -1,14 +1,17 @@
 RESULT street_layout_test passed=15 failed=0
 PASS spawned player is on the floor
 PASS capsule bottom within 8 cm of sidewalk (-0.053 vs -0.055)
-PASS walked 4.80 m in 3 s (walk speed 1.6 m/s)
+PASS idle animation when standing (idle)
+PASS walk animation while walking (walk)
+PASS back to idle after stopping (idle)
+PASS walked 4.05 m in 3 s (expected ~4.05)
 PASS still on the floor after walking
 PASS found a kerb section without a parked car (s=67.0)
-PASS crossed the kerb onto the carriageway (v=-7.13)
+PASS crossed the kerb onto the carriageway (v=-7.63)
 PASS standing on the road surface
 PASS parked car blocks the way (v=-9.58)
 PASS blocked by the facade (v=-16.52, facade -16.82)
 PASS end wall holds (s=104.10 < 105.00)
 PASS never fell through the world
-RESULT walk_test passed=11 failed=0
+RESULT walk_test passed=14 failed=0
 OK

@@ -86,9 +86,17 @@ func _run() -> void:
 
 	# 2. Walk forward (along the street, towards Friesenplatz) for 3 s at walking speed.
 	var s_before := _sv().x
-	await _hold("move_forward", 3.0)
+	check(player.anim_state == "idle", "idle animation when standing (%s)" % player.anim_state)
+	Input.action_press("move_forward")
+	await _frames(120)
+	check(player.anim_state == "walk", "walk animation while walking (%s)" % player.anim_state)
+	await _frames(60)
+	Input.action_release("move_forward")
+	await _frames(40)
+	check(player.anim_state == "idle", "back to idle after stopping (%s)" % player.anim_state)
 	var walked := _sv().x - s_before
-	check(walked > 3.0 and walked < 6.5, "walked %.2f m in 3 s (walk speed 1.6 m/s)" % walked)
+	var expected: float = float(player.cfg.get("walk_speed", 1.35)) * 3.0
+	check(walked > expected * 0.75 and walked < expected * 1.3, "walked %.2f m in 3 s (expected ~%.2f)" % [walked, expected])
 	check(player.is_on_floor(), "still on the floor after walking")
 
 	# 3. Step off the kerb onto the road (move right = towards the street centre, east),

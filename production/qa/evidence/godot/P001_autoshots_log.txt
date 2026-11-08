@@ -6,6 +6,8 @@ STRAY_DIAG spawn pos=(-23.221, 0.895296, -24.027) yaw_deg=-11.1
 STRAY_DIAG hud touch_controls=false
 STRAY_DIAG ground_check on_floor=true gap_m=0.000 pos=(-23.221, 0.847268, -24.027)
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_00_player_spawn_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_00b_player_walking_night.png err=0 size=(1280, 720)
+STRAY_DIAG anim_state_while_walking=walk
 STRAY_DIAG lighting=night
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_01_street_south_overview_night.png err=0 size=(1280, 720)
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_02_nachtflug_entrance_night.png err=0 size=(1280, 720)

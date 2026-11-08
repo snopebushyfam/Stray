@@ -18,6 +18,10 @@ var _visual: Node3D
 var _gravity: float = 9.81
 var _frames: int = 0
 var _look_touch_index: int = -1
+var _anim: AnimationPlayer
+var _anim_names: Dictionary = {}
+## Name of the locomotion state currently shown ("idle", "walk", "run", "air"), "" without a rig.
+var anim_state: String = ""
 ## Look input from scripts/tests (degrees per call, x = yaw, y = pitch).
 var injected_look := Vector2.ZERO
 
@@ -36,9 +40,12 @@ func setup(config: Dictionary) -> void:
 	floor_snap_length = 0.3
 	floor_max_angle = deg_to_rad(50.0)
 
-	# Placeholder body: clearly not a final character.
 	_visual = Node3D.new()
 	add_child(_visual)
+	if _load_character(cfg.get("character", {}), h):
+		_build_camera(h)
+		return
+	# Fallback placeholder body when the character asset is missing.
 	var body := MeshInstance3D.new()
 	var bm := CapsuleMesh.new()
 	bm.radius = r * 0.85
@@ -59,6 +66,10 @@ func setup(config: Dictionary) -> void:
 	nose.position = Vector3(0, h * 0.35, -r * 0.8)  # shows the facing direction (-Z)
 	_visual.add_child(nose)
 
+	_build_camera(h)
+
+
+func _build_camera(h: float) -> void:
 	_yaw_pivot = Node3D.new()
 	_yaw_pivot.position.y = float(cfg.get("camera_height", 1.55)) - h * 0.5
 	add_child(_yaw_pivot)
@@ -75,6 +86,68 @@ func setup(config: Dictionary) -> void:
 	camera.fov = 70.0
 	camera.near = 0.05
 	_arm.add_child(camera)
+
+
+## Instances the rigged character (CC0 Quaternius mannequin) and tints its two materials.
+## Returns false when the scene is missing, so setup() falls back to the placeholder.
+func _load_character(c: Dictionary, h: float) -> bool:
+	if c.is_empty() or not ResourceLoader.exists(c.get("scene", "")):
+		return false
+	var scene: PackedScene = load(c["scene"])
+	if scene == null:
+		return false
+	var model: Node3D = scene.instantiate()
+	model.name = "Character"
+	model.rotation.y = deg_to_rad(c.get("yaw_offset_deg", 180.0))  # glTF faces +Z, Godot forward is -Z
+	model.position.y = -h * 0.5  # model feet at y = 0, capsule centre at the body origin
+	_visual.add_child(model)
+	var body := StandardMaterial3D.new()
+	body.albedo_color = Color(c.get("body_color", [0.14, 0.16, 0.21])[0], c.get("body_color", [0.14, 0.16, 0.21])[1], c.get("body_color", [0.14, 0.16, 0.21])[2])
+	body.roughness = 0.7
+	var joints := StandardMaterial3D.new()
+	var jc: Array = c.get("joint_color", [0.05, 0.05, 0.06])
+	joints.albedo_color = Color(jc[0], jc[1], jc[2])
+	for mi in model.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		for i in m.mesh.get_surface_count():
+			var src := m.mesh.surface_get_material(i)
+			m.set_surface_override_material(i, joints if src != null and "Joint" in src.resource_name else body)
+	var players := model.find_children("*", "AnimationPlayer", true, false)
+	if players.is_empty():
+		return true
+	_anim = players[0]
+	_anim_names = c.get("anims", {})
+	_set_anim("idle", 1.0)
+	return true
+
+
+func _set_anim(state: String, speed_scale: float) -> void:
+	if _anim == null:
+		return
+	var anim_name: String = _anim_names.get(state, "")
+	if anim_name.is_empty() or not _anim.has_animation(anim_name):
+		return
+	if anim_state != state:
+		_anim.play(anim_name, float(cfg.get("character", {}).get("blend_time", 0.2)))
+		anim_state = state
+	_anim.speed_scale = speed_scale
+
+
+func _update_animation() -> void:
+	if _anim == null:
+		return
+	var c: Dictionary = cfg.get("character", {})
+	var natural: Dictionary = c.get("natural_speed_mps", {})
+	var h_speed := Vector2(velocity.x, velocity.z).length()
+	if not is_on_floor():
+		_set_anim("air", 1.0)
+	elif h_speed < float(c.get("idle_below_mps", 0.15)):
+		_set_anim("idle", 1.0)
+	else:
+		var state := "run" if Input.is_action_pressed("run") else "walk"
+		var nat: float = natural.get(_anim_names.get(state, ""), 1.0)
+		# Scale the cycle to the real speed so the feet do not slide.
+		_set_anim(state, clampf(h_speed / maxf(nat, 0.01), 0.4, 2.0))
 
 
 ## Points character and camera along a yaw (radians, about +Y).
@@ -133,6 +206,7 @@ func _physics_process(delta: float) -> void:
 		var turn := deg_to_rad(cfg.get("turn_speed_deg", 540.0)) * delta
 		_visual.rotation.y = rotate_toward(_visual.rotation.y, want, turn)
 	move_and_slide()
+	_update_animation()
 
 	_frames += 1
 	if _frames == 30:

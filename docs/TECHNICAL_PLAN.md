@@ -50,7 +50,12 @@ Beim Lauf gefunden und behoben: Putz wirkte blockig (Schachbrett) → weiches Ra
 unten; ein Auto parkte im KIOSK-Kamerapunkt → Kamerapunkte bleiben frei; Metallic-Lack wirkte im
 Compatibility-Renderer schwarz → Metallic 0,1. Der Lauf-Test fand zu Recht, dass ein geparktes Auto
 den Weg vom Gehweg versperrt; er sucht nun eine freie Stelle und prüft das Blockieren eigens.
-Noch offen in Schritt 1: echte Spielfigur mit Animationen, Ton. Die Unreal-Fassung kennt die
+**Spielfigur (2026-11-08):** CC0-Mannequin von Quaternius (1,83 m, Metermaß, 43 Animationen).
+Zustände Idle / Walk / Jog / Jump nach Geschwindigkeit; die Animationsgeschwindigkeit wird an das
+echte Tempo angepasst (natürliche Tempi aus der Root-Motion gemessen: Walk 0,97 m/s, Jog 5,36 m/s),
+Gehtempo jetzt 1,35 m/s. `walk_test` prüft Idle → Walk → Idle (14/14).
+Noch offen in Schritt 1: Ton; Kleidung/Gesicht der Figur (das Rig ist für weitere UAL-kompatible
+Figuren nutzbar). Die Unreal-Fassung kennt die
 Möbel und Shader noch nicht.
 
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte

@@ -1,7 +1,7 @@
 {
  "schema": "stray.player/1",
  "note": "Player tuning for Prototype 001. Speeds in m/s, angles in degrees.",
- "walk_speed": 1.6,
+ "walk_speed": 1.35,
  "run_speed": 4.5,
  "acceleration": 10.0,
  "jump_velocity": 3.6,
@@ -45,5 +45,33 @@
   "release_mouse": [
    "Escape"
   ]
+ },
+ "character": {
+  "scene": "res://assets/characters/quaternius_ual/UAL1_Standard.glb",
+  "source": "Quaternius Universal Animation Library (CC0 1.0), assets/characters/quaternius_ual/LICENSE_CC0.txt",
+  "yaw_offset_deg": 180.0,
+  "body_color": [
+   0.32,
+   0.34,
+   0.4
+  ],
+  "joint_color": [
+   0.1,
+   0.1,
+   0.12
+  ],
+  "anims": {
+   "idle": "Idle",
+   "walk": "Walk",
+   "run": "Jog_Fwd",
+   "air": "Jump"
+  },
+  "natural_speed_mps": {
+   "Walk": 0.97,
+   "Jog_Fwd": 5.36
+  },
+  "natural_speed_note": "measured from the root motion of UAL1_Standard_RM.glb (displacement per loop / loop length)",
+  "blend_time": 0.2,
+  "idle_below_mps": 0.15
  }
 }

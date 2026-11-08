@@ -140,6 +140,12 @@ func _run_autoshots() -> void:
 	DirAccess.make_dir_recursive_absolute(dir)
 	await get_tree().create_timer(1.5).timeout  # let physics settle (ground check at frame 30)
 	await _snap(dir, "P001_00_player_spawn_night.png")
+	# Walking pose: hold forward for 1.2 s, capture mid-stride from the player camera.
+	Input.action_press("move_forward")
+	await get_tree().create_timer(1.2).timeout
+	await _snap(dir, "P001_00b_player_walking_night.png")
+	Input.action_release("move_forward")
+	print("STRAY_DIAG anim_state_while_walking=%s" % player.anim_state)
 	var cam := Camera3D.new()
 	cam.fov = 75.0
 	add_child(cam)

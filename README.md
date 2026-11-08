@@ -19,7 +19,7 @@ auf echtem Tablet noch nicht.
 Start: `godot --path .` (Godot 4.7, nach `git lfs pull`). Steuerung: WASD/Maus, Shift rennen,
 Leertaste springen, N Tag/Nacht; auf Touch-Geräten Joystick links, Wischen rechts.
 
-Daten: Geobasis NRW (dl-de/zero-2-0) · © OpenStreetMap-Mitwirkende (ODbL).
+Daten: Geobasis NRW (dl-de/zero-2-0) · © OpenStreetMap-Mitwirkende (ODbL) · Figur & Animationen: Quaternius (CC0).
 
 ---
 
