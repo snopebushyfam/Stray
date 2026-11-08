@@ -54,7 +54,12 @@ den Weg vom Gehweg versperrt; er sucht nun eine freie Stelle und prüft das Bloc
 Zustände Idle / Walk / Jog / Jump nach Geschwindigkeit; die Animationsgeschwindigkeit wird an das
 echte Tempo angepasst (natürliche Tempi aus der Root-Motion gemessen: Walk 0,97 m/s, Jog 5,36 m/s),
 Gehtempo jetzt 1,35 m/s. `walk_test` prüft Idle → Walk → Idle (14/14).
-Noch offen in Schritt 1: Ton; Kleidung/Gesicht der Figur (das Rig ist für weitere UAL-kompatible
+**Ton (2026-11-08):** Stadt-Atmo überall, Clubbass als 3D-Quelle vor der NACHTFLUG-Tür (wird mit
+Abstand leiser), Schritte pro Schrittlänge (0,65 m gehen / 1,25 m rennen) mit leichter Tonhöhen-
+Variation. Konfiguration `data/p001/audio_config.json`. Geprüft: Spieler laufen, Schrittzahl passt zur
+Strecke (`walk_test` 17/17), Spektrum gemessen. **Nicht geprüft: wie es klingt** (in der Cloud
+kann niemand zuhören). Im Browser startet Ton erst nach der ersten Berührung/Taste (Browser-Regel).
+Schritt 1 ist damit abgeschlossen bis auf: Kleidung/Gesicht der Figur (das Rig ist für weitere UAL-kompatible
 Figuren nutzbar). Die Unreal-Fassung kennt die
 Möbel und Shader noch nicht.
 

@@ -1,0 +1,14 @@
+{
+ "schema": "stray.p001.audio/1",
+ "note": "Audio for Prototype 001. city/club are synthesised by tools/audio/synth_p001.py; footsteps are Kenney Impact Sounds (CC0).",
+ "city": {"stream": "res://assets/audio/p001/city_ambience_loop.wav", "volume_db": -8.0},
+ "club": {"stream": "res://assets/audio/p001/club_bass_loop.wav", "volume_db": 2.0, "unit_size": 5.0,
+          "max_distance": 70.0, "out_m": 0.6, "up_m": 1.6},
+ "footsteps": {
+  "streams": ["res://assets/audio/footsteps_kenney/footstep_concrete_000.ogg",
+              "res://assets/audio/footsteps_kenney/footstep_concrete_001.ogg",
+              "res://assets/audio/footsteps_kenney/footstep_concrete_002.ogg",
+              "res://assets/audio/footsteps_kenney/footstep_concrete_003.ogg",
+              "res://assets/audio/footsteps_kenney/footstep_concrete_004.ogg"],
+  "volume_db": -6.0, "walk_stride_m": 0.65, "run_stride_m": 1.25, "pitch_jitter": 0.06}
+}

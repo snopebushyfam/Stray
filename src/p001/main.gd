@@ -8,10 +8,13 @@
 extends Node3D
 
 const PLAYER_CONFIG := "res://data/p001/player_config.json"
+const AUDIO_CONFIG := "res://data/p001/audio_config.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
 var player_cfg: Dictionary = {}
+var city_audio: AudioStreamPlayer
+var club_audio: AudioStreamPlayer3D
 
 
 func _ready() -> void:
@@ -33,6 +36,7 @@ func _ready() -> void:
 	player.face_yaw(builder.layout.spawn_yaw())
 	player.camera.make_current()
 	print("STRAY_DIAG spawn pos=%s yaw_deg=%.1f" % [player.global_position, rad_to_deg(builder.layout.spawn_yaw())])
+	_build_audio()
 	_build_hud()
 	if "--autoshots" in OS.get_cmdline_user_args():
 		_run_autoshots.call_deferred()
@@ -64,6 +68,51 @@ static func register_input_actions(controls: Dictionary) -> void:
 		var b := InputEventJoypadButton.new()
 		b.button_index = JOY_BUTTON_A
 		InputMap.action_add_event("jump", b)
+
+
+## Loads a WAV/OGG stream and makes it loop over its whole length.
+static func _looping_stream(path: String) -> AudioStream:
+	if not ResourceLoader.exists(path):
+		push_error("STRAY_DIAG audio=missing %s" % path)
+		return null
+	var st: AudioStream = load(path)
+	if st is AudioStreamWAV:
+		var w := st as AudioStreamWAV
+		w.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		w.loop_begin = 0
+		w.loop_end = int(w.get_length() * w.mix_rate)
+	elif st is AudioStreamOggVorbis:
+		(st as AudioStreamOggVorbis).loop = true
+	return st
+
+
+func _build_audio() -> void:
+	var cfg := _load_json(AUDIO_CONFIG)
+	var city: Dictionary = cfg.get("city", {})
+	city_audio = AudioStreamPlayer.new()
+	city_audio.name = "CityAmbience"
+	city_audio.stream = _looping_stream(city.get("stream", ""))
+	city_audio.volume_db = city.get("volume_db", -10.0)
+	add_child(city_audio)
+	city_audio.play()
+	# Club bass: positioned just outside the NACHTFLUG door, attenuates with distance.
+	var club: Dictionary = cfg.get("club", {})
+	var L := builder.layout
+	var pos := StrayStreetLayout._v2(L.club["en"])
+	var n := StrayStreetLayout._v2(L.club["normal_en"]).normalized()
+	var p := pos + n * float(club.get("out_m", 0.6))
+	club_audio = AudioStreamPlayer3D.new()
+	club_audio.name = "ClubBass"
+	club_audio.stream = _looping_stream(club.get("stream", ""))
+	club_audio.volume_db = club.get("volume_db", 0.0)
+	club_audio.unit_size = club.get("unit_size", 5.0)
+	club_audio.max_distance = club.get("max_distance", 70.0)
+	club_audio.position = StrayStreetLayout.en_to_godot(p.x, p.y, L.ground_z_at(p) + float(club.get("up_m", 1.6)))
+	add_child(club_audio)
+	club_audio.play()
+	player.setup_footsteps(cfg.get("footsteps", {}))
+	print("STRAY_DIAG audio city=%s club=%s club_pos=%s footsteps=%d" % [
+		city_audio.stream != null, club_audio.stream != null, club_audio.position, player.footstep_streams.size()])
 
 
 static func _load_json(path: String) -> Dictionary:

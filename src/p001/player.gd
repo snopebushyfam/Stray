@@ -22,6 +22,13 @@ var _anim: AnimationPlayer
 var _anim_names: Dictionary = {}
 ## Name of the locomotion state currently shown ("idle", "walk", "run", "air"), "" without a rig.
 var anim_state: String = ""
+## Footstep sounds (Kenney CC0, concrete); one is played per stride while on the floor.
+var footstep_streams: Array[AudioStream] = []
+var footstep_count: int = 0
+var _step_cfg: Dictionary = {}
+var _step_player: AudioStreamPlayer3D
+var _stride_acc: float = 0.0
+var _rng := RandomNumberGenerator.new()
 ## Look input from scripts/tests (degrees per call, x = yaw, y = pitch).
 var injected_look := Vector2.ZERO
 
@@ -150,6 +157,40 @@ func _update_animation() -> void:
 		_set_anim(state, clampf(h_speed / maxf(nat, 0.01), 0.4, 2.0))
 
 
+## Configures footstep audio from audio_config.json ("footsteps" section).
+func setup_footsteps(cfg_steps: Dictionary) -> void:
+	_step_cfg = cfg_steps
+	for path in cfg_steps.get("streams", []):
+		if ResourceLoader.exists(path):
+			footstep_streams.append(load(path))
+	_step_player = AudioStreamPlayer3D.new()
+	_step_player.name = "Footsteps"
+	_step_player.volume_db = cfg_steps.get("volume_db", -6.0)
+	_step_player.position.y = -float(cfg.get("capsule_height", 1.8)) * 0.5
+	_step_player.max_polyphony = 2
+	add_child(_step_player)
+	_rng.seed = 7
+
+
+func _update_footsteps(delta: float) -> void:
+	if footstep_streams.is_empty() or not is_on_floor():
+		_stride_acc = 0.0
+		return
+	var h_speed := Vector2(velocity.x, velocity.z).length()
+	if h_speed < 0.2:
+		_stride_acc = 0.0
+		return
+	_stride_acc += h_speed * delta
+	var stride: float = _step_cfg.get("run_stride_m", 1.25) if Input.is_action_pressed("run") else _step_cfg.get("walk_stride_m", 0.65)
+	if _stride_acc >= stride:
+		_stride_acc -= stride
+		var jitter: float = _step_cfg.get("pitch_jitter", 0.06)
+		_step_player.stream = footstep_streams[_rng.randi_range(0, footstep_streams.size() - 1)]
+		_step_player.pitch_scale = 1.0 + _rng.randf_range(-jitter, jitter)
+		_step_player.play()
+		footstep_count += 1
+
+
 ## Points character and camera along a yaw (radians, about +Y).
 func face_yaw(yaw: float) -> void:
 	_visual.rotation.y = yaw
@@ -207,6 +248,7 @@ func _physics_process(delta: float) -> void:
 		_visual.rotation.y = rotate_toward(_visual.rotation.y, want, turn)
 	move_and_slide()
 	_update_animation()
+	_update_footsteps(delta)
 
 	_frames += 1
 	if _frames == 30:

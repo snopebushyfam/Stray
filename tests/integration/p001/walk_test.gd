@@ -85,6 +85,9 @@ func _run() -> void:
 	check(absf((player.global_position.y - half) - g0) < 0.08, "capsule bottom within 8 cm of sidewalk (%.3f vs %.3f)" % [player.global_position.y - half, g0])
 
 	# 2. Walk forward (along the street, towards Friesenplatz) for 3 s at walking speed.
+	check(main.city_audio != null and main.city_audio.playing, "city ambience playing")
+	check(main.club_audio != null and main.club_audio.playing, "club bass playing at NACHTFLUG")
+	var steps_before := player.footstep_count
 	var s_before := _sv().x
 	check(player.anim_state == "idle", "idle animation when standing (%s)" % player.anim_state)
 	Input.action_press("move_forward")
@@ -95,6 +98,9 @@ func _run() -> void:
 	await _frames(40)
 	check(player.anim_state == "idle", "back to idle after stopping (%s)" % player.anim_state)
 	var walked := _sv().x - s_before
+	var steps := player.footstep_count - steps_before
+	var stride: float = 0.65
+	check(steps >= int(walked / stride) - 1 and steps <= int(walked / stride) + 1, "%d footsteps for %.2f m (stride %.2f m)" % [steps, walked, stride])
 	var expected: float = float(player.cfg.get("walk_speed", 1.35)) * 3.0
 	check(walked > expected * 0.75 and walked < expected * 1.3, "walked %.2f m in 3 s (expected ~%.2f)" % [walked, expected])
 	check(player.is_on_floor(), "still on the floor after walking")
