@@ -1,0 +1,38 @@
+; STRAY - Godot 4.7 project (Prototype 001 "The Street").
+; Compatibility renderer: runs on the cloud test machine (software OpenGL), on
+; tablets/phones and in the browser (WebGL 2). The Unreal version lives in Unreal/.
+
+config_version=5
+
+[application]
+
+config/name="STRAY"
+config/description="Third-person life RPG in Cologne - Prototype 001: Hohenzollernring at night"
+run/main_scene="res://src/p001/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=false
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+common/physics_ticks_per_second=60
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+limits/opengl/max_lights_per_object=16
+limits/opengl/max_renderable_lights=64
+anti_aliasing/quality/msaa_3d=2
+textures/vram_compression/import_etc2_astc=true

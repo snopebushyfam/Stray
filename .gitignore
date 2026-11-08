@@ -181,3 +181,5 @@ $RECYCLE.BIN/
 tools/geodata/cache/
 # Unreal project-local
 *.sln
+# Web export preset has no secrets (Android keystores would) - keep it versioned
+!export_presets.cfg

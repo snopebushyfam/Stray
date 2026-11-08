@@ -1,0 +1,146 @@
+{
+ "schema": "stray.p001.godot_render/1",
+ "note": "Godot-specific light/render tuning for P001 (Compatibility renderer, non-physical light units). Positions and geometry come from P001_Layout.json.",
+ "night": {
+  "background": [
+   0.01,
+   0.014,
+   0.03
+  ],
+  "ambient_color": [
+   0.18,
+   0.2,
+   0.28
+  ],
+  "ambient_energy": 0.06,
+  "moon_energy": 0.06,
+  "moon_color": [
+   0.62,
+   0.72,
+   1.0
+  ],
+  "moon_pitch_deg": -28.0,
+  "moon_yaw_deg": 200.0,
+  "fog_density": 0.006,
+  "fog_color": [
+   0.07,
+   0.055,
+   0.045
+  ],
+  "exposure": 1.25,
+  "glow_intensity": 0.9,
+  "glow_bloom": 0.08,
+  "street_lamps_on": true
+ },
+ "day": {
+  "background": [
+   0.55,
+   0.68,
+   0.85
+  ],
+  "ambient_color": [
+   0.62,
+   0.68,
+   0.78
+  ],
+  "ambient_energy": 0.55,
+  "moon_energy": 2.2,
+  "moon_color": [
+   1.0,
+   0.97,
+   0.92
+  ],
+  "moon_pitch_deg": -48.0,
+  "moon_yaw_deg": 155.0,
+  "fog_density": 0.0015,
+  "fog_color": [
+   0.65,
+   0.72,
+   0.82
+  ],
+  "exposure": 0.9,
+  "glow_intensity": 0.2,
+  "glow_bloom": 0.0,
+  "street_lamps_on": false
+ },
+ "street_lamp": {
+  "energy": 16.0,
+  "range": 24.0,
+  "angle_deg": 64.0,
+  "attenuation": 0.9,
+  "color": [
+   1.0,
+   0.82,
+   0.58
+  ],
+  "lens_emission": 8.0,
+  "shadows": false,
+  "shadows_note": "off: spot shadows produced black wedge artifacts in the Compatibility renderer (verified 2026-11-08); moon, KIOSK and NACHTFLUG lights keep shadows"
+ },
+ "shopfront": {
+  "energy": 1.2,
+  "range": 6.5,
+  "emission": 1.15
+ },
+ "upper_window_emission": 0.9,
+ "kiosk": {
+  "window_emission": 3.0,
+  "sign_emission": 4.0,
+  "light_energy": 2.5,
+  "light_range": 9.0
+ },
+ "club": {
+  "strip_emission": 6.0,
+  "canopy_emission": 5.0,
+  "wash_energy": 3.5,
+  "wash_range": 12.0,
+  "door_energy": 4.0
+ },
+ "colors": {
+  "asphalt": [
+   0.035,
+   0.035,
+   0.038
+  ],
+  "paving": [
+   0.24,
+   0.23,
+   0.22
+  ],
+  "kerb": [
+   0.34,
+   0.33,
+   0.32
+  ],
+  "median": [
+   0.13,
+   0.13,
+   0.13
+  ],
+  "paint": [
+   0.65,
+   0.65,
+   0.62
+  ],
+  "terrain": [
+   0.07,
+   0.065,
+   0.06
+  ],
+  "facade": [
+   0.45,
+   0.41,
+   0.36
+  ],
+  "roof": [
+   0.13,
+   0.11,
+   0.11
+  ],
+  "metal": [
+   0.08,
+   0.08,
+   0.09
+  ]
+ }
+}

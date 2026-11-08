@@ -1,0 +1,49 @@
+{
+ "schema": "stray.player/1",
+ "note": "Player tuning for Prototype 001. Speeds in m/s, angles in degrees.",
+ "walk_speed": 1.6,
+ "run_speed": 4.5,
+ "acceleration": 10.0,
+ "jump_velocity": 3.6,
+ "turn_speed_deg": 540.0,
+ "capsule_radius": 0.35,
+ "capsule_height": 1.8,
+ "camera_distance": 3.8,
+ "camera_height": 1.75,
+ "camera_shoulder_offset": 0.45,
+ "camera_pitch_min_deg": -70.0,
+ "camera_pitch_max_deg": 35.0,
+ "mouse_sensitivity_deg_per_px": 0.15,
+ "touch_look_sensitivity_deg_per_px": 0.25,
+ "spawn_clearance": 0.05,
+ "controls": {
+  "move_forward": [
+   "W",
+   "Up"
+  ],
+  "move_back": [
+   "S",
+   "Down"
+  ],
+  "move_left": [
+   "A",
+   "Left"
+  ],
+  "move_right": [
+   "D",
+   "Right"
+  ],
+  "run": [
+   "Shift"
+  ],
+  "jump": [
+   "Space"
+  ],
+  "toggle_day_night": [
+   "N"
+  ],
+  "release_mouse": [
+   "Escape"
+  ]
+ }
+}

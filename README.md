@@ -1,22 +1,23 @@
 # STRAY
 
 Realistisches Third-Person-Open-World-Life-RPG in einem komprimierten Köln
-(Säulen: **Nightlife · Life · Consequences**). Unreal Engine 5.8, C++.
+(Säulen: **Nightlife · Life · Consequences**). **Aktive Engine: Godot 4.7 (GDScript)**;
+eine Unreal-5.8-C++-Fassung desselben Prototyps liegt (ungetestet) unter `Unreal/`.
 
 | | |
 |---|---|
 | Design | [`docs/STRAY_GDD.md`](docs/STRAY_GDD.md) |
-| Technik, Audit, Abnahme | [`docs/TECHNICAL_PLAN.md`](docs/TECHNICAL_PLAN.md) |
+| Technik, Audit, Tests | [`docs/TECHNICAL_PLAN.md`](docs/TECHNICAL_PLAN.md) |
 | Assets & Lizenzen | [`docs/ASSET_MANIFEST.md`](docs/ASSET_MANIFEST.md) |
-| Prototype 001 Datenvorschau | [`docs/prototype-001/`](docs/prototype-001/) |
+| Spiel-Screenshots (Beweis) | [`production/qa/evidence/godot/`](production/qa/evidence/godot/) |
 
-**Prototype 001 „The Street“** — 150 m Hohenzollernring bei Nacht aus amtlichen
-LoD2-Gebäudedaten (Geobasis NRW) und OSM, mit KIOSK, Club NACHTFLUG, Straßenlicht und
-Third-Person-Figur. **Status: Code und Daten fertig, in Unreal noch NICHT kompiliert oder
-gespielt** (Abnahme-Anleitung: `docs/TECHNICAL_PLAN.md` §6).
+**Prototype 001 „The Street“** — 150 m Hohenzollernring bei Nacht aus amtlichen Daten
+(Geobasis NRW LoD2 + DGM1) und OSM, mit KIOSK, Club NACHTFLUG, Straßenlicht und
+Third-Person-Figur. **In Godot gespielt und getestet** (Desktop-Renderer und Web/WebGL 2);
+auf echtem Tablet noch nicht.
 
-Schnellstart (Windows, UE 5.8): `git lfs pull`, `Stray.uproject` öffnen (baut das C++-Modul),
-beim ersten Start entstehen Materialien und `L_P001_Street` automatisch, dann Play.
+Start: `godot --path .` (Godot 4.7, nach `git lfs pull`). Steuerung: WASD/Maus, Shift rennen,
+Leertaste springen, N Tag/Nacht; auf Touch-Geräten Joystick links, Wischen rechts.
 
 Daten: Geobasis NRW (dl-de/zero-2-0) · © OpenStreetMap-Mitwirkende (ODbL).
 

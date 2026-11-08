@@ -200,7 +200,7 @@ def render(L, sc, ways, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
     plan(L, sc, ways, out_dir / "p001_plan_preview.png")
     profile_plot(L, sc, out_dir / "p001_profile_preview.png")
-    obj = Path(__file__).resolve().parents[2] / "Content" / L["lod2_mesh"]
+    obj = Path(__file__).resolve().parents[2] / "data" / "p001" / L["lod2_mesh"]
     for vp in L["viewpoints"]:
         perspective(L, obj, out_dir / f"p001_view_{vp['name']}_preview.png", vp["en"], vp["h"],
                     vp["look_en"], vp["look_h"], f"Viewpoint '{vp['name']}'")

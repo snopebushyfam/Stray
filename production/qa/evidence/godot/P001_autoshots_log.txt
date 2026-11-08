@@ -1,0 +1,20 @@
+STRAY_DIAG lighting=night
+STRAY_DIAG build=ok lod2=1 buildings=155 lod2_tris=6028 terrain=1 terrain_tris=27000 street_tris=3028 profile_rows=53 lights=45 shadow_lights=3 street_len_m=150.0
+STRAY_DIAG spawn pos=(-23.221, 0.895296, -24.027) yaw_deg=-11.1
+STRAY_DIAG hud touch_controls=false
+STRAY_DIAG ground_check on_floor=true gap_m=0.000 pos=(-23.221, 0.847268, -24.027)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_00_player_spawn_night.png err=0 size=(1280, 720)
+STRAY_DIAG lighting=night
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_01_street_south_overview_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_02_nachtflug_entrance_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_03_kiosk_front_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_04_street_north_to_south_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_05_high_overview_night.png err=0 size=(1280, 720)
+STRAY_DIAG lighting=day
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_01_street_south_overview_day.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_02_nachtflug_entrance_day.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_03_kiosk_front_day.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_04_street_north_to_south_day.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_05_high_overview_day.png err=0 size=(1280, 720)
+STRAY_DIAG lighting=night
+STRAY_DIAG autoshots=done dir=/home/user/Stray/production/qa/evidence/godot

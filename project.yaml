@@ -27,6 +27,6 @@ framework:
 # precedence order.
 
 engine:
-  name: Unreal
-  version: 5.8
-  language: C++
+  name: Godot
+  version: 4.7
+  language: GDScript

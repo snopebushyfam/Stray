@@ -1,11 +1,44 @@
 # STRAY — Technischer Plan
 
-**Stand:** 2026-11-08 · **Engine:** Unreal Engine 5.8 (C++20), Ziel Windows/DX12 · **Branch:** `claude/jolly-allen-b3y08s`
+**Stand:** 2026-11-08 · **Aktive Engine:** Godot 4.7.2 (GDScript, Compatibility-Renderer) · **Archiv:** Unreal 5.8 C++ unter `Unreal/` · **Branch:** `claude/jolly-allen-b3y08s`
 
-> **Status Prototype 001: CODE + DATEN FERTIG, IN UNREAL UNVERIFIZIERT.**
-> Die Cloud-Umgebung, in der dieser Stand entstand, hat **keinen Unreal Editor, kein
-> UnrealBuildTool und keine GPU/GUI** (Linux-Container). Nichts davon wurde kompiliert,
-> geladen oder gespielt. Die Abnahme in Abschnitt 6 muss auf dem Windows-PC laufen.
+> **Status Prototype 001 (Godot): GESPIELT UND GEPRÜFT in der Cloud-Umgebung** — Godot 4.7.2 lief
+> unter Xvfb mit Software-OpenGL (llvmpipe) und als Web-Export in Chromium (WebGL 2). Belege:
+> `production/qa/evidence/godot/` (12 Screenshots, Log, Testlog).
+> Nicht geprüft: echte Tablet-/Handy-Hardware, Touch-Bedienung mit dem Finger, Performance auf GPU.
+>
+> **Unreal-Version (`Unreal/`): weiterhin nie kompiliert oder gestartet** (kein Unreal in der Cloud).
+
+## 0. Godot-Version (aktiv)
+
+| | |
+|---|---|
+| Projekt | `project.godot` (Repo-Wurzel), Hauptszene `src/p001/main.tscn` |
+| Code | `src/p001/street_layout.gd` (Daten + Mathe), `obj_mesh.gd` (OBJ-Leser), `street_builder.gd` (Straße, Gelände, Gebäude, Licht), `player.gd` (Third-Person, Maus/Tastatur/Gamepad/Touch), `main.gd` (Spawn, HUD, VirtualJoystick, Auto-Screenshots) |
+| Daten | `data/p001/` — gemeinsam mit Unreal: `P001_Layout.json`, LoD2-/DGM1-OBJ; Godot-spezifisch: `godot_render.json` (Licht/Farben), `player_config.json` (Tempo, Kamera, Tastenbelegung) |
+| Koordinaten | Godot X = Ost, Y = oben, Z = −Nord (reine Rotation, keine Spiegelung); Godot-Frontfläche = im Uhrzeigersinn |
+| Licht | 45 dynamische Lichter (12 Straßenlampen, 29 Schaufenster, KIOSK, NACHTFLUG, Mond). Limit Compatibility: 16 pro Objekt / 64 gesamt → Straße in 12-m-Stücken, ein Netz pro Gebäude |
+| Steuerung | WASD/Pfeile + Maus, Gamepad, Touch: VirtualJoystick links (Godot 4.7), Wischen rechts = Kamera, Buttons Springen + Tag/Nacht. N = Tag/Nacht |
+
+**Ausführen / prüfen**
+
+```bash
+godot --path .                                             # spielen (Editor: godot -e --path .)
+godot --path . -- --autoshots                              # 11 Beweis-Screenshots -> production/qa/evidence/godot/
+GODOT=godot tests/run_tests.sh                             # Unit- + Lauf-Tests + Python-Datentests
+godot --headless --path . --export-release "Web" build/web/index.html   # Web-Build (WebGL 2)
+```
+
+**Testergebnis 2026-11-08:** `street_layout_test` 15/15, `walk_test` 9/9 (Spawn auf Gehweg,
+4,8 m in 3 s gegangen, Bordstein hinab, Fassade blockiert, Endwand hält, nicht durch die Welt
+gefallen), Python 12/12. Gegenprobe: ohne Straßen-/Gebäudekollision schlagen 3 Lauf-Tests fehl.
+Gefundene und behobene Fehler beim echten Lauf: Schaufenster flimmerten (Z-Fighting), Lampen zu
+schwach, Schattenkeile an Lampen (Spot-Schatten im Compatibility-Renderer → Lampenschatten aus).
+
+**Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
+`SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
+
+---
 
 ## 1. Bestandsaufnahme (Audit, 2026-11-08)
 
@@ -17,10 +50,10 @@
 | Eigene Köln-3D-Karte | **Nicht auffindbar** (weder Repo noch ZIP). Nicht verwendet, nicht behauptet. |
 | Amtliche Daten | **Erreichbar und verwendet:** Geobasis NRW LoD2 `LoD2_32_355_5645_1_NW.gml` (69,3 MB, Last-Modified 2026-05-26) und DGM1 `dgm1_32_355_5645_1_nw_2022.tif` (1 m Gelände). OSM-API 0.6 erreichbar (Overpass nicht). |
 | 3dcityloader-Export (vom Inhaber nachgereicht) | Echt, exakt georeferenziert (siehe `assets/geodata/3dcityloader_friesenplatz_nord/README.md`), liegt aber 90–290 m **nördlich** von P001 — gesichert, noch nicht verwendet. |
-| Unreal ausführbar? | **Nein.** Kein `UnrealEditor`, keine Engine-Installation, keine GPU. Blender ebenfalls nicht installiert. |
+| Unreal ausführbar? | **Nein.** Kein `UnrealEditor`, keine Engine-Installation, keine GPU. Blender ebenfalls nicht installiert. **Godot 4.7.2 dagegen ja** (Download von GitHub, Xvfb + Mesa llvmpipe). |
 | Ausführbar war | Python 3 (+ numpy, pyproj, mapbox-earcut, matplotlib), git, git-lfs, clang (ohne UE-Header). |
 
-## 2. Architektur
+## 2. Architektur (Unreal-Version, archiviert unter `Unreal/`)
 
 ```
 Stray.uproject                     UE 5.8, Plugins: EnhancedInput, ProceduralMeshComponent, PythonScriptPlugin, EditorScriptingUtilities

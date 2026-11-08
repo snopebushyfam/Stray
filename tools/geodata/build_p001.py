@@ -246,7 +246,7 @@ def main():
     fetch(DGM_URL + DGM_TILE, CACHE / DGM_TILE)
     fetch("https://api.openstreetmap.org/api/0.6/map?bbox=%s,%s,%s,%s" % OSM_BBOX, a.osm)
 
-    data_dir = ROOT / "Content/Stray/Data"
+    data_dir = ROOT / "data/p001"
     x0, y0, x1, y1 = LOD2_BBOX_LOCAL
     keep = lambda x, y: (ORIGIN[0] + x0 <= x <= ORIGIN[0] + x1) and (ORIGIN[1] + y0 <= y <= ORIGIN[1] + y1)
     bl = cg.read_buildings(a.gml, keep)
@@ -351,11 +351,11 @@ def main():
                    "local_origin_utm": list(ORIGIN),
                    "axes_local": "X=East, Y=North, Z=Up (metres)",
                    "axes_unreal": "UE.X = East*100, UE.Y = -North*100, UE.Z = Up*100 (cm)"},
-        "lod2_mesh": "Stray/Data/LoD2_P001_Hohenzollernring.obj",
+        "lod2_mesh": "LoD2_P001_Hohenzollernring.obj",
         "street": {"origin_en": r2(fr.o), "bearing_deg": round(fr.bearing, 3),
                    "s_start": s0, "s_end": s1, **cross,
                    "facade_west_median": round(west_face, 2), "facade_east_median": round(east_face, 2)},
-        "terrain_mesh": "Stray/Data/DGM1_P001_Terrain.obj",
+        "terrain_mesh": "DGM1_P001_Terrain.obj",
         "terrain_stats": terrain,
         "profile": {"columns": ["s", "road_centre", "road_edge_west", "road_edge_east", "sidewalk_west", "sidewalk_east",
                                 "facade_west", "facade_east"],
