@@ -112,10 +112,21 @@ def perspective(L, obj_path: Path, out: Path, eye_en, eye_h, look_en, look_h, ti
     strips = (((-k_, k_), 0.0, [.33, .34, .36]), ((st["sidewalk_west_outer"], -k_), 0.15, [.66, .64, .6]),
               ((k_, st["sidewalk_east_outer"]), 0.15, [.66, .64, .6]),
               ((-st["median_half_width"], st["median_half_width"]), 0.12, [.45, .46, .48]))
+    prof = np.array(L["profile"]["samples"])
+
+    def zat(s_, vv, base):  # surface height from the DGM1 profile (approximation for the preview)
+        r = [np.interp(s_, prof[:, 0], prof[:, i]) for i in range(1, 8)]
+        if base == 0.0:   # road
+            return r[0] + ((r[1] if vv < 0 else r[2]) - r[0]) * min(abs(vv) / k_, 1)
+        if base == 0.12:  # median
+            return r[0] + 0.12
+        return r[3] if vv < 0 else r[4]
+
     for (v0, v1), z, c in strips:  # 3 m pieces so the painter's sort and near clipping behave
         for s_ in np.arange(st["s_start"], st["s_end"], 3.0):
             q = [o + s_ * u + v0 * v, o + (s_ + 3) * u + v0 * v, o + (s_ + 3) * u + v1 * v, o + s_ * u + v1 * v]
-            q3 = np.c_[np.array(q), np.full(4, z)]
+            zz = [zat(s_, v0, z), zat(s_ + 3, v0, z), zat(s_ + 3, v1, z), zat(s_, v1, z)]
+            q3 = np.c_[np.array(q), np.array(zz)]
             tris.append((q3[[0, 1, 2]], np.array(c)))
             tris.append((q3[[0, 2, 3]], np.array(c)))
     for l in L["lamps"]["positions"]:
@@ -153,9 +164,42 @@ def perspective(L, obj_path: Path, out: Path, eye_en, eye_h, look_en, look_h, ti
     plt.close(fig)
 
 
+def profile_plot(L, sc, out: Path):
+    """Longitudinal section: DGM1-derived road / kerb / facade heights and LoD2 building bases."""
+    p = np.array(L["profile"]["samples"])
+    st = L["street"]
+    b = math.radians(st["bearing_deg"])
+    u = np.array([math.sin(b), math.cos(b)]); v = np.array([u[1], -u[0]]); o = np.array(st["origin_en"])
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.plot(p[:, 0], p[:, 1], c="#333", lw=2, label="Fahrbahnmitte")
+    ax.plot(p[:, 0], p[:, 2], c="#777", lw=1, ls="--", label="Rinne West")
+    ax.plot(p[:, 0], p[:, 4], c="#2a7", lw=1.5, label="Gehweg West an Bordstein")
+    ax.plot(p[:, 0], p[:, 6], c="#2a7", lw=1, ls=":", label="Gehweg West an Fassade")
+    ax.plot(p[:, 0], p[:, 5], c="#27a", lw=1.5, label="Gehweg Ost an Bordstein")
+    ax.plot(p[:, 0], p[:, 7], c="#27a", lw=1, ls=":", label="Gehweg Ost an Fassade")
+    for bd in sc["buildings"]:
+        for r in bd["ground_rings_local"]:
+            q = np.array(r)
+            if len(q) == 0:
+                continue
+            sv = np.c_[(q - o) @ u, (q - o) @ v]
+            m = (sv[:, 0] >= st["s_start"]) & (sv[:, 0] <= st["s_end"]) & (np.abs(sv[:, 1]) < 22) & (np.abs(sv[:, 1]) > 9)
+            if m.any():
+                ax.scatter(sv[m, 0], np.full(m.sum(), bd["zmin_local"]), s=6, c=np.where(sv[m, 1] < 0, "#2a7", "#27a"), alpha=.5)
+    ax.axvline(L["kiosk"]["s"], c="#0a0", lw=.8); ax.text(L["kiosk"]["s"], ax.get_ylim()[1], " KIOSK", va="top", fontsize=8)
+    ax.axvline(L["club"]["s"], c="#d0d", lw=.8); ax.text(L["club"]["s"], ax.get_ylim()[1], " NACHTFLUG", va="top", fontsize=8)
+    ax.set_xlabel("s entlang Hohenzollernring [m] (Richtung Friesenplatz)")
+    ax.set_ylabel("Hoehe rel. %.2f m NHN [m]" % L["georef"]["local_origin_utm"][2])
+    ax.set_title("P001 Laengsschnitt aus DGM1 (Linien) + LoD2-Gebaeudesockel (Punkte)\n" + STAMP, fontsize=9)
+    ax.grid(True, lw=.3); ax.legend(fontsize=7, ncol=3)
+    fig.savefig(out, dpi=110, bbox_inches="tight")
+    plt.close(fig)
+
+
 def render(L, sc, ways, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
     plan(L, sc, ways, out_dir / "p001_plan_preview.png")
+    profile_plot(L, sc, out_dir / "p001_profile_preview.png")
     obj = Path(__file__).resolve().parents[2] / "Content" / L["lod2_mesh"]
     for vp in L["viewpoints"]:
         perspective(L, obj, out_dir / f"p001_view_{vp['name']}_preview.png", vp["en"], vp["h"],

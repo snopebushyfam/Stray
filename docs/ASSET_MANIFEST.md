@@ -11,6 +11,8 @@ Abschnitt 0 ist der **geprüfte Ist-Zustand**. Ab Abschnitt A folgt das ursprün
 | Asset | Pfad | Quelle / Lizenz | Status |
 |---|---|---|---|
 | LoD2-Gebäude Hohenzollernring (155 Gebäude, 6.029 Dreiecke, lokal) | `Content/Stray/Data/LoD2_P001_Hohenzollernring.obj` (+ `.mtl`, `.json` Georeferenz/Metadaten) | Geobasis NRW, Kachel `LoD2_32_355_5645_1_NW.gml`, dl-de/zero-2-0 | erzeugt + mit Python geprüft (Orientierung, Maßstab, Höhen); **in Unreal ungeprüft**; Git LFS |
+| DGM1-Gelände P001 (2-m-Raster, 27.000 Dreiecke) | `Content/Stray/Data/DGM1_P001_Terrain.obj` | Geobasis NRW `dgm1_32_355_5645_1_nw_2022.tif`, dl-de/zero-2-0 | erzeugt + mit Python geprüft; **in Unreal ungeprüft**; Git LFS |
+| 3dcityloader-Export „Friesenplatz Nord“ (DXF + Kartentextur) | `assets/geodata/3dcityloader_friesenplatz_nord/` | vom Projektinhaber, 3dcityloader.com; LoD2/DGM dl-de/zero-2-0, Textur ODbL | echt, Georeferenz gemessen (README dort); **nicht im Spiel**, liegt nördlich von P001; Git LFS |
 | Straßenlayout P001 | `Content/Stray/Data/P001_Layout.json` | abgeleitet aus LoD2 + OSM (ODbL, © OpenStreetMap-Mitwirkende); Annahmen in `provenance` | erzeugt, Unreal-Automation-Tests geschrieben, **nicht ausgeführt** |
 | Datenvorschauen | `docs/prototype-001/*.png` | eigene matplotlib-Renderings | **kein Unreal-Bild**; Git LFS |
 | Engine-Basisformen (Cube/Cylinder/Sphere, BasicShapeMaterial) | `/Engine/BasicShapes/` | Teil von Unreal Engine | wird zur Laufzeit referenziert |
@@ -28,7 +30,7 @@ Nach dem ersten Start diese `.uasset`/`.umap` committen (LFS-Regeln sind gesetzt
 
 | Gesucht | Wo gesucht | Ergebnis |
 |---|---|---|
-| Eigene Köln-3D-Karte des Projektinhabers | Repo `Stray` (alle Branches), `game-studio-template`, `video-skills`, Upload-ZIP | **nicht vorhanden** |
+| Eigene Köln-3D-Karte des Projektinhabers (die frühere) | Repo `Stray` (alle Branches), `game-studio-template`, `video-skills`, Upload-ZIP | **nicht vorhanden**; nachgereicht wurde ein neuer 3dcityloader-Export (siehe 0.1) |
 | Altes UE-5.8.2-Projekt, Commits `6fd0a5c`/`e5f0b56`, `AStrayStreetBlockout` | dito | **nicht vorhanden** |
 | Spielerfigur mit Rig/Animationen | dito | fehlt → Platzhalterkörper; Third-Person-Content-Pack per `Config/DefaultGame.ini` einhängbar |
 | Texturen (Asphalt, Platten, Fassaden), Fahrzeuge, NPCs, Audio, Smartphone-UI | dito | fehlen (einfarbige Materialien) |
@@ -38,6 +40,7 @@ Nach dem ersten Start diese `.uasset`/`.umap` committen (LFS-Regeln sind gesetzt
 | Datei | Größe | SHA-256 (Anfang) | Bezug |
 |---|---|---|---|
 | `LoD2_32_355_5645_1_NW.gml` | 69.278.147 B | `c59a948cecd5e8d1324f249f8a529c389e1b95c8ca5038c948ec5ba7ef5a675b` | https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/lod2_gml/LoD2_32_355_5645_1_NW.gml |
+| `dgm1_32_355_5645_1_nw_2022.tif` | 1.964.442 B | – | https://www.opengeodata.nrw.de/produkte/geobasis/hm/dgm1_tiff/dgm1_tiff/dgm1_32_355_5645_1_nw_2022.tif |
 | OSM-Ausschnitt | ~1,8 MB | – | https://api.openstreetmap.org/api/0.6/map?bbox=6.9375,50.9375,6.9420,50.9412 |
 
 Beide landen durch `tools/geodata/build_p001.py` in `tools/geodata/cache/` (gitignored).

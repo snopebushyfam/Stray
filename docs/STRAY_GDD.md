@@ -44,7 +44,7 @@ Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schi
 
 ## Prototype 001 — Umsetzungsstand (2026-11-08)
 - Ort: **Hohenzollernring, 150 m** (s = −45 … +105 m) südlich des Friesenplatzes; reale
-  Gebäude aus Geobasis-NRW-LoD2, Straßenachse aus OpenStreetMap.
+  Gebäude aus Geobasis-NRW-LoD2, reales Gelände/Gefälle aus DGM1, Straßenachse aus OpenStreetMap.
 - KIOSK: Ostseite, s = 48 m. NACHTFLUG: Westseite, s = 64 m, schräg gegenüber.
 - Spawn: Westgehweg, s = 22 m, Blick nach Norden; NACHTFLUG liegt voraus links, KIOSK gegenüber.
 - Steuerung: WASD/Maus bzw. Gamepad, Shift = rennen, Leertaste = springen, **N = Tag/Nacht**.

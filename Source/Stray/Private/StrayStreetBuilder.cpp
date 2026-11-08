@@ -116,6 +116,18 @@ AStrayStreetBuilder::AStrayStreetBuilder()
 	Buildings->SetCollisionProfileName(UCollisionProfile::BlockAll_ProfileName);
 	Buildings->bUseAsyncCooking = false; // collision must exist on the first frame the player lands
 
+	Terrain = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Dgm1Terrain"));
+	Terrain->SetupAttachment(Root);
+	Terrain->bUseComplexAsSimpleCollision = true;
+	Terrain->SetCollisionProfileName(UCollisionProfile::BlockAll_ProfileName);
+	Terrain->bUseAsyncCooking = false;
+
+	StreetSurface = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("StreetSurface"));
+	StreetSurface->SetupAttachment(Root);
+	StreetSurface->bUseComplexAsSimpleCollision = true;
+	StreetSurface->SetCollisionProfileName(UCollisionProfile::BlockAll_ProfileName);
+	StreetSurface->bUseAsyncCooking = false;
+
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeFinder(TEXT("/Engine/BasicShapes/Cube.Cube"));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderFinder(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereFinder(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
@@ -161,6 +173,8 @@ void AStrayStreetBuilder::ClearGenerated()
 	}
 	Generated.Reset();
 	Buildings->ClearAllMeshSections();
+	Terrain->ClearAllMeshSections();
+	StreetSurface->ClearAllMeshSections();
 }
 
 void AStrayStreetBuilder::Rebuild()
@@ -206,8 +220,9 @@ void AStrayStreetBuilder::Rebuild()
 
 	Stats.Components = Generated.Num();
 	UE_LOG(LogStray, Log,
-		TEXT("STRAY_DIAG build=ok lod2=%d buildings=%d triangles=%d lights=%d shadow_lights=%d components=%d project_materials=%d street_len_m=%.1f"),
-		Stats.bLod2Loaded ? 1 : 0, Stats.Lod2Buildings, Stats.Lod2Triangles, Stats.Lights, Stats.ShadowCastingLights,
+		TEXT("STRAY_DIAG build=ok lod2=%d buildings=%d triangles=%d terrain=%d terrain_tris=%d street_tris=%d profile_rows=%d lights=%d shadow_lights=%d components=%d project_materials=%d street_len_m=%.1f"),
+		Stats.bLod2Loaded ? 1 : 0, Stats.Lod2Buildings, Stats.Lod2Triangles, Stats.bTerrainLoaded ? 1 : 0, Stats.TerrainTriangles,
+		Stats.StreetTriangles, Layout.Profile.Num(), Stats.Lights, Stats.ShadowCastingLights,
 		Stats.Components, Stats.bUsingProjectMaterials ? 1 : 0, Layout.Street.Length());
 }
 
@@ -268,14 +283,6 @@ UStaticMeshComponent* AStrayStreetBuilder::AddBox(const FVector& CenterCm, const
 	return AddMesh(CubeMesh, CenterCm, FRotator(0.0, Yaw, 0.0), SizeM, Material, bCollision);
 }
 
-UStaticMeshComponent* AStrayStreetBuilder::AddStreetSlab(double S0, double S1, double V0, double V1, double ZBottom, double ZTop,
-	UMaterialInterface* Material, bool bCollision)
-{
-	const FStrayStreetDef& St = Layout.Street;
-	const FVector2D C = St.ToEN((S0 + S1) * 0.5, (V0 + V1) * 0.5);
-	return AddBox(Ue(C, (ZBottom + ZTop) * 0.5), FVector(S1 - S0, FMath::Abs(V1 - V0), ZTop - ZBottom), St.AxisYaw(), Material, bCollision);
-}
-
 UInstancedStaticMeshComponent* AStrayStreetBuilder::AddInstanced(UStaticMesh* Mesh, UMaterialInterface* Material, bool bCollision)
 {
 	UInstancedStaticMeshComponent* C = NewGenerated<UInstancedStaticMeshComponent>(TEXT("Instanced"));
@@ -312,37 +319,213 @@ void AStrayStreetBuilder::CountLight(bool bShadows)
 
 void AStrayStreetBuilder::BuildGround()
 {
-	const FStrayStreetDef& St = Layout.Street;
-	const double S0 = St.SStart, S1 = St.SEnd, K = St.KerbHalfWidth;
-
-	// Large ground plate under the whole LoD2 cut-out: no void between buildings or behind them.
+	// Safety plate 1 m below the lowest terrain point: catches any hole, normally never seen.
 	const FVector2D Mid = (Layout.GroundMinEN + Layout.GroundMaxEN) * 0.5;
 	const FVector2D Size = Layout.GroundMaxEN - Layout.GroundMinEN;
 	AddBox(Ue(Mid, Layout.GroundZ - 0.25), FVector(Size.X, Size.Y, 0.5), 0.0, Surface(GroundDark, 0.95f), true);
 
-	// Road surface top at Z = 0, sidewalks at kerb height.
-	AddStreetSlab(S0, S1, -K, K, -0.30, 0.0, Surface(Asphalt, 0.9f), true);
-	AddStreetSlab(S0, S1, -St.MedianHalfWidth, St.MedianHalfWidth, 0.0, 0.12, Surface(MedianStone, 0.85f), true);
-	AddStreetSlab(S0, S1, St.SidewalkWestOuter, -K, -0.30, St.KerbHeight, Surface(Paving, 0.8f), true);
-	AddStreetSlab(S0, S1, K, St.SidewalkEastOuter, -0.30, St.KerbHeight, Surface(Paving, 0.8f), true);
-	AddStreetSlab(S0, S1, -K - 0.18, -K, -0.30, St.KerbHeight + 0.005, Surface(KerbStone, 0.7f), true);
-	AddStreetSlab(S0, S1, K, K + 0.18, -0.30, St.KerbHeight + 0.005, Surface(KerbStone, 0.7f), true);
+	BuildTerrain();
+	BuildStreetSurface();
+	BuildMarkings();
+}
 
-	// Markings: solid edge lines and dashed lane dividers (3 m line / 6 m gap).
-	UMaterialInterface* Paint = Surface(LanePaint, 0.6f);
-	for (const double Side : { -1.0, 1.0 })
+void AStrayStreetBuilder::BuildTerrain()
+{
+	if (Layout.TerrainMeshRelPath.IsEmpty())
 	{
-		const double Edge = Side * St.CarriagewayHalfWidth;
-		AddStreetSlab(S0, S1, Edge - 0.06, Edge + 0.06, 0.0, 0.006, Paint, false);
+		UE_LOG(LogStray, Warning, TEXT("STRAY_DIAG terrain=none (layout has no terrain_mesh)"));
+		return;
 	}
-	UInstancedStaticMeshComponent* Dashes = AddInstanced(CubeMesh, Paint, false);
-	for (double S = S0 + 1.5; S + 3.0 < S1; S += 9.0)
+	const FString Path = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() / Layout.TerrainMeshRelPath);
+	FString Error;
+	const TSharedPtr<FStrayObjMesh> Mesh = LoadObjCached(Path, bDoubleSidedProceduralMeshes, Error);
+	if (!Mesh.IsValid())
 	{
-		for (const double Side : { -1.0, 1.0 })
+		UE_LOG(LogStray, Error, TEXT("STRAY_DIAG terrain=failed error=%s"), *Error);
+		return;
+	}
+	const TArray<FVector2D> NoUV;
+	const TArray<FLinearColor> NoColors;
+	const TArray<FProcMeshTangent> NoTangents;
+	for (int32 I = 0; I < Mesh->Sections.Num(); ++I)
+	{
+		const FStrayObjSection& S = Mesh->Sections[I];
+		Terrain->CreateMeshSection_LinearColor(I, S.Positions, S.Indices, S.Normals, NoUV, NoColors, NoTangents, true);
+		Terrain->SetMaterial(I, Surface(FLinearColor(0.07f, 0.065f, 0.06f), 0.95f));
+	}
+	Stats.bTerrainLoaded = true;
+	Stats.TerrainTriangles = Mesh->NumTriangles() / (bDoubleSidedProceduralMeshes ? 2 : 1);
+}
+
+namespace
+{
+	/** Triangle soup for one material section of the street surface. */
+	struct FStripBuilder
+	{
+		TArray<FVector> Pos;
+		TArray<FVector> Nrm;
+		TArray<int32> Idx;
+		bool bDoubleSided = true;
+
+		/**
+		 * Adds triangle A-B-C facing Desired. Unreal's front face satisfies
+		 * Normal == (C - A) ^ (B - A) (same rule StrayObjMesh relies on).
+		 */
+		void Tri(FVector A, FVector B, FVector C, const FVector& Desired)
 		{
-			const FVector2D P = St.ToEN(S + 1.5, Side * St.LaneDividerOffset);
-			Dashes->AddInstance(FTransform(FRotator(0.0, St.AxisYaw(), 0.0), Ue(P, 0.003), FVector(3.0, 0.12, 0.006)));
+			FVector N = (C - A) ^ (B - A);
+			if (N.SizeSquared() < 1e-6)
+			{
+				return;
+			}
+			if ((N | Desired) < 0.0)
+			{
+				Swap(B, C);
+				N = -N;
+			}
+			N.Normalize();
+			for (int32 Pass = 0; Pass < (bDoubleSided ? 2 : 1); ++Pass)
+			{
+				const int32 Base = Pos.Num();
+				Pos.Append({ A, B, C });
+				const FVector PN = Pass == 0 ? N : -N;
+				Nrm.Append({ PN, PN, PN });
+				Idx.Append(Pass == 0 ? TArray<int32>{ Base, Base + 1, Base + 2 } : TArray<int32>{ Base, Base + 2, Base + 1 });
+			}
 		}
+
+		void Quad(const FVector& P00, const FVector& P10, const FVector& P11, const FVector& P01, const FVector& Desired)
+		{
+			Tri(P00, P10, P11, Desired);
+			Tri(P00, P11, P01, Desired);
+		}
+	};
+}
+
+void AStrayStreetBuilder::BuildStreetSurface()
+{
+	const FStrayStreetDef& St = Layout.Street;
+	const double K = St.KerbHalfWidth;
+	const double M = St.MedianHalfWidth;
+	const double KerbW = FStrayP001Layout::KerbStoneWidth;
+	const double FW = Layout.ProfileFacadeVWest;
+	const double FE = Layout.ProfileFacadeVEast;
+	const double Skirt = 1.2; // vertical skirts below every free edge (no see-through gaps)
+	const FVector Up(0, 0, 1);
+	const FVector Right = StrayGeo::EnDirToUnreal(St.RightEN());
+	const FVector Along = StrayGeo::EnDirToUnreal(St.AxisEN());
+
+	TArray<double> Ss;
+	for (double S = St.SStart; S < St.SEnd - 0.01; S += 1.5)
+	{
+		Ss.Add(S);
+	}
+	Ss.Add(St.SEnd);
+
+	enum ESection { Road, Median, Walk, KerbSec, SkirtSec, Num };
+	FStripBuilder B[Num];
+	for (FStripBuilder& X : B)
+	{
+		X.bDoubleSided = bDoubleSidedProceduralMeshes;
+	}
+	auto P = [&](double S, double V, double Z) { return Ue(St.ToEN(S, V), Z); };
+	auto Prof = [&](double S) { return Layout.ProfileAt(S); };
+
+	// Cross-section, west -> east: (v, height function). Heights are metres.
+	auto WalkW = [&](double S) { return Prof(S).SidewalkWest; };
+	auto WalkE = [&](double S) { return Prof(S).SidewalkEast; };
+	auto MedTop = [&](double S) { return Prof(S).RoadCentre + FStrayP001Layout::MedianRise; };
+
+	for (int32 I = 0; I + 1 < Ss.Num(); ++I)
+	{
+		const double S0 = Ss[I], S1 = Ss[I + 1];
+		auto Top = [&](int32 Sec, double V0, double V1, TFunctionRef<double(double, double)> Z)
+		{
+			B[Sec].Quad(P(S0, V0, Z(S0, V0)), P(S1, V0, Z(S1, V0)), P(S1, V1, Z(S1, V1)), P(S0, V1, Z(S0, V1)), Up);
+		};
+		auto Wall = [&](int32 Sec, double V, TFunctionRef<double(double)> Lo, TFunctionRef<double(double)> Hi, const FVector& Facing)
+		{
+			B[Sec].Quad(P(S0, V, Lo(S0)), P(S1, V, Lo(S1)), P(S1, V, Hi(S1)), P(S0, V, Hi(S0)), Facing);
+		};
+		const auto RoadAt = [&](double S, double V) { return Layout.RoadZ(S, V); };
+
+		// Tops (sidewalks fall towards the kerb: kerb value -> facade value, flat beyond the facade line)
+		const auto WalkAt = [&](double S, double V) { return Layout.SidewalkZ(S, V); };
+		Top(Walk, St.SidewalkWestOuter, FW, WalkAt);
+		Top(Walk, FW, -K - KerbW, WalkAt);
+		Top(KerbSec, -K - KerbW, -K, [&](double S, double) { return WalkW(S) + 0.005; });
+		Top(Road, -K, -M, RoadAt);
+		Top(Median, -M, M, [&](double S, double) { return MedTop(S); });
+		Top(Road, M, K, RoadAt);
+		Top(KerbSec, K, K + KerbW, [&](double S, double) { return WalkE(S) + 0.005; });
+		Top(Walk, K + KerbW, FE, WalkAt);
+		Top(Walk, FE, St.SidewalkEastOuter, WalkAt);
+		// Kerb and median faces
+		Wall(KerbSec, -K, [&](double S) { return Layout.RoadZ(S, -K); }, [&](double S) { return WalkW(S) + 0.005; }, Right);
+		Wall(KerbSec, K, [&](double S) { return Layout.RoadZ(S, K); }, [&](double S) { return WalkE(S) + 0.005; }, -Right);
+		Wall(Median, -M, [&](double S) { return Layout.RoadZ(S, -M); }, MedTop, -Right);
+		Wall(Median, M, [&](double S) { return Layout.RoadZ(S, M); }, MedTop, Right);
+		// Outer skirts
+		const auto OuterW = [&](double S) { return Layout.SidewalkZ(S, St.SidewalkWestOuter); };
+		const auto OuterE = [&](double S) { return Layout.SidewalkZ(S, St.SidewalkEastOuter); };
+		Wall(SkirtSec, St.SidewalkWestOuter, [&](double S) { return OuterW(S) - Skirt; }, OuterW, -Right);
+		Wall(SkirtSec, St.SidewalkEastOuter, [&](double S) { return OuterE(S) - Skirt; }, OuterE, Right);
+	}
+	// End skirts: close both ends of the street body down to Skirt below the lowest point.
+	for (const double S : { St.SStart, St.SEnd })
+	{
+		const FVector Facing = S == St.SStart ? -Along : Along;
+		const FStrayProfileSample Pr = Prof(S);
+		const double Bottom = FMath::Min(Pr.RoadEdgeWest, Pr.RoadEdgeEast) - Skirt;
+		const double Vs[] = { St.SidewalkWestOuter, FW, -K, -M, M, K, FE, St.SidewalkEastOuter };
+		// Highest surface touching v (covers the vertical kerb / median faces at the cut).
+		const auto TopZMax = [&](double V)
+		{
+			double Z = Layout.RoadZ(S, V);
+			if (FMath::Abs(V) >= K - 1e-6) { Z = FMath::Max(Z, Layout.SidewalkZ(S, V) + 0.005); }
+			if (FMath::Abs(V) <= M + 1e-6) { Z = FMath::Max(Z, MedTop(S)); }
+			return Z;
+		};
+		for (int32 J = 0; J + 1 < UE_ARRAY_COUNT(Vs); ++J)
+		{
+			const double Va = Vs[J], Vb = Vs[J + 1];
+			B[SkirtSec].Quad(P(S, Va, Bottom), P(S, Vb, Bottom), P(S, Vb, TopZMax(Vb)), P(S, Va, TopZMax(Va)), Facing);
+		}
+	}
+
+	const FLinearColor Colors[Num] = { Asphalt, MedianStone, Paving, KerbStone, GroundDark };
+	const float Rough[Num] = { 0.9f, 0.85f, 0.8f, 0.7f, 0.95f };
+	const TArray<FVector2D> NoUV;
+	const TArray<FLinearColor> NoColors;
+	const TArray<FProcMeshTangent> NoTangents;
+	for (int32 Sec = 0; Sec < Num; ++Sec)
+	{
+		StreetSurface->CreateMeshSection_LinearColor(Sec, B[Sec].Pos, B[Sec].Idx, B[Sec].Nrm, NoUV, NoColors, NoTangents, true);
+		StreetSurface->SetMaterial(Sec, Surface(Colors[Sec], Rough[Sec]));
+		Stats.StreetTriangles += B[Sec].Idx.Num() / 3 / (bDoubleSidedProceduralMeshes ? 2 : 1);
+	}
+}
+
+void AStrayStreetBuilder::BuildMarkings()
+{
+	// Solid edge lines (3 m pieces following the profile) and dashed lane dividers (3 m / 6 m gap).
+	const FStrayStreetDef& St = Layout.Street;
+	UMaterialInterface* Paint = Surface(LanePaint, 0.6f);
+	UInstancedStaticMeshComponent* Lines = AddInstanced(CubeMesh, Paint, false);
+	const FRotator Rot(0.0, St.AxisYaw(), 0.0);
+	auto Piece = [&](double SMid, double V, double Len)
+	{
+		Lines->AddInstance(FTransform(Rot, Ue(St.ToEN(SMid, V), Layout.RoadZ(SMid, V) + 0.006), FVector(Len, 0.12, 0.02)));
+	};
+	for (double S = St.SStart; S + 3.0 <= St.SEnd + 1e-3; S += 3.0)
+	{
+		Piece(S + 1.5, -St.CarriagewayHalfWidth, 3.02);
+		Piece(S + 1.5, St.CarriagewayHalfWidth, 3.02);
+	}
+	for (double S = St.SStart + 1.5; S + 3.0 < St.SEnd; S += 9.0)
+	{
+		Piece(S + 1.5, -St.LaneDividerOffset, 3.0);
+		Piece(S + 1.5, St.LaneDividerOffset, 3.0);
 	}
 }
 
@@ -350,7 +533,7 @@ void AStrayStreetBuilder::BuildLod2()
 {
 	const FString Path = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() / Layout.Lod2MeshRelPath);
 	FString Error;
-	const TSharedPtr<FStrayObjMesh> Mesh = LoadObjCached(Path, bDoubleSidedBuildings, Error);
+	const TSharedPtr<FStrayObjMesh> Mesh = LoadObjCached(Path, bDoubleSidedProceduralMeshes, Error);
 	if (!Mesh.IsValid())
 	{
 		Stats.Error = Error;
@@ -370,7 +553,7 @@ void AStrayStreetBuilder::BuildLod2()
 	}
 	Stats.bLod2Loaded = true;
 	Stats.Lod2Buildings = Mesh->ObjectCount;
-	Stats.Lod2Triangles = Mesh->NumTriangles() / (bDoubleSidedBuildings ? 2 : 1);
+	Stats.Lod2Triangles = Mesh->NumTriangles() / (bDoubleSidedProceduralMeshes ? 2 : 1);
 }
 
 void AStrayStreetBuilder::BuildLamps()
@@ -383,10 +566,11 @@ void AStrayStreetBuilder::BuildLamps()
 	{
 		const FVector2D A = L.ArmDirEN.GetSafeNormal();
 		const double ArmYaw = StrayGeo::EnDirToYaw(A);
-		AddMesh(CylinderMesh, Ue(L.PosEN, H * 0.5), FRotator::ZeroRotator, FVector(0.16, 0.16, H), PoleMat, true);
-		AddBox(Ue(L.PosEN + A * 0.8, H - 0.10), FVector(1.6, 0.08, 0.08), ArmYaw, PoleMat, false);
-		AddBox(Ue(L.PosEN + A * 1.5, H - 0.20), FVector(0.70, 0.30, 0.14), ArmYaw, PoleMat, false);
-		AddBox(Ue(L.PosEN + A * 1.5, H - 0.275), FVector(0.60, 0.22, 0.02), ArmYaw, LensMat, false);
+		const double G = GroundM(L.PosEN);
+		AddMesh(CylinderMesh, Ue(L.PosEN, G + H * 0.5), FRotator::ZeroRotator, FVector(0.16, 0.16, H), PoleMat, true);
+		AddBox(Ue(L.PosEN + A * 0.8, G + H - 0.10), FVector(1.6, 0.08, 0.08), ArmYaw, PoleMat, false);
+		AddBox(Ue(L.PosEN + A * 1.5, G + H - 0.20), FVector(0.70, 0.30, 0.14), ArmYaw, PoleMat, false);
+		AddBox(Ue(L.PosEN + A * 1.5, G + H - 0.275), FVector(0.60, 0.22, 0.02), ArmYaw, LensMat, false);
 
 		USpotLightComponent* Spot = NewGenerated<USpotLightComponent>(TEXT("StreetLamp"));
 		Spot->SetMobility(EComponentMobility::Movable);
@@ -399,7 +583,7 @@ void AStrayStreetBuilder::BuildLamps()
 		Spot->InnerConeAngle = (float)(Layout.LampOuterConeDeg * 0.45);
 		Spot->SourceRadius = 15.0f;
 		Spot->CastShadows = Layout.bLampShadows;
-		Spot->SetRelativeTransform(FTransform(FRotator(-90.0, 0.0, 0.0), Ue(L.PosEN + A * 1.5, H - 0.30)));
+		Spot->SetRelativeTransform(FTransform(FRotator(-90.0, 0.0, 0.0), Ue(L.PosEN + A * 1.5, G + H - 0.30)));
 		Spot->RegisterComponent();
 		CountLight(Layout.bLampShadows);
 	}
@@ -407,11 +591,10 @@ void AStrayStreetBuilder::BuildLamps()
 
 void AStrayStreetBuilder::BuildShopfronts()
 {
-	const double Kerb = Layout.Street.KerbHeight;
 	for (const FStrayFacadeFeature& F : Layout.Shopfronts)
 	{
 		const double Yaw = StrayGeo::EnDirToYaw(F.NormalEN);
-		const double Zc = Kerb + 0.30 + F.Height * 0.5;
+		const double Zc = GroundM(F.PosEN + F.NormalEN * 1.0) + 0.30 + F.Height * 0.5;
 		AddBox(Ue(F.PosEN, Zc), FVector(0.16, F.Width + 0.35, F.Height + 0.35), Yaw, Surface(Metal, 0.4f), false);
 		AddBox(Ue(F.PosEN + F.NormalEN * 0.06, Zc), FVector(0.04, F.Width, F.Height), Yaw,
 			Emissive(F.Color, (float)Layout.ShopfrontEmissiveNits), false);
@@ -437,7 +620,7 @@ void AStrayStreetBuilder::BuildWindows()
 	UInstancedStaticMeshComponent* Cool = AddInstanced(CubeMesh, Emissive(FLinearColor(0.70f, 0.82f, 1.0f), (float)Layout.WindowEmissiveNits), false);
 	for (const FStrayFacadeFeature& W : Layout.Windows)
 	{
-		const FTransform T(FRotator(0.0, StrayGeo::EnDirToYaw(W.NormalEN), 0.0), Ue(W.PosEN + W.NormalEN * 0.03, W.Z),
+		const FTransform T(FRotator(0.0, StrayGeo::EnDirToYaw(W.NormalEN), 0.0), Ue(W.PosEN + W.NormalEN * 0.03, GroundM(W.PosEN + W.NormalEN * 1.0) + W.Z),
 			FVector(0.04, Layout.WindowWidth, Layout.WindowHeight));
 		(W.bWarm ? Warm : Cool)->AddInstance(T);
 	}
@@ -453,7 +636,7 @@ void AStrayStreetBuilder::BuildKiosk()
 	const FVector2D N = F.NormalEN;
 	const FVector2D T(N.Y, -N.X); // along the facade
 	const double Yaw = StrayGeo::EnDirToYaw(N);
-	const double Kerb = Layout.Street.KerbHeight;
+	const double Kerb = GroundM(F.PosEN + N * 1.0);
 	auto At = [&](double Along, double Out, double Up) { return Ue(F.PosEN + T * Along + N * Out, Kerb + Up); };
 
 	const FLinearColor Warm(1.0f, 0.84f, 0.62f);
@@ -500,7 +683,7 @@ void AStrayStreetBuilder::BuildClub()
 	const FVector2D N = F.NormalEN;
 	const FVector2D T(N.Y, -N.X);
 	const double Yaw = StrayGeo::EnDirToYaw(N);
-	const double Kerb = Layout.Street.KerbHeight;
+	const double Kerb = GroundM(F.PosEN + N * 1.0);
 	auto At = [&](double Along, double Out, double Up) { return Ue(F.PosEN + T * Along + N * Out, Kerb + Up); };
 
 	const FLinearColor Magenta(1.0f, 0.05f, 0.55f);
@@ -567,14 +750,15 @@ void AStrayStreetBuilder::BuildEndBarriers()
 		int32 I = 0;
 		for (double V = St.SidewalkWestOuter + 0.6; V < St.SidewalkEastOuter - 0.5; V += 1.25, ++I)
 		{
-			(I % 2 ? White : Red)->AddInstance(FTransform(FRotator(0.0, St.AxisYaw(), 0.0), Ue(St.ToEN(S, V), 0.55), FVector(0.3, 1.2, 1.1)));
+			const FVector2D BP = St.ToEN(S, V);
+			(I % 2 ? White : Red)->AddInstance(FTransform(FRotator(0.0, St.AxisYaw(), 0.0), Ue(BP, GroundM(BP) + 0.55), FVector(0.3, 1.2, 1.1)));
 		}
 		// Invisible wall: the prototype ends here (the city beyond is not built yet).
 		UBoxComponent* Wall = NewGenerated<UBoxComponent>(TEXT("EndWall"));
 		Wall->SetBoxExtent(FVector(25.0, (St.SidewalkEastOuter - St.SidewalkWestOuter) * 50.0 + 200.0, 600.0));
 		Wall->SetCollisionProfileName(UCollisionProfile::BlockAll_ProfileName);
 		Wall->SetRelativeTransform(FTransform(FRotator(0.0, St.AxisYaw(), 0.0),
-			Ue(St.ToEN(S, (St.SidewalkWestOuter + St.SidewalkEastOuter) * 0.5), 5.0)));
+			Ue(St.ToEN(S, (St.SidewalkWestOuter + St.SidewalkEastOuter) * 0.5), Layout.ProfileAt(S).RoadCentre + 5.0)));
 		Wall->RegisterComponent();
 	}
 }

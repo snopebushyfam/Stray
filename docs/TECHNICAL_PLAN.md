@@ -15,7 +15,8 @@
 | Altes Unreal-Projekt (UE 5.8.2) | **Nicht vorhanden.** Kein `.uproject`, `.umap`, `.uasset` im Repo, in `game-studio-template`, `video-skills` oder im Upload-ZIP. Commits `6fd0a5c` / `e5f0b56` und `AStrayStreetBlockout` existieren in keinem erreichbaren Repository. |
 | Git-LFS | Vorher keine LFS-Dateien. LFS 3.4.1 installiert; `.gitattributes` jetzt mit LFS-Regeln für `uasset/umap/obj/fbx/blend/glb/gml/png/...`. |
 | Eigene Köln-3D-Karte | **Nicht auffindbar** (weder Repo noch ZIP). Nicht verwendet, nicht behauptet. |
-| Amtliche Daten | **Erreichbar und verwendet:** Geobasis NRW LoD2 `LoD2_32_355_5645_1_NW.gml` (69,3 MB, Last-Modified 2026-05-26). OSM-API 0.6 erreichbar (Overpass nicht). |
+| Amtliche Daten | **Erreichbar und verwendet:** Geobasis NRW LoD2 `LoD2_32_355_5645_1_NW.gml` (69,3 MB, Last-Modified 2026-05-26) und DGM1 `dgm1_32_355_5645_1_nw_2022.tif` (1 m Gelände). OSM-API 0.6 erreichbar (Overpass nicht). |
+| 3dcityloader-Export (vom Inhaber nachgereicht) | Echt, exakt georeferenziert (siehe `assets/geodata/3dcityloader_friesenplatz_nord/README.md`), liegt aber 90–290 m **nördlich** von P001 — gesichert, noch nicht verwendet. |
 | Unreal ausführbar? | **Nein.** Kein `UnrealEditor`, keine Engine-Installation, keine GPU. Blender ebenfalls nicht installiert. |
 | Ausführbar war | Python 3 (+ numpy, pyproj, mapbox-earcut, matplotlib), git, git-lfs, clang (ohne UE-Header). |
 
@@ -68,14 +69,16 @@ dem 15-cm-Gehweg). Für spätere Erweiterungen: UE-Georeferencing-Plugin mit die
 | Element | Quelle | Umsetzung |
 |---|---|---|
 | 155 Gebäude, ~6.000 Dreiecke | **gemessen** (LoD2) | ProceduralMesh, Kollision, Wand/Dach/Boden-Material |
+| Gelände 200 × 270 m, 2-m-Raster (27.000 Dreiecke) | **gemessen** (DGM1) | ProceduralMesh mit Kollision; im Straßenkorridor 25 cm unter die Straße abgesenkt |
+| Längsprofil (Gefälle ~0,5 m nach Norden), Bordsteinhöhen 10–21 cm, Gehweg-Quergefälle | **gemessen** (DGM1), alle 3 m, 15 m geglättet | Straßenoberfläche als ProceduralMesh: Fahrbahn, Mittelstreifen, Bordsteine, Gehwege, Schürzen |
 | Straßenachse, 2×2 Spuren | **gemessen** (OSM `highway=primary` „Hohenzollernring“) | Fahrbahn, Mittelstreifen, Markierungen |
 | Fassadenfluchten | **gemessen** (LoD2, Strahltest alle 3 m) | West −16,7 m, Ost +19,2 m (Median) |
-| Spurbreiten, Parkstreifen, Bordstein | **angenommen** | 3,4 m / 2,0 m / 15 cm |
+| Spurbreiten, Parkstreifen | **angenommen** | 3,4 m / 2,0 m; Bordsteinhöhe auf 10–25 cm begrenzt |
 | 12 Straßenlampen (8 m, 1.800 cd, 3.400 K, Schatten) | **angenommen** (OSM kartiert kaum Lampen) | SpotLight, beidseitig versetzt, 25 m |
 | 29 Schaufenster, 142 erleuchtete Fenster | **prozedural**, deterministisch (Seed 1408) | RectLight + Emissive-Panel / ISM |
 | KIOSK (Ostseite, s = 48 m) | Fassade real; Name **fiktiv** | Lichtkasten, Schaufenster, Tür, Markise, Kühlschrank, 2 Lichter |
 | NACHTFLUG (Westseite, s = 64 m) | Fassade real; Club **fiktiv** | Portal, Lichtleisten, Vordach, Schriftzug, Absperrkordel, 2 Lichter |
-| Spawn | Westgehweg, s = 22 m, Blick Richtung Friesenplatz | Kapselunterkante 5 cm über Gehweg; Bodenprüfung + Recovery |
+| Spawn | Westgehweg, s = 22 m, Blick Richtung Friesenplatz | Kapselunterkante 5 cm über der realen Gehweghöhe; Bodenprüfung + Recovery |
 | Enden | Baken + unsichtbare Kollisionswand bei s = −45 / +105 m | Spieler bleibt im gebauten Bereich |
 
 ## 5. Beleuchtung (Ursache des früheren Problems adressiert)
@@ -131,8 +134,10 @@ Danach **manuell** im PIE (Play in Editor) prüfen und die Screenshots nach
   Substrate automatisch konvertiert.
 * TextRender-Schriftzüge nutzen das Engine-Standardmaterial; deshalb sitzen sie vor
   leuchtenden Lichtkästen (lesbar, egal ob das Textmaterial beleuchtet ist).
-* Gebäude doppelseitig (`bDoubleSidedBuildings=True`) als Sicherheitsnetz, bis die
-  Wicklung im Editor bestätigt ist; danach in `DefaultGame.ini` abschalten (halbiert Dreiecke).
+* Prozedurale Netze doppelseitig (`bDoubleSidedProceduralMeshes=True`) als Sicherheitsnetz, bis
+  die Wicklung im Editor bestätigt ist; danach in `DefaultGame.ini` abschalten (halbiert Dreiecke).
+* Straßenoberfläche, Gelände und Gebäude sind ProceduralMesh: keine Distance Fields → kein
+  Lumen-Software-GI-Beitrag, keine Nanite. Für die Produktion in StaticMeshes konvertieren.
 * Keine Figur-Animation: Platzhalterkörper, bis das Third-Person-Content-Pack hinzugefügt und in
   `Config/DefaultGame.ini` eingetragen ist.
 
@@ -148,5 +153,9 @@ Danach **manuell** im PIE (Play in Editor) prüfen und die Screenshots nach
 ```bash
 pip install numpy pyproj mapbox-earcut matplotlib
 python3 tools/geodata/build_p001.py            # lädt Kachel + OSM nach tools/geodata/cache/ (gitignored)
-python3 -m unittest discover -s tools/geodata/tests -v
+python3 -m unittest discover -s tools/geodata/tests -v   # 12 Tests: Konvertierung + P001-Datenkonsistenz
 ```
+
+Die Datenkonsistenz-Tests (`test_p001_data.py`) prüfen u. a., dass kein Gebäudesockel über dem
+Gehweg schwebt. Dieser Test schlug zuerst fehl (Spalt bis 12 cm, Gehweg ohne Quergefälle) und ist
+seit der Quergefälle-Modellierung grün.

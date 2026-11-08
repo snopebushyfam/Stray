@@ -65,9 +65,44 @@ bool FStraySpawnTest::RunTest(const FString& Parameters)
 	}
 	const double HalfHeight = 90.0;
 	const FTransform T = L.ComputeSpawnTransform(HalfHeight, 5.0);
-	// Capsule bottom must be exactly 5 cm above the sidewalk top (kerb height).
+	// Capsule bottom must be exactly 5 cm above the (DGM1-derived) sidewalk surface at the spawn.
 	const double Bottom = T.GetLocation().Z - HalfHeight;
-	TestTrue(TEXT("capsule bottom above sidewalk"), FMath::IsNearlyEqual(Bottom, L.Street.KerbHeight * 100.0 + 5.0, 0.01));
+	const double Sidewalk = L.GroundZAt(L.SpawnEN) * 100.0;
+	TestTrue(TEXT("capsule bottom 5 cm above sidewalk"), FMath::IsNearlyEqual(Bottom, Sidewalk + 5.0, 0.01));
+	// And the sidewalk is above the carriageway next to it (kerb), never below.
+	const FVector2D SV = L.ToStreetFrame(L.SpawnEN);
+	TestTrue(TEXT("sidewalk above road"), Sidewalk > L.RoadZ(SV.X, -L.Street.KerbHalfWidth) * 100.0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FStrayProfileTerrainTest, "Stray.P001.ProfileFollowsTerrain", STRAY_TEST_FLAGS)
+bool FStrayProfileTerrainTest::RunTest(const FString& Parameters)
+{
+	// Arrange
+	FStrayP001Layout L;
+	FString Error;
+	if (!TestTrue(TEXT("layout loads"), FStrayP001Layout::LoadFromFile(FStrayP001Layout::DefaultLayoutPath(), L, Error)))
+	{
+		return false;
+	}
+	// Act
+	const FStrayProfileSample South = L.ProfileAt(L.Street.SStart);
+	const FStrayProfileSample North = L.ProfileAt(L.Street.SEnd);
+	// Assert: profile covers the segment; the real Ring falls towards Friesenplatz (DGM1: ~0.5 m).
+	TestTrue(TEXT("profile has rows"), L.Profile.Num() >= 40);
+	TestTrue(TEXT("road falls to the north by 0.2..2 m"), South.RoadCentre - North.RoadCentre > 0.2 && South.RoadCentre - North.RoadCentre < 2.0);
+	for (const FStrayProfileSample& P : L.Profile)
+	{
+		const double KerbW = P.SidewalkWest - P.RoadEdgeWest;
+		const double KerbE = P.SidewalkEast - P.RoadEdgeEast;
+		TestTrue(FString::Printf(TEXT("kerbs 8..30 cm at s=%.1f"), P.S), KerbW >= 0.08 && KerbW <= 0.30 && KerbE >= 0.08 && KerbE <= 0.30);
+	}
+	// Interpolation is continuous: halfway between two rows lies between their values.
+	const FStrayProfileSample& A = L.Profile[10];
+	const FStrayProfileSample& B = L.Profile[11];
+	const double Mid = L.ProfileAt((A.S + B.S) * 0.5).RoadCentre;
+	TestTrue(TEXT("interpolated centre between neighbours"), Mid >= FMath::Min(A.RoadCentre, B.RoadCentre) - 1e-9 && Mid <= FMath::Max(A.RoadCentre, B.RoadCentre) + 1e-9);
+	TestFalse(TEXT("terrain mesh referenced"), L.TerrainMeshRelPath.IsEmpty());
 	return true;
 }
 

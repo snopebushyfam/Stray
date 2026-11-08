@@ -78,6 +78,19 @@ struct STRAY_API FStrayLampDef
 	FVector2D ArmDirEN = FVector2D(1, 0);
 };
 
+/** One row of the DGM1-derived street profile. Heights in metres relative to the local origin. */
+struct STRAY_API FStrayProfileSample
+{
+	double S = 0.0;
+	double RoadCentre = 0.0;
+	double RoadEdgeWest = 0.0;
+	double RoadEdgeEast = 0.0;
+	double SidewalkWest = 0.15;       // at the kerb
+	double SidewalkEast = 0.15;
+	double FacadeWest = 0.15;         // at the facade line (cross-fall towards the kerb)
+	double FacadeEast = 0.15;
+};
+
 struct STRAY_API FStrayViewpoint
 {
 	FString Name;
@@ -101,6 +114,10 @@ struct STRAY_API FStrayLightingPreset
 struct STRAY_API FStrayP001Layout
 {
 	FString Lod2MeshRelPath;          // relative to the project Content dir
+	FString TerrainMeshRelPath;       // DGM1 terrain grid, same local frame (optional)
+	TArray<FStrayProfileSample> Profile; // sorted by S; empty = flat street (kerb height)
+	double ProfileFacadeVWest = -16.5;   // v of the facade lines the cross-fall runs to
+	double ProfileFacadeVEast = 19.0;
 	FVector UtmOrigin = FVector::ZeroVector;
 	FStrayStreetDef Street;
 	FVector2D GroundMinEN = FVector2D::ZeroVector;
@@ -151,4 +168,27 @@ struct STRAY_API FStrayP001Layout
 
 	/** True when a local EN point lies on a sidewalk of the street segment. */
 	bool IsOnSidewalk(const FVector2D& PosEN) const;
+
+	/** Street-frame coordinates (s, v) of a local EN point. */
+	FVector2D ToStreetFrame(const FVector2D& PosEN) const;
+
+	/** Profile row at S (linear interpolation, clamped to the ends). Flat default if no profile. */
+	FStrayProfileSample ProfileAt(double S) const;
+
+	/** Carriageway surface height (m) at street coordinates; linear from centre to the gutter. */
+	double RoadZ(double S, double V) const;
+
+	/**
+	 * Walkable surface height (m) at a local EN point: sidewalk top beyond the kerb lines,
+	 * the median top inside the median, otherwise the carriageway.
+	 */
+	double GroundZAt(const FVector2D& PosEN) const;
+
+	/** Sidewalk height (m) at street coordinates beyond the kerb: kerb value -> facade value. */
+	double SidewalkZ(double S, double V) const;
+
+	/** Height of the raised median above the road centre (m). */
+	static constexpr double MedianRise = 0.12;
+	/** Width of the kerb stone strip (m). */
+	static constexpr double KerbStoneWidth = 0.18;
 };

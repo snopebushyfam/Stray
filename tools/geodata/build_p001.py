@@ -31,10 +31,15 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent))
 import citygml_extract as cg  # noqa: E402
+from dgm import Dgm  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 CACHE = Path(__file__).parent / "cache"
 TILE = "LoD2_32_355_5645_1_NW.gml"
+DGM_TILE = "dgm1_32_355_5645_1_nw_2022.tif"
+DGM_URL = "https://www.opengeodata.nrw.de/produkte/geobasis/hm/dgm1_tiff/dgm1_tiff/"
+TERRAIN_STEP = 2.0   # metres, terrain mesh resolution
+PROFILE_STEP = 3.0   # metres, street profile sampling
 # Local origin: a point on the Hohenzollernring, ~120 m south of Friesenplatz.
 # Height = median base height of the buildings lining the segment (DHHN2016).
 ORIGIN = (355260.0, 5645100.0, 49.25)
@@ -144,6 +149,88 @@ def facade_hit(fr: Frame, buildings, s, side, vmin=9.5, vmax=40.0):
     return side * t, pt, n, b
 
 
+def street_profile(dgm: Dgm, fr: Frame, cross: dict, s0: float, s1: float, west_face: float, east_face: float,
+                   facade_bases=None):
+    """Longitudinal street profile from DGM1, local heights (relative to ORIGIN[2]).
+    Per sample: s, road centre, road edge west/east (gutter), sidewalk at the kerb west/east,
+    sidewalk at the facade line west/east (cross-fall towards the kerb).
+    facade_bases: {side: [(s, building base zmin)]} - the facade height is raised to the
+    LoD2 base of the building there, so no wall foot hangs above the pavement.
+    Smoothed over 15 m (DGM1 noise, parked cars are not in a DTM but kerbs are only
+    partly resolved at 1 m). Kerb height is clamped to a plausible 0.10-0.25 m."""
+    k = cross["kerb_half_width"]
+
+    def h(s, v):
+        e, n = fr.en(s, v)
+        return dgm.sample(ORIGIN[0] + e, ORIGIN[1] + n) - ORIGIN[2]
+
+    def med(s, va, vb):
+        return float(np.median([h(s, v) for v in np.arange(min(va, vb), max(va, vb) + 1e-6, 0.5)]))
+
+    ss = np.arange(s0 - PROFILE_STEP, s1 + PROFILE_STEP + 1e-6, PROFILE_STEP)
+    def base_at(side, s):
+        rows = [z for (sb, z) in (facade_bases or {}).get(side, []) if abs(sb - s) <= 3.0]
+        return max(rows) if rows else -1e9
+
+    raw = np.array([[med(s, -1.6, -0.9) * 0.5 + med(s, 0.9, 1.6) * 0.5,
+                     med(s, -k + 1.5, -k + 0.3), med(s, k - 1.5, k - 0.3),
+                     med(s, -k - 1.0, -k - 2.5), med(s, k + 1.0, k + 2.5),
+                     max(med(s, west_face + 0.5, west_face + 1.5), base_at(-1, s)),
+                     max(med(s, east_face - 1.5, east_face - 0.5), base_at(+1, s))] for s in ss])
+    kern = np.ones(5) / 5
+    pad = np.pad(raw, ((2, 2), (0, 0)), mode="edge")
+    sm = np.stack([np.convolve(pad[:, i], kern, mode="valid") for i in range(raw.shape[1])], axis=1)
+    # Facade heights must not be smoothed below a building base: take the max of the
+    # smoothed value and the raw (base-including) value.
+    sm[:, 5] = np.maximum(sm[:, 5], raw[:, 5])
+    sm[:, 6] = np.maximum(sm[:, 6], raw[:, 6])
+    out = []
+    for s, (c, ew, ee, ww, we, fw, fe) in zip(ss, sm):
+        ew, ee = min(ew, c), min(ee, c)                       # crown: gutters never above the centre
+        ww = ew + float(np.clip(ww - ew, 0.10, 0.25))
+        we = ee + float(np.clip(we - ee, 0.10, 0.25))
+        fw = float(np.clip(fw, ww - 0.05, ww + 0.35))         # cross-fall towards the kerb, bounded
+        fe = float(np.clip(fe, we - 0.05, we + 0.35))
+        out.append([round(float(s), 2)] + [round(float(x), 3) for x in (c, ew, ee, ww, we, fw, fe)])
+    return out
+
+
+def profile_at(profile, s):
+    """Linear interpolation of a profile row at s (clamped)."""
+    p = np.asarray(profile)
+    return np.array([np.interp(s, p[:, 0], p[:, i]) for i in range(1, p.shape[1])])
+
+
+def write_terrain(dgm: Dgm, fr: Frame, cross: dict, profile, s0, s1, min_en, max_en, path: Path):
+    """DGM1 grid mesh (local frame), carved 0.25 m below the street corridor so the
+    street mesh always lies on top. Triangles are CCW seen from above."""
+    xs = np.arange(min_en[0], max_en[0] + 1e-6, TERRAIN_STEP)
+    ys = np.arange(min_en[1], max_en[1] + 1e-6, TERRAIN_STEP)
+    lines = [f"# STRAY DGM1 terrain from {DGM_TILE} (dl-de/zero-2-0), {TERRAIN_STEP:g} m grid",
+             f"# Local frame like the LoD2 OBJ: origin EPSG:25832 E={ORIGIN[0]} N={ORIGIN[1]}, DHHN2016 H={ORIGIN[2]}",
+             "o Terrain", "usemtl M_Terrain"]
+    zmin, zmax, carved = 1e9, -1e9, 0
+    for y in ys:
+        for x in xs:
+            z = dgm.sample(ORIGIN[0] + x, ORIGIN[1] + y) - ORIGIN[2]
+            s, v = fr.sv((x, y))
+            if s0 - 1.0 <= s <= s1 + 1.0 and cross["sidewalk_west_outer"] - 1.0 <= v <= cross["sidewalk_east_outer"] + 1.0:
+                floor_ = float(profile_at(profile, s)[:3].min()) - 0.25
+                if z > floor_:
+                    z, carved = floor_, carved + 1
+            zmin, zmax = min(zmin, z), max(zmax, z)
+            lines.append(f"v {x:.3f} {y:.3f} {z:.3f}")
+    nx = len(xs)
+    for j in range(len(ys) - 1):
+        for i in range(nx - 1):
+            a, b, c, d = j * nx + i + 1, j * nx + i + 2, (j + 1) * nx + i + 2, (j + 1) * nx + i + 1
+            lines.append(f"f {a} {b} {c}")
+            lines.append(f"f {a} {c} {d}")
+    path.write_text("\n".join(lines) + "\n")
+    return {"vertices": nx * len(ys), "triangles": 2 * (nx - 1) * (len(ys) - 1),
+            "z_min": round(zmin, 3), "z_max": round(zmax, 3), "carved_vertices": carved}
+
+
 def r2(x):
     return [round(float(x[0]), 3), round(float(x[1]), 3)]
 
@@ -156,6 +243,7 @@ def main():
     a = ap.parse_args()
 
     fetch(cg.BASE_URL + TILE, a.gml)
+    fetch(DGM_URL + DGM_TILE, CACHE / DGM_TILE)
     fetch("https://api.openstreetmap.org/api/0.6/map?bbox=%s,%s,%s,%s" % OSM_BBOX, a.osm)
 
     data_dir = ROOT / "Content/Stray/Data"
@@ -199,6 +287,18 @@ def main():
         "sidewalk_east_outer": round(float(np.percentile(fe, 95)) + 2.0, 2),
     }
     kerb = cross["kerb_half_width"]
+
+    # --- real terrain (DGM1): street profile + terrain mesh ------------------------
+    dgm = Dgm.from_geotiff(CACHE / DGM_TILE)
+    bases = {sd: [(s_, h_[3]["zmin_local"]) for s_, h_ in facade[sd]
+                  if abs(h_[0]) <= abs(cross["sidewalk_west_outer" if sd < 0 else "sidewalk_east_outer"])]
+             for sd in (-1, +1)}
+    profile = street_profile(dgm, fr, cross, s0, s1, west_face, east_face, bases)
+    gmin, gmax = [x0 - 10, y0 - 10], [x1 + 10, y1 + 10]
+    terrain = write_terrain(dgm, fr, cross, profile, s0, s1, gmin, gmax, data_dir / "DGM1_P001_Terrain.obj")
+    pr = np.array(profile)
+    print(f"profile: centre {pr[0,1]:+.2f} -> {pr[-1,1]:+.2f} m, kerbs {np.r_[pr[:,4]-pr[:,2], pr[:,5]-pr[:,3]].min():.2f}"
+          f"..{np.r_[pr[:,4]-pr[:,2], pr[:,5]-pr[:,3]].max():.2f} m; terrain {terrain}")
 
     # --- street lamps: both kerbs, staggered ---------------------------------------
     lamps = []
@@ -245,7 +345,7 @@ def main():
         return {"name": name, "en": r2(p), "h": h, "look_en": r2(q), "look_h": look_h}
 
     layout = {
-        "schema": "stray.p001.layout/1",
+        "schema": "stray.p001.layout/2",
         "name": "Prototype 001 - The Street (Hohenzollernring, Koeln)",
         "georef": {"crs": "EPSG:25832", "vertical": "DHHN2016",
                    "local_origin_utm": list(ORIGIN),
@@ -255,7 +355,15 @@ def main():
         "street": {"origin_en": r2(fr.o), "bearing_deg": round(fr.bearing, 3),
                    "s_start": s0, "s_end": s1, **cross,
                    "facade_west_median": round(west_face, 2), "facade_east_median": round(east_face, 2)},
-        "ground_plane": {"min_en": [x0 - 10, y0 - 10], "max_en": [x1 + 10, y1 + 10], "z": -0.03},
+        "terrain_mesh": "Stray/Data/DGM1_P001_Terrain.obj",
+        "terrain_stats": terrain,
+        "profile": {"columns": ["s", "road_centre", "road_edge_west", "road_edge_east", "sidewalk_west", "sidewalk_east",
+                                "facade_west", "facade_east"],
+                    "facade_v": [round(west_face, 2), round(east_face, 2)],
+                    "note": "heights in metres relative to local_origin_utm[2]; viewpoint/feature heights are above local ground",
+                    "samples": profile},
+        # Safety plate 1 m below the lowest terrain point (catches any hole; normally invisible).
+        "ground_plane": {"min_en": gmin, "max_en": gmax, "z": round(terrain["z_min"] - 1.0, 3)},
         "lamps": {"height": 8.0, "intensity_cd": 1800.0, "temperature_k": 3400.0,
                   "attenuation_radius": 32.0, "outer_cone_deg": 62.0, "cast_shadows": True,
                   "positions": lamps},
@@ -282,15 +390,18 @@ def main():
             "measured": [
                 "building geometry, heights and facade lines: Geobasis NRW LoD2 tile " + TILE,
                 "street axis + carriageway centrelines: OpenStreetMap ways named Hohenzollernring (highway=primary)",
-                "kiosk facade: ground floor of a real LoD2 building; position chosen near an OSM shop=kiosk node"],
+                "kiosk facade: ground floor of a real LoD2 building; position chosen near an OSM shop=kiosk node",
+                "terrain + street longitudinal profile, crown and kerb heights: Geobasis NRW DGM1 tile " + DGM_TILE],
             "assumed": [
-                "lane widths (3.4 m), median (1.2 m), parking strip (2.0 m), kerb height (0.15 m)",
+                "lane widths (3.4 m), median (1.2 m), parking strip (2.0 m)",
+                "kerb height clamped to 0.10-0.25 m and profile smoothed over 15 m (DGM1 is 1 m resolution)",
+                "sidewalk cross-fall: linear from kerb to the median facade line, facade height >= LoD2 base",
                 "street lamp positions/spacing/intensity (procedural, NOT from OSM - only few lamps are mapped)",
                 "shopfront/window placement and colours (procedural, deterministic seed)",
                 "NACHTFLUG and KIOSK signage are fictional; no real business is represented",
-                "street surface is flat at local Z=0; real terrain falls ~1 m towards Friesenplatz"],
+                ],
             "osm_carriageway_offsets_m": [[w, l, round(o, 2)] for w, l, o in carriageways],
-            "licences": {"lod2": cg.LICENCE,
+            "licences": {"lod2": cg.LICENCE, "dgm1": cg.LICENCE,
                          "osm": "ODbL 1.0 - (c) OpenStreetMap contributors (attribution required on release)"}},
     }
     (data_dir / "P001_Layout.json").write_text(json.dumps(layout, indent=1))

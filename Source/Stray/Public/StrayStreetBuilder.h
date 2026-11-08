@@ -30,6 +30,9 @@ struct STRAY_API FStrayBuildStats
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) bool bLod2Loaded = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) int32 Lod2Buildings = 0;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) int32 Lod2Triangles = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) bool bTerrainLoaded = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) int32 TerrainTriangles = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) int32 StreetTriangles = 0;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) int32 Lights = 0;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) int32 ShadowCastingLights = 0;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) int32 Components = 0;
@@ -83,9 +86,13 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Stray|Street")
 	FSoftObjectPath EmissiveMaterialPath = FSoftObjectPath(TEXT("/Game/Stray/Materials/M_Stray_Emissive.M_Stray_Emissive"));
 
-	/** Adds back faces to the LoD2 mesh. Safety net while the winding is not verified in the editor. */
+	/**
+	 * Adds back faces to the procedural meshes (buildings, terrain, street surface).
+	 * Safety net while the triangle winding has not been confirmed in the editor; switch
+	 * off in Config/DefaultGame.ini once confirmed (halves the triangle count).
+	 */
 	UPROPERTY(Config, EditAnywhere, Category = "Stray|Street")
-	bool bDoubleSidedBuildings = true;
+	bool bDoubleSidedProceduralMeshes = true;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stray|Street")
 	FStrayBuildStats Stats;
@@ -101,10 +108,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Stray|Lighting") TObjectPtr<UExponentialHeightFogComponent> HeightFog;
 	UPROPERTY(VisibleAnywhere, Category = "Stray|Lighting") TObjectPtr<UPostProcessComponent> PostProcess;
 	UPROPERTY(VisibleAnywhere, Category = "Stray|Street") TObjectPtr<UProceduralMeshComponent> Buildings;
+	UPROPERTY(VisibleAnywhere, Category = "Stray|Street") TObjectPtr<UProceduralMeshComponent> Terrain;
+	UPROPERTY(VisibleAnywhere, Category = "Stray|Street") TObjectPtr<UProceduralMeshComponent> StreetSurface;
 
 private:
 	void ClearGenerated();
 	void BuildGround();
+	void BuildTerrain();
+	void BuildStreetSurface();
+	void BuildMarkings();
 	void BuildLod2();
 	void BuildLamps();
 	void BuildShopfronts();
@@ -122,8 +134,8 @@ private:
 	/** Box with size in metres; Location = box centre in cm. */
 	UStaticMeshComponent* AddBox(const FVector& CenterCm, const FVector& SizeM, double Yaw, UMaterialInterface* Material, bool bCollision);
 	/** Box spanning street-frame ranges (metres), between ZBottom and ZTop (metres). */
-	UStaticMeshComponent* AddStreetSlab(double S0, double S1, double V0, double V1, double ZBottom, double ZTop,
-		UMaterialInterface* Material, bool bCollision);
+	/** Walkable ground height (metres, actor-relative) at a local EN point: profile-aware. */
+	double GroundM(const FVector2D& PosEN) const { return Layout.GroundZAt(PosEN); }
 	UInstancedStaticMeshComponent* AddInstanced(UStaticMesh* Mesh, UMaterialInterface* Material, bool bCollision);
 	void AddText(const FString& Text, const FVector& LocationCm, double Yaw, float WorldSizeCm, const FColor& Color);
 	void CountLight(bool bShadows);

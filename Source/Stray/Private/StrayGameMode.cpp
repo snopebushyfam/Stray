@@ -93,8 +93,12 @@ void AStrayGameMode::NextAutoShot()
 	else if (ShotIndex < Views.Num())
 	{
 		const FStrayViewpoint& V = Views[ShotIndex];
-		const FVector Eye = StrayGeo::EnuToUnreal(V.EyeEN.X, V.EyeEN.Y, V.EyeEN.Z) + Street->GetActorLocation();
-		const FVector Target = StrayGeo::EnuToUnreal(V.TargetEN.X, V.TargetEN.Y, V.TargetEN.Z) + Street->GetActorLocation();
+		// Viewpoint heights are above the local ground (street profile from DGM1).
+		const FStrayP001Layout& L = Street->GetLayout();
+		const double EyeGround = L.GroundZAt(FVector2D(V.EyeEN.X, V.EyeEN.Y));
+		const double TargetGround = L.GroundZAt(FVector2D(V.TargetEN.X, V.TargetEN.Y));
+		const FVector Eye = StrayGeo::EnuToUnreal(V.EyeEN.X, V.EyeEN.Y, EyeGround + V.EyeEN.Z) + Street->GetActorLocation();
+		const FVector Target = StrayGeo::EnuToUnreal(V.TargetEN.X, V.TargetEN.Y, TargetGround + V.TargetEN.Z) + Street->GetActorLocation();
 		if (!ShotCamera)
 		{
 			ShotCamera = GetWorld()->SpawnActor<ACameraActor>(Eye, (Target - Eye).Rotation());

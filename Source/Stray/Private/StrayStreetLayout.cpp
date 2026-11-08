@@ -113,7 +113,7 @@ bool FStrayP001Layout::FromJsonString(const FString& Json, FStrayP001Layout& Out
 	}
 
 	FString Schema;
-	if (!Root->TryGetStringField(TEXT("schema"), Schema) || Schema != TEXT("stray.p001.layout/1"))
+	if (!Root->TryGetStringField(TEXT("schema"), Schema) || Schema != TEXT("stray.p001.layout/2"))
 	{
 		OutError = FString::Printf(TEXT("unexpected schema '%s'"), *Schema);
 		return false;
@@ -122,6 +122,39 @@ bool FStrayP001Layout::FromJsonString(const FString& Json, FStrayP001Layout& Out
 	{
 		OutError = TEXT("missing lod2_mesh");
 		return false;
+	}
+
+	Root->TryGetStringField(TEXT("terrain_mesh"), Out.TerrainMeshRelPath);
+	if (const TSharedPtr<FJsonObject> Prof = Field(Root, TEXT("profile")))
+	{
+		const TArray<TSharedPtr<FJsonValue>>* Rows = nullptr;
+		if (Prof->TryGetArrayField(TEXT("samples"), Rows))
+		{
+			for (const TSharedPtr<FJsonValue>& R : *Rows)
+			{
+				const TArray<TSharedPtr<FJsonValue>>& C = R->AsArray();
+				if (C.Num() >= 6)
+				{
+					FStrayProfileSample P;
+					P.S = C[0]->AsNumber();
+					P.RoadCentre = C[1]->AsNumber();
+					P.RoadEdgeWest = C[2]->AsNumber();
+					P.RoadEdgeEast = C[3]->AsNumber();
+					P.SidewalkWest = C[4]->AsNumber();
+					P.SidewalkEast = C[5]->AsNumber();
+					P.FacadeWest = C.Num() >= 8 ? C[6]->AsNumber() : P.SidewalkWest;
+					P.FacadeEast = C.Num() >= 8 ? C[7]->AsNumber() : P.SidewalkEast;
+					Out.Profile.Add(P);
+				}
+			}
+			Out.Profile.Sort([](const FStrayProfileSample& A, const FStrayProfileSample& B) { return A.S < B.S; });
+		}
+		const TArray<TSharedPtr<FJsonValue>>* FacadeV = nullptr;
+		if (Prof->TryGetArrayField(TEXT("facade_v"), FacadeV) && FacadeV->Num() == 2)
+		{
+			Out.ProfileFacadeVWest = (*FacadeV)[0]->AsNumber();
+			Out.ProfileFacadeVEast = (*FacadeV)[1]->AsNumber();
+		}
 	}
 
 	const TSharedPtr<FJsonObject> Geo = Field(Root, TEXT("georef"));
@@ -267,17 +300,95 @@ FString FStrayP001Layout::DefaultLayoutPath()
 
 FTransform FStrayP001Layout::ComputeSpawnTransform(double CapsuleHalfHeightCm, double SpawnClearanceCm) const
 {
-	const double GroundTopCm = (IsOnSidewalk(SpawnEN) ? Street.KerbHeight : 0.0) * 100.0;
+	const double GroundTopCm = GroundZAt(SpawnEN) * 100.0;
 	FVector Loc = StrayGeo::EnuToUnreal(SpawnEN.X, SpawnEN.Y, 0.0);
 	Loc.Z = GroundTopCm + CapsuleHalfHeightCm + SpawnClearanceCm;
 	return FTransform(FRotator(0.0, StrayGeo::EnDirToYaw(SpawnDirEN), 0.0), Loc);
 }
 
-bool FStrayP001Layout::IsOnSidewalk(const FVector2D& PosEN) const
+FVector2D FStrayP001Layout::ToStreetFrame(const FVector2D& PosEN) const
 {
 	const FVector2D D = PosEN - Street.OriginEN;
-	const double S = FVector2D::DotProduct(D, Street.AxisEN());
-	const double V = FVector2D::DotProduct(D, Street.RightEN());
+	return FVector2D(FVector2D::DotProduct(D, Street.AxisEN()), FVector2D::DotProduct(D, Street.RightEN()));
+}
+
+FStrayProfileSample FStrayP001Layout::ProfileAt(double S) const
+{
+	if (Profile.Num() == 0)
+	{
+		FStrayProfileSample Flat;
+		Flat.S = S;
+		Flat.SidewalkWest = Flat.SidewalkEast = Flat.FacadeWest = Flat.FacadeEast = Street.KerbHeight;
+		return Flat;
+	}
+	if (S <= Profile[0].S)
+	{
+		return Profile[0];
+	}
+	if (S >= Profile.Last().S)
+	{
+		return Profile.Last();
+	}
+	int32 I = 1;
+	while (Profile[I].S < S)
+	{
+		++I;
+	}
+	const FStrayProfileSample& A = Profile[I - 1];
+	const FStrayProfileSample& B = Profile[I];
+	const double T = (S - A.S) / FMath::Max(B.S - A.S, 1e-6);
+	FStrayProfileSample R;
+	R.S = S;
+	R.RoadCentre = FMath::Lerp(A.RoadCentre, B.RoadCentre, T);
+	R.RoadEdgeWest = FMath::Lerp(A.RoadEdgeWest, B.RoadEdgeWest, T);
+	R.RoadEdgeEast = FMath::Lerp(A.RoadEdgeEast, B.RoadEdgeEast, T);
+	R.SidewalkWest = FMath::Lerp(A.SidewalkWest, B.SidewalkWest, T);
+	R.SidewalkEast = FMath::Lerp(A.SidewalkEast, B.SidewalkEast, T);
+	R.FacadeWest = FMath::Lerp(A.FacadeWest, B.FacadeWest, T);
+	R.FacadeEast = FMath::Lerp(A.FacadeEast, B.FacadeEast, T);
+	return R;
+}
+
+double FStrayP001Layout::RoadZ(double S, double V) const
+{
+	const FStrayProfileSample P = ProfileAt(S);
+	const double T = FMath::Clamp(FMath::Abs(V) / FMath::Max(Street.KerbHalfWidth, 1e-6), 0.0, 1.0);
+	return FMath::Lerp(P.RoadCentre, V < 0.0 ? P.RoadEdgeWest : P.RoadEdgeEast, T);
+}
+
+double FStrayP001Layout::SidewalkZ(double S, double V) const
+{
+	const FStrayProfileSample P = ProfileAt(S);
+	const double Kerb = Street.KerbHalfWidth + KerbStoneWidth;
+	if (V < 0.0)
+	{
+		const double T = FMath::Clamp((-V - Kerb) / FMath::Max(-ProfileFacadeVWest - Kerb, 1e-6), 0.0, 1.0);
+		return FMath::Lerp(P.SidewalkWest, P.FacadeWest, T);
+	}
+	const double T = FMath::Clamp((V - Kerb) / FMath::Max(ProfileFacadeVEast - Kerb, 1e-6), 0.0, 1.0);
+	return FMath::Lerp(P.SidewalkEast, P.FacadeEast, T);
+}
+
+double FStrayP001Layout::GroundZAt(const FVector2D& PosEN) const
+{
+	const FVector2D SV = ToStreetFrame(PosEN);
+	const FStrayProfileSample P = ProfileAt(SV.X);
+	if (FMath::Abs(SV.Y) >= Street.KerbHalfWidth)
+	{
+		return SidewalkZ(SV.X, SV.Y);
+	}
+	if (FMath::Abs(SV.Y) <= Street.MedianHalfWidth)
+	{
+		return P.RoadCentre + MedianRise;
+	}
+	return RoadZ(SV.X, SV.Y);
+}
+
+bool FStrayP001Layout::IsOnSidewalk(const FVector2D& PosEN) const
+{
+	const FVector2D SV = ToStreetFrame(PosEN);
+	const double S = SV.X;
+	const double V = SV.Y;
 	if (S < Street.SStart || S > Street.SEnd)
 	{
 		return false;
