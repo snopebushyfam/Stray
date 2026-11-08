@@ -8,6 +8,9 @@
 class_name StrayInteractions
 extends Node
 
+## Emitted when the bouncer lets the player in (main.gd turns it into a phone message).
+signal club_admitted
+
 const RADIUS := 1.9
 
 var layout: StrayStreetLayout
@@ -18,6 +21,9 @@ var door: StrayBouncerRules
 var player: StrayPlayer
 var builder: StrayStreetBuilder
 var ui: StrayUi
+## Game clock (opening hours). Without one, the club counts as open whenever it is night.
+var clock: StrayGameClock
+var phone_cfg: Dictionary = {}
 ## Seconds the player has waited at the queue end (reset when they walk away).
 var queued_seconds: float = 0.0
 var points: Dictionary = {}  # id -> Vector3 (Godot)
@@ -33,7 +39,7 @@ func setup(p_layout: StrayStreetLayout, p_econ: Dictionary, p_player: StrayPlaye
 	player = p_player
 	builder = p_builder
 	ui = p_ui
-	life = StrayLifeState.new(int(econ.get("start_cash_cents", 0)))
+	life = StrayLifeState.new(int(econ.get("start_cash_cents", 0)), int(phone_cfg.get("bank", {}).get("start_account_cents", 0)))
 	shop = StrayKioskShop.new(econ.get("kiosk", {}))
 	door = StrayBouncerRules.new(econ.get("club", {}))
 	var k := _frame(layout.kiosk)
@@ -44,6 +50,10 @@ func setup(p_layout: StrayStreetLayout, p_econ: Dictionary, p_player: StrayPlaye
 	var tail_along: float = float(npc_q.get("start_along", -1.8)) - float(npc_q.get("count", 5)) * float(npc_q.get("spacing", 0.9))
 	points["queue_end"] = _gp(c.pos + c.n * float(npc_q.get("out", 2.7)) + c.t * tail_along)
 	_spawn_bouncer(c, character_cfg)
+	var atms: Array = layout.furniture.get("atms", [])
+	for i in atms.size():
+		var a := _frame(atms[i])
+		points["atm_%d" % i] = _gp(a.pos + a.n * 0.8)
 	life.cash_changed.connect(func(_c): ui.set_status(life))
 	life.reputation_changed.connect(func(_a, _v): ui.set_status(life))
 	ui.set_status(life)
@@ -112,14 +122,16 @@ func _physics_process(delta: float) -> void:
 		return
 	door.tick(delta)
 	var pp := player.global_position
-	var night := not builder.day_mode
+	var night := club_is_open()
 	if night and _flat_dist(pp, points["queue_end"]) < float(econ.get("club", {}).get("queue_spot_radius", 1.6)):
 		queued_seconds += delta
 	elif _flat_dist(pp, points["club_door"]) > 12.0:
 		queued_seconds = 0.0
 	var best := ""
 	var best_d := RADIUS
-	for id in ["kiosk", "club_door"]:
+	for id in points:
+		if id == "queue_end":
+			continue
 		var d := _flat_dist(pp, points[id])
 		if d < best_d:
 			best = id
@@ -134,6 +146,8 @@ func _physics_process(delta: float) -> void:
 			prompt = "[E] Kiosk"
 		"club_door":
 			prompt = "[E] Mit dem Türsteher reden"
+		_ when current.begins_with("atm_"):
+			prompt = "[E] Geldautomat (%s abheben)" % StrayLifeState.euro(int(phone_cfg.get("bank", {}).get("atm_withdraw_cents", 2000)))
 	if night and queued_seconds > 0.0 and current.is_empty() and _flat_dist(pp, points["queue_end"]) < 2.0:
 		var need: float = econ.get("club", {}).get("queue_wait_seconds", 15.0)
 		prompt = "Anstehen … %d / %d s" % [mini(int(queued_seconds), int(need)), int(need)]
@@ -147,6 +161,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Triggers the nearest interaction (also called by the touch button and by tests/autoshots).
 func interact() -> void:
+	if current.begins_with("atm_"):
+		withdraw_at_atm()
+		return
 	match current:
 		"kiosk":
 			if shop_open:
@@ -156,14 +173,30 @@ func interact() -> void:
 				player.input_enabled = false
 				ui.open_shop(econ["kiosk"].get("title", "KIOSK"), econ["kiosk"].get("greeting", ""), shop.items())
 		"club_door":
-			last_door_result = door.decide(life, not builder.day_mode, queued_seconds)
+			last_door_result = door.decide(life, club_is_open(), queued_seconds)
 			ui.show_message("Türsteher", last_door_result.text)
 			print("STRAY_DIAG door reason=%s cash=%s nightlife=%d queued=%.1f" % [
 				last_door_result.reason, StrayLifeState.euro(life.cash_cents), int(life.reputation["nightlife"]), queued_seconds])
 			if last_door_result.admitted:
 				queued_seconds = 0.0
+				club_admitted.emit()
 				await get_tree().create_timer(2.5).timeout
 				ui.show_message("", String(econ.get("club", {}).get("lines", {}).get("inside", "")), 6.0)
+
+
+## True during the club's opening hours (game clock), or at night when there is no clock.
+func club_is_open() -> bool:
+	return clock.club_open() if clock else not builder.day_mode
+
+
+func withdraw_at_atm() -> bool:
+	var amount: int = int(phone_cfg.get("bank", {}).get("atm_withdraw_cents", 2000))
+	var ok := life.withdraw(amount)
+	ui.show_message(String(phone_cfg.get("bank", {}).get("atm_name", "Geldautomat")),
+		("%s ausgezahlt. Kontostand %s." % [StrayLifeState.euro(amount), StrayLifeState.euro(life.account_cents)]) if ok
+		else "Auszahlung nicht möglich. Kontostand %s." % StrayLifeState.euro(life.account_cents), 4.0)
+	print("STRAY_DIAG atm ok=%s cash=%s account=%s" % [ok, StrayLifeState.euro(life.cash_cents), StrayLifeState.euro(life.account_cents)])
+	return ok
 
 
 func buy(item_id: String) -> Dictionary:

@@ -44,7 +44,7 @@ func decide(state: StrayLifeState, is_night: bool, queued_seconds: float) -> Dic
 		result = {"admitted": false, "reason": "drunk", "text": _line("drunk")}
 	else:
 		var fee: int = int(cfg.get("entry_fee", 1500))
-		if not state.pay(fee):
+		if not state.pay(fee, "Eintritt %s" % String(cfg.get("name", "Club"))):
 			result = {"admitted": false, "reason": "broke", "text": _line("broke") % StrayLifeState.euro(fee)}
 		else:
 			state.change_reputation("nightlife", int(rep.get("admitted", 1)))

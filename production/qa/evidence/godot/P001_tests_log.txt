@@ -46,7 +46,27 @@ PASS waited in the queue (16.3 s)
 PASS admitted after queueing (welcome)
 PASS entry fee 15 € paid (18,50 €)
 PASS nightlife reputation +1
+PASS afternoon: daylight and club closed (14:00)
 PASS closed during the day
-RESULT interaction_test passed=16 failed=0
+RESULT interaction_test passed=17 failed=0
+RESULT phone_logic_test passed=19 failed=0
+PASS clock advanced ~1 game min in 6 s (1.00)
+PASS HUD shows the time (23:11)
+PASS 23:1x is night lighting
+PASS 2 start messages, unread
+PASS Tab opens the phone and pauses movement
+PASS HUD status hidden behind the open phone
+PASS reading marks messages as read
+PASS bank shows account 120 € and cash 35 €
+PASS map shows 214 real LoD2 footprints
+PASS map markers: kiosk, club, 2 ATMs
+PASS Tab closes the phone
+PASS ATM interaction point from OSM
+PASS ATM prompt
+PASS withdrew 20 € (cash 55,00 €, account 100,00 €)
+PASS ATM booking recorded
+PASS N jumps to 14:00 with daylight
+PASS back to 23:30, night, club open
+RESULT phone_test passed=17 failed=0
 python data tests: OK
 ALL_TESTS_EXIT=0

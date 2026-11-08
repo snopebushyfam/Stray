@@ -778,6 +778,18 @@ func _build_furniture() -> void:
 		doors += 1
 	counts["doors"] = doors
 
+	# ATMs (OSM): steel panel with a lit screen and a keypad.
+	for a in f.get("atms", []):
+		var p := StrayStreetLayout._v2(a["en"])
+		var n := StrayStreetLayout._v2(a["normal_en"]).normalized()
+		var bas := StrayStreetLayout.facing_basis(n)
+		var g := _g(p + n)
+		_box(Transform3D(bas, _gp(p + n * 0.1, g + 1.15)), Vector3(0.75, 1.1, 0.2), _surface(Color(0.45, 0.47, 0.5), 0.35))
+		_box(Transform3D(bas, _gp(p + n * 0.21, g + 1.35)), Vector3(0.4, 0.3, 0.02), _emissive(Color(0.35, 0.65, 1.0), 2.5))
+		_box(Transform3D(bas, _gp(p + n * 0.24, g + 1.02)), Vector3(0.3, 0.12, 0.1), _surface(Color(0.12, 0.12, 0.13), 0.5))
+		_box(Transform3D(bas, _gp(p + n * 0.2, g + 1.85)), Vector3(0.75, 0.22, 0.04), _emissive(Color(0.2, 0.45, 0.9), 1.8))
+	counts["atms"] = f.get("atms", []).size()
+
 	# Surveillance cameras (OSM).
 	for c in f.get("cameras", []):
 		var p := StrayStreetLayout._v2(c["en"])

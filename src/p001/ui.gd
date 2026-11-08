@@ -96,8 +96,12 @@ func _panel(top_left: Vector2, bottom_right: Vector2) -> PanelContainer:
 	return p
 
 
+var clock_text: String = ""
+
+
 func set_status(state: StrayLifeState) -> void:
-	status_label.text = "Bargeld %s\nRuf Nachtleben %+d" % [StrayLifeState.euro(state.cash_cents), int(state.reputation.get("nightlife", 0))]
+	status_label.text = "%sBargeld %s\nRuf Nachtleben %+d" % [("%s\n" % clock_text) if not clock_text.is_empty() else "",
+		StrayLifeState.euro(state.cash_cents), int(state.reputation.get("nightlife", 0))]
 
 
 func show_prompt(text: String) -> void:

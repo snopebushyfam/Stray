@@ -82,7 +82,9 @@ func _run() -> void:
 	check(int(ix.life.reputation["nightlife"]) == 1, "nightlife reputation +1")
 
 	# Daytime: closed.
-	main.builder.set_day_mode(true)
+	main.toggle_day_night()  # clock jumps to 14:00
+	check(main.builder.day_mode and not ix.club_is_open(), "afternoon: daylight and club closed (%s)" % main.clock.hhmm())
+	await _go(ix.points["club_door"])
 	ix.door.since_refusal = INF
 	await _press_interact()
 	check(ix.last_door_result.get("reason") == "closed", "closed during the day")

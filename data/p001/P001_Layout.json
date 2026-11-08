@@ -3371,6 +3371,32 @@
     "source": "osm"
    }
   ],
+  "atms": [
+   {
+    "en": [
+     2.133,
+     -13.913
+    ],
+    "normal_en": [
+     -0.983,
+     0.185
+    ],
+    "s": -10.36,
+    "source": "osm"
+   },
+   {
+    "en": [
+     -31.384,
+     2.165
+    ],
+    "normal_en": [
+     0.982,
+     -0.187
+    ],
+    "s": -1.02,
+    "source": "osm"
+   }
+  ],
   "parked_cars": [
    {
     "en": [
@@ -3894,7 +3920,7 @@
    "street axis + carriageway centrelines: OpenStreetMap ways named Hohenzollernring (highway=primary)",
    "kiosk facade: ground floor of a real LoD2 building; position chosen near an OSM shop=kiosk node",
    "terrain + street longitudinal profile, crown and kerb heights: Geobasis NRW DGM1 tile dgm1_32_355_5645_1_nw_2022.tif",
-   "traffic signal, crossing, trees, waste baskets, bike racks, building entrances, cameras: OSM nodes"
+   "traffic signal, crossing, trees, waste baskets, bike racks, building entrances, cameras, ATMs: OSM nodes"
   ],
   "assumed": [
    "lane widths (3.4 m), median (1.2 m), parking strip (2.0 m)",

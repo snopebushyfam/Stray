@@ -1,5 +1,5 @@
 STRAY_DIAG signal s=-41.4 ford_s=-44.0
-STRAY_DIAG furniture {"bike_racks":2,"bins":2,"cars":25,"doors":5,"signals":1,"trees":2}
+STRAY_DIAG furniture {"atms":2,"bike_racks":2,"bins":2,"cars":25,"doors":5,"signals":1,"trees":2}
 STRAY_DIAG lighting=night
 STRAY_DIAG build=ok lod2=1 buildings=155 lod2_tris=6028 terrain=1 terrain_tris=27000 street_tris=3028 profile_rows=53 lights=45 shadow_lights=3 street_len_m=150.0
 STRAY_DIAG spawn pos=(-23.221, 0.895296, -24.027) yaw_deg=-11.1
@@ -8,6 +8,7 @@ STRAY_DIAG pedestrians walkers=15 queue=5
 STRAY_DIAG traffic cars=12 lanes=4
 STRAY_DIAG hud touch_controls=false
 STRAY_DIAG interactions kiosk=(12.33402, -0.059635, -45.33917) club_door=(-17.64324, -0.138483, -65.74069) queue_end=(-15.38415, -0.187471, -71.72371) cash=35,00 €
+STRAY_DIAG phone clock=23:10 messages=2 contacts=2 account=120,00 €
 STRAY_DIAG ground_check on_floor=true gap_m=0.000 pos=(-23.221, 0.847268, -24.027)
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_00_player_spawn_night.png err=0 size=(1280, 720)
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_00b_player_walking_night.png err=0 size=(1280, 720)
@@ -29,4 +30,9 @@ STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_10_kiosk_
 STRAY_DIAG kiosk item=koelsch ok=true cash=33,20 €
 STRAY_DIAG door reason=queue cash=33,20 € nightlife=0 queued=0.0
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_11_bouncer_queue_night.png err=0 size=(1280, 720)
+STRAY_DIAG atm ok=true cash=53,20 € account=100,00 €
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_20_phone_home.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_21_phone_map.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_22_phone_messages.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_23_phone_bank.png err=0 size=(1280, 720)
 STRAY_DIAG autoshots=done dir=/home/user/Stray/production/qa/evidence/godot

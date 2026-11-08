@@ -253,7 +253,7 @@ def street_furniture(nodes, fr: Frame, buildings, cross: dict, s0: float, s1: fl
     k = cross["kerb_half_width"]
     inside = lambda s: s0 + 0.5 <= s <= s1 - 0.5
     f = {"traffic_signals": [], "crossings": [], "trees": [], "waste_baskets": [], "bicycle_parking": [],
-         "entrances": [], "cameras": [], "parked_cars": []}
+         "entrances": [], "cameras": [], "atms": [], "parked_cars": []}
     for s, v, tg in nodes:
         en = r2(fr.en(s, v))
         if tg.get("highway") == "traffic_signals" and inside(s):
@@ -271,6 +271,10 @@ def street_furniture(nodes, fr: Frame, buildings, cross: dict, s0: float, s1: fl
             if hit and abs(hit[0] - v) < 2.5:  # snap the door onto the real facade
                 f["entrances"].append({"en": r2(hit[1]), "normal_en": r2(hit[2]), "s": round(s, 2),
                                        "kind": tg.get("entrance"), "source": "osm"})
+        elif tg.get("amenity") == "atm" and inside(s):
+            hit = facade_hit(fr, buildings, s, 1 if v > 0 else -1)
+            if hit:
+                f["atms"].append({"en": r2(hit[1]), "normal_en": r2(hit[2]), "s": round(s, 2), "source": "osm"})
         elif tg.get("man_made") == "surveillance" and inside(s):
             hit = facade_hit(fr, buildings, s, 1 if v > 0 else -1)
             if hit:
@@ -467,7 +471,7 @@ def main():
                 "street axis + carriageway centrelines: OpenStreetMap ways named Hohenzollernring (highway=primary)",
                 "kiosk facade: ground floor of a real LoD2 building; position chosen near an OSM shop=kiosk node",
                 "terrain + street longitudinal profile, crown and kerb heights: Geobasis NRW DGM1 tile " + DGM_TILE,
-                "traffic signal, crossing, trees, waste baskets, bike racks, building entrances, cameras: OSM nodes"],
+                "traffic signal, crossing, trees, waste baskets, bike racks, building entrances, cameras, ATMs: OSM nodes"],
             "assumed": [
                 "lane widths (3.4 m), median (1.2 m), parking strip (2.0 m)",
                 "kerb height clamped to 0.10-0.25 m and profile smoothed over 15 m (DGM1 is 1 m resolution)",

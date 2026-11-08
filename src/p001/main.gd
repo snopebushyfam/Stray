@@ -11,6 +11,7 @@ const PLAYER_CONFIG := "res://data/p001/player_config.json"
 const AUDIO_CONFIG := "res://data/p001/audio_config.json"
 const NPC_CONFIG := "res://data/p001/npc_config.json"
 const ECONOMY_CONFIG := "res://data/p001/economy_config.json"
+const PHONE_CONFIG := "res://data/p001/phone_config.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
@@ -21,6 +22,9 @@ var pedestrians: StrayPedestrians
 var traffic: StrayTraffic
 var ui: StrayUi
 var interactions: StrayInteractions
+var clock: StrayGameClock
+var messages: StrayMessages
+var phone: StrayPhone
 
 
 func _ready() -> void:
@@ -56,17 +60,75 @@ func _ready() -> void:
 	ui = StrayUi.new()
 	ui.name = "LifeUi"
 	add_child(ui)
+	var phone_cfg := _load_json(PHONE_CONFIG)
+	clock = StrayGameClock.new(phone_cfg.get("clock", {}))
+	clock.hour_changed.connect(func(_h): _sync_daylight())
+	_sync_daylight()
 	interactions = StrayInteractions.new()
 	interactions.name = "Interactions"
+	interactions.clock = clock
+	interactions.phone_cfg = phone_cfg
 	add_child(interactions)
 	interactions.setup(builder.layout, _load_json(ECONOMY_CONFIG), player, builder, ui, player_cfg.get("character", {}))
+	_build_phone(phone_cfg)
 	if "--autoshots" in OS.get_cmdline_user_args():
 		_run_autoshots.call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_day_night"):
-		builder.set_day_mode(not builder.day_mode)
+		toggle_day_night()
+
+
+## Debug / touch: jump the clock to the afternoon or to late night; lighting follows the clock.
+func toggle_day_night() -> void:
+	clock.set_time("23:30" if clock.is_daytime() else "14:00")
+	_sync_daylight()
+
+
+func _sync_daylight() -> void:
+	if builder and builder.day_mode != clock.is_daytime():
+		builder.set_day_mode(clock.is_daytime())
+
+
+func _process(delta: float) -> void:
+	if clock:
+		clock.advance(delta)
+		if ui and interactions and ui.clock_text != clock.hhmm():
+			ui.clock_text = clock.hhmm()
+			ui.set_status(interactions.life)
+
+
+func _build_phone(phone_cfg: Dictionary) -> void:
+	messages = StrayMessages.new(phone_cfg)
+	var map := StrayPhoneMap.new()
+	map.setup(builder.layout, builder.layout.resolve("LoD2_P001_Hohenzollernring.json"))
+	var L := builder.layout
+	map.markers.append({"en": StrayStreetLayout._v2(L.kiosk["en"]), "color": Color(0.2, 0.9, 0.4), "label": "KIOSK"})
+	map.markers.append({"en": StrayStreetLayout._v2(L.club["en"]), "color": Color(1.0, 0.2, 0.7), "label": "NACHTFLUG"})
+	for a in L.furniture.get("atms", []):
+		map.markers.append({"en": StrayStreetLayout._v2(a["en"]), "color": Color(0.3, 0.6, 1.0), "label": "€"})
+	phone = StrayPhone.new()
+	phone.name = "Phone"
+	add_child(phone)
+	phone.setup(interactions.life, messages, clock, phone_cfg, map)
+	phone.opened_changed.connect(func(open):
+		player.input_enabled = not open and not interactions.shop_open
+		ui.status_label.visible = not open)  # the phone covers the top-right HUD; it shows time + money itself
+	messages.received.connect(func(m): if not phone.is_open: ui.show_message("📱 %s" % m.name, m.text, 5.0))
+	interactions.club_admitted.connect(func(): messages.trigger("club_admitted", clock.hhmm()))
+	interactions.life.cash_changed.connect(func(c): messages.check_cash(c, clock.hhmm()))
+	messages.trigger("start", clock.hhmm())
+	print("STRAY_DIAG phone clock=%s messages=%d contacts=%d account=%s" % [clock.hhmm(), messages.inbox.size(),
+		messages.known_contacts().size(), StrayLifeState.euro(interactions.life.account_cents)])
+
+
+func _physics_process(_delta: float) -> void:
+	if phone and phone.map and player:
+		var p := player.global_position
+		phone.map.player_en = Vector2(p.x, -p.z)
+		var f := -player.camera.global_transform.basis.z
+		phone.map.player_dir_en = Vector2(f.x, -f.z)
 
 
 ## Registers keyboard + gamepad bindings for the actions named in the player config.
@@ -148,7 +210,7 @@ func _build_hud() -> void:
 	add_child(hud)
 	var info := Label.new()
 	info.text = "STRAY · Prototyp 001 · Hohenzollernring, Köln (LoD2/DGM1 Geobasis NRW, © OSM)\n" \
-		+ "WASD/Stick: gehen · Shift: rennen · Leertaste: springen · Maus: Kamera · E: interagieren · N: Tag/Nacht"
+		+ "WASD/Stick: gehen · Shift: rennen · Leertaste: springen · Maus: Kamera · E: interagieren · Tab: Handy · N: Tag/Nacht"
 	info.position = Vector2(12, 8)
 	info.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
 	info.add_theme_font_size_override("font_size", 14)
@@ -168,7 +230,7 @@ func _build_hud() -> void:
 		var day := Button.new()
 		day.text = "Tag/Nacht"
 		day.position = Vector2(12, 60)
-		day.pressed.connect(func(): builder.set_day_mode(not builder.day_mode))
+		day.pressed.connect(toggle_day_night)
 		hud.add_child(day)
 		var jump := Button.new()
 		jump.text = "Springen"
@@ -250,5 +312,14 @@ func _run_autoshots() -> void:
 	await get_tree().create_timer(0.8).timeout
 	interactions.interact()
 	await _snap(dir, "P001_11_bouncer_queue_night.png")
+	# Smartphone apps.
+	player.global_position = builder.layout.spawn_position(0.9) + Vector3(0, 0.05, 0)
+	player.face_yaw(builder.layout.spawn_yaw())
+	interactions.withdraw_at_atm()
+	phone.toggle()
+	for app in ["home", "map", "messages", "bank"]:
+		phone.open_app(app)
+		await _snap(dir, "P001_2%d_phone_%s.png" % [["home", "map", "messages", "bank"].find(app), app])
+	phone.toggle()
 	print("STRAY_DIAG autoshots=done dir=%s" % dir)
 	get_tree().quit()

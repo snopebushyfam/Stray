@@ -96,6 +96,21 @@ wurde und nach dem Anstehen zurückkam, galt als „genervt“ (−2 Ruf). Regre
 nach der Korrektur grün. Offen: Kiosk-Unterzeile teils von der Markise verdeckt; Ruf hat außer am
 Türsteher noch keine Folgen; Getränke haben keine Wirkung außer dem Alkoholzähler.
 
+**Schritt 4 „Smartphone“ (2026-11-08, gespielt + getestet):**
+
+| | Umsetzung |
+|---|---|
+| Spielzeit | `game_clock.gd`: Sa 14.11., Start 23:10, 10 × Echtzeit; Licht folgt der Uhr (Tag 7–20 Uhr); N springt auf 14:00 bzw. 23:30. Club geöffnet 23:00–06:00 (über Mitternacht). |
+| Handy (Tab / Touch „Handy“) | `phone_ui.gd`: Statuszeile (Uhrzeit, Akku sinkt pro Spielstunde, ungelesene Nachrichten); Apps **Bank** (Konto, Bargeld, letzte Buchungen), **Karte** (`phone_map.gd`: 214 echte LoD2-Grundrisse, Position + Blickrichtung, KIOSK, NACHTFLUG, Geldautomaten), **Nachrichten**, **Kontakte**, **Jobs** (Anzeige, noch nicht annehmbar). Bewegung pausiert. |
+| Konto + Geldautomaten | `life_state.gd`: Konto 120 €, Buchungen für jede Zahlung; 2 Geldautomaten an den **echten OSM-Positionen** (`amenity=atm`), 20 € abheben. |
+| Nachrichten | `messages.gd`: ereignisgesteuert (Start: Vermieter mit Mietfälligkeit 450 €, Mama; nach Club-Einlass eine unbekannte Nummer, die als Kontakt erscheint; unter 5 € Bargeld Mama). Jede Nachricht genau einmal. |
+| Daten | `data/p001/phone_config.json` (Uhr, Bank, Akku, Kontakte, Nachrichten, Jobs) |
+
+Tests: `phone_logic_test` 19/19 (u. a. Mitternacht, Öffnungszeiten, Abhebung über Kontostand verweigert,
+Nachrichten nur einmal), `phone_test` 17/17. Beim Lauf gefunden und behoben: Typfehler in `game_clock.gd`;
+das offene Handy verdeckte die Geldanzeige; ein Rechenfehler in einem Test (6 h statt 60 min vorgespult —
+die Uhr war richtig). Offen: Miete hat noch keine Fälligkeit/Folge, Jobs nicht annehmbar, Akku ohne Wirkung.
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

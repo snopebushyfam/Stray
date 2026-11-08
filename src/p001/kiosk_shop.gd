@@ -26,7 +26,7 @@ func buy(state: StrayLifeState, item_id: String) -> Dictionary:
 	if it.is_empty():
 		return {"ok": false, "text": "Haben wir nicht."}
 	var price: int = int(it.get("price", 0))
-	if not state.pay(price):
+	if not state.pay(price, "Kiosk: %s" % it.get("name", item_id)):
 		return {"ok": false, "text": String(cfg.get("too_poor", "Reicht nicht. %s")) % StrayLifeState.euro(price)}
 	state.add_item(item_id, it.get("tags", []))
 	return {"ok": true, "text": String(cfg.get("bought", "%s für %s.")) % [it.get("name", item_id), StrayLifeState.euro(price)]}

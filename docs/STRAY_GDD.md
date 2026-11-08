@@ -56,3 +56,9 @@ Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schi
 - **NIGHTLIFE / CONSEQUENCES:** Türsteher am NACHTFLUG entscheidet nach Uhrzeit, Anstehen, Alkohol,
   Eintrittsgeld (15 €) und Ruf; Nerven, Abweisung und Einlass verändern den Ruf „Nachtleben“.
 - Regeln und Texte: `data/p001/economy_config.json`.
+
+## Schritt 4 — Smartphone (2026-11-08)
+- Spielzeit Samstagnacht (10 × Echtzeit), Club 23–6 Uhr; Licht folgt der Uhr.
+- Handy-Apps: Bank (Konto 120 € + Bargeld, Buchungen), Karte (echte Grundrisse), Nachrichten
+  (ereignisgesteuert), Kontakte, Jobs (Vorschau). Geldautomaten an echten OSM-Standorten.
+- Daten: `data/p001/phone_config.json`.
