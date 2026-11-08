@@ -80,6 +80,22 @@ Skriptfehler nicht als Fehlschlag — jetzt zählt jeder `SCRIPT ERROR`, und God
 neue Klassen. Noch nicht: Motorgeräusche, Ampelphasen (Ampel bleibt für Autos grün), Fußgänger
 überqueren die Straße nicht.
 
+**Schritt 3 „Erste Interaktion“ (2026-11-08, gespielt + getestet):**
+
+| | Umsetzung |
+|---|---|
+| Geld, Inventar, Ruf (Nachtleben / Sozial / Polizei) | `src/p001/life_state.gd` — reine Logik, Start 35,00 € |
+| KIOSK | `kiosk_shop.gd` + Menü (`ui.gd`): „[E] Kiosk“ an der Tür, 5 Artikel, Kauf zieht Geld ab, Ablehnung bei zu wenig Geld; Bewegung pausiert im Menü. Kein begehbarer Innenraum (LoD2-Gebäude sind geschlossene Hüllen). |
+| NACHTFLUG-Tür | `bouncer_rules.gd` + Türsteher-Figur: Reihenfolge der Prüfungen: tagsüber zu → genervt (erneut gefragt binnen 30 s, −2 Ruf) → Ruf ≤ −3 → nicht angestanden (kein Ruf-Verlust) → zu betrunken (≥ 3 Kölsch, −1) → kein Eintrittsgeld (15 €, −1) → Einlass (+1). Anstehen = 15 s am Ende der Schlange. Club-Innenraum folgt später. |
+| Bedienung | `E` / Touch-Button „Interagieren“, Hinweistext, Sprechblase, Anzeige Bargeld + Ruf |
+| Daten | `data/p001/economy_config.json` (Preise in Cent, Regeln, alle Texte) |
+
+Tests: `life_rules_test` 20/20, `interaction_test` 16/16 (Kiosk-Kauf, vordrängeln abgewiesen, anstehen,
+Einlass mit Eintritt und Ruf, tagsüber zu). **Gefundener Logikfehler:** Wer zum Anstellen geschickt
+wurde und nach dem Anstehen zurückkam, galt als „genervt“ (−2 Ruf). Regressionstest erst rot (2 Fehler),
+nach der Korrektur grün. Offen: Kiosk-Unterzeile teils von der Markise verdeckt; Ruf hat außer am
+Türsteher noch keine Folgen; Getränke haben keine Wirkung außer dem Alkoholzähler.
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

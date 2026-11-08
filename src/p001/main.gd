@@ -10,6 +10,7 @@ extends Node3D
 const PLAYER_CONFIG := "res://data/p001/player_config.json"
 const AUDIO_CONFIG := "res://data/p001/audio_config.json"
 const NPC_CONFIG := "res://data/p001/npc_config.json"
+const ECONOMY_CONFIG := "res://data/p001/economy_config.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
@@ -18,6 +19,8 @@ var city_audio: AudioStreamPlayer
 var club_audio: AudioStreamPlayer3D
 var pedestrians: StrayPedestrians
 var traffic: StrayTraffic
+var ui: StrayUi
+var interactions: StrayInteractions
 
 
 func _ready() -> void:
@@ -50,6 +53,13 @@ func _ready() -> void:
 	add_child(traffic)
 	traffic.setup(builder.layout, npc_cfg, player)
 	_build_hud()
+	ui = StrayUi.new()
+	ui.name = "LifeUi"
+	add_child(ui)
+	interactions = StrayInteractions.new()
+	interactions.name = "Interactions"
+	add_child(interactions)
+	interactions.setup(builder.layout, _load_json(ECONOMY_CONFIG), player, builder, ui, player_cfg.get("character", {}))
 	if "--autoshots" in OS.get_cmdline_user_args():
 		_run_autoshots.call_deferred()
 
@@ -138,7 +148,7 @@ func _build_hud() -> void:
 	add_child(hud)
 	var info := Label.new()
 	info.text = "STRAY · Prototyp 001 · Hohenzollernring, Köln (LoD2/DGM1 Geobasis NRW, © OSM)\n" \
-		+ "WASD/Stick: gehen · Shift: rennen · Leertaste: springen · Maus: Kamera · N: Tag/Nacht"
+		+ "WASD/Stick: gehen · Shift: rennen · Leertaste: springen · Maus: Kamera · E: interagieren · N: Tag/Nacht"
 	info.position = Vector2(12, 8)
 	info.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
 	info.add_theme_font_size_override("font_size", 14)
@@ -224,5 +234,21 @@ func _run_autoshots() -> void:
 			await _snap(dir, "P001_%02d_%s_%s.png" % [idx, vp["name"], "day" if day else "night"])
 			idx += 1
 	builder.set_day_mode(false)
+	# Interaction captures from the player camera: kiosk menu, then the bouncer's answer.
+	player.camera.make_current()
+	player.global_position = interactions.points["kiosk"] + Vector3(0, 0.95, 0)
+	# Face the kiosk facade (opposite of its outward normal) so the camera looks at the shop.
+	var kn := StrayStreetLayout.en_dir_to_godot(-StrayStreetLayout._v2(builder.layout.kiosk["normal_en"]))
+	player.face_yaw(atan2(-kn.x, -kn.z))
+	player.global_position += StrayStreetLayout.en_dir_to_godot(StrayStreetLayout._v2(builder.layout.kiosk["normal_en"])) * 0.8
+	await get_tree().create_timer(0.8).timeout
+	interactions.interact()
+	await _snap(dir, "P001_10_kiosk_menu_night.png")
+	interactions._on_shop_choice("koelsch")
+	interactions._on_shop_choice("")
+	player.global_position = interactions.points["club_door"] + Vector3(0, 0.95, 0)
+	await get_tree().create_timer(0.8).timeout
+	interactions.interact()
+	await _snap(dir, "P001_11_bouncer_queue_night.png")
 	print("STRAY_DIAG autoshots=done dir=%s" % dir)
 	get_tree().quit()

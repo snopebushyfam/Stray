@@ -1,0 +1,186 @@
+## Prototype 001 interactions: KIOSK counter (shop menu) and the NACHTFLUG door (bouncer).
+##
+## Interaction points are derived from the layout (facade features). The player waits at the end
+## of the club queue to "queue"; the bouncer then decides via StrayBouncerRules. Pure rules live in
+## life_state.gd / kiosk_shop.gd / bouncer_rules.gd; this node only does proximity, input and UI.
+## Config: data/p001/economy_config.json. Design: docs/STRAY_GDD.md (pillars LIFE, NIGHTLIFE,
+## CONSEQUENCES).
+class_name StrayInteractions
+extends Node
+
+const RADIUS := 1.9
+
+var layout: StrayStreetLayout
+var econ: Dictionary = {}
+var life: StrayLifeState
+var shop: StrayKioskShop
+var door: StrayBouncerRules
+var player: StrayPlayer
+var builder: StrayStreetBuilder
+var ui: StrayUi
+## Seconds the player has waited at the queue end (reset when they walk away).
+var queued_seconds: float = 0.0
+var points: Dictionary = {}  # id -> Vector3 (Godot)
+var current: String = ""
+var shop_open := false
+var last_door_result: Dictionary = {}
+
+
+func setup(p_layout: StrayStreetLayout, p_econ: Dictionary, p_player: StrayPlayer,
+		p_builder: StrayStreetBuilder, p_ui: StrayUi, character_cfg: Dictionary) -> void:
+	layout = p_layout
+	econ = p_econ
+	player = p_player
+	builder = p_builder
+	ui = p_ui
+	life = StrayLifeState.new(int(econ.get("start_cash_cents", 0)))
+	shop = StrayKioskShop.new(econ.get("kiosk", {}))
+	door = StrayBouncerRules.new(econ.get("club", {}))
+	var k := _frame(layout.kiosk)
+	points["kiosk"] = _gp(k.pos + k.t * 1.75 + k.n * 1.0)
+	var c := _frame(layout.club)
+	points["club_door"] = _gp(c.pos + c.n * 1.6)
+	var npc_q: Dictionary = _load_json("res://data/p001/npc_config.json").get("club_queue", {})
+	var tail_along: float = float(npc_q.get("start_along", -1.8)) - float(npc_q.get("count", 5)) * float(npc_q.get("spacing", 0.9))
+	points["queue_end"] = _gp(c.pos + c.n * float(npc_q.get("out", 2.7)) + c.t * tail_along)
+	_spawn_bouncer(c, character_cfg)
+	life.cash_changed.connect(func(_c): ui.set_status(life))
+	life.reputation_changed.connect(func(_a, _v): ui.set_status(life))
+	ui.set_status(life)
+	ui.shop_choice.connect(_on_shop_choice)
+	ui.interact_pressed.connect(interact)
+	print("STRAY_DIAG interactions kiosk=%s club_door=%s queue_end=%s cash=%s" % [
+		points["kiosk"], points["club_door"], points["queue_end"], StrayLifeState.euro(life.cash_cents)])
+
+
+static func _load_json(path: String) -> Dictionary:
+	var v: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	return v if typeof(v) == TYPE_DICTIONARY else {}
+
+
+func _frame(f: Dictionary) -> Dictionary:
+	var pos := StrayStreetLayout._v2(f["en"])
+	var n := StrayStreetLayout._v2(f["normal_en"]).normalized()
+	return {"pos": pos, "n": n, "t": Vector2(n.y, -n.x)}
+
+
+func _gp(en: Vector2) -> Vector3:
+	return StrayStreetLayout.en_to_godot(en.x, en.y, layout.ground_z_at(en))
+
+
+func _spawn_bouncer(c: Dictionary, character_cfg: Dictionary) -> void:
+	if not ResourceLoader.exists(character_cfg.get("scene", "")):
+		return
+	var model: Node3D = load(character_cfg["scene"]).instantiate()
+	var root := Node3D.new()
+	root.name = "Bouncer"
+	var p: Vector2 = c.pos + c.n * 0.9 + c.t * 1.55
+	root.position = _gp(p)
+	var face := StrayStreetLayout.en_dir_to_godot(c.n)
+	root.rotation.y = atan2(-face.x, -face.z)
+	model.rotation.y = deg_to_rad(character_cfg.get("yaw_offset_deg", 180.0))
+	model.scale = Vector3.ONE * 1.1
+	var black := StandardMaterial3D.new()
+	black.albedo_color = Color(0.03, 0.03, 0.035)
+	for mi in model.find_children("*", "MeshInstance3D", true, false):
+		for i in (mi as MeshInstance3D).mesh.get_surface_count():
+			(mi as MeshInstance3D).set_surface_override_material(i, black)
+	root.add_child(model)
+	add_child(root)
+	var ap: Array = model.find_children("*", "AnimationPlayer", true, false)
+	if not ap.is_empty():
+		(ap[0] as AnimationPlayer).play("Idle")
+	var body := StaticBody3D.new()
+	body.collision_layer = 4
+	var cs := CollisionShape3D.new()
+	var cap := CapsuleShape3D.new()
+	cap.radius = 0.32
+	cap.height = 1.9
+	cs.shape = cap
+	cs.position.y = 0.95
+	body.add_child(cs)
+	body.position = root.position
+	add_child(body)
+
+
+func _flat_dist(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
+
+
+func _physics_process(delta: float) -> void:
+	if player == null:
+		return
+	door.tick(delta)
+	var pp := player.global_position
+	var night := not builder.day_mode
+	if night and _flat_dist(pp, points["queue_end"]) < float(econ.get("club", {}).get("queue_spot_radius", 1.6)):
+		queued_seconds += delta
+	elif _flat_dist(pp, points["club_door"]) > 12.0:
+		queued_seconds = 0.0
+	var best := ""
+	var best_d := RADIUS
+	for id in ["kiosk", "club_door"]:
+		var d := _flat_dist(pp, points[id])
+		if d < best_d:
+			best = id
+			best_d = d
+	if best != current:
+		current = best
+		if shop_open and current != "kiosk":
+			_close_shop()
+	var prompt := ""
+	match current:
+		"kiosk":
+			prompt = "[E] Kiosk"
+		"club_door":
+			prompt = "[E] Mit dem Türsteher reden"
+	if night and queued_seconds > 0.0 and current.is_empty() and _flat_dist(pp, points["queue_end"]) < 2.0:
+		var need: float = econ.get("club", {}).get("queue_wait_seconds", 15.0)
+		prompt = "Anstehen … %d / %d s" % [mini(int(queued_seconds), int(need)), int(need)]
+	ui.show_prompt("" if shop_open else prompt)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("interact"):
+		interact()
+
+
+## Triggers the nearest interaction (also called by the touch button and by tests/autoshots).
+func interact() -> void:
+	match current:
+		"kiosk":
+			if shop_open:
+				_close_shop()
+			else:
+				shop_open = true
+				player.input_enabled = false
+				ui.open_shop(econ["kiosk"].get("title", "KIOSK"), econ["kiosk"].get("greeting", ""), shop.items())
+		"club_door":
+			last_door_result = door.decide(life, not builder.day_mode, queued_seconds)
+			ui.show_message("Türsteher", last_door_result.text)
+			print("STRAY_DIAG door reason=%s cash=%s nightlife=%d queued=%.1f" % [
+				last_door_result.reason, StrayLifeState.euro(life.cash_cents), int(life.reputation["nightlife"]), queued_seconds])
+			if last_door_result.admitted:
+				queued_seconds = 0.0
+				await get_tree().create_timer(2.5).timeout
+				ui.show_message("", String(econ.get("club", {}).get("lines", {}).get("inside", "")), 6.0)
+
+
+func buy(item_id: String) -> Dictionary:
+	var r := shop.buy(life, item_id)
+	ui.show_message("Kiosk", r.text, 3.5)
+	print("STRAY_DIAG kiosk item=%s ok=%s cash=%s" % [item_id, r.ok, StrayLifeState.euro(life.cash_cents)])
+	return r
+
+
+func _on_shop_choice(item_id: String) -> void:
+	if item_id.is_empty():
+		_close_shop()
+	else:
+		buy(item_id)
+
+
+func _close_shop() -> void:
+	shop_open = false
+	player.input_enabled = true
+	ui.close_shop()

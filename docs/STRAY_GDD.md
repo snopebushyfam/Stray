@@ -50,3 +50,9 @@ Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schi
 - Steuerung: WASD/Maus bzw. Gamepad, Shift = rennen, Leertaste = springen, **N = Tag/Nacht**.
 - Status: **in Godot 4.7 gespielt und getestet** (Cloud, Desktop + Web). Unreal-Fassung unverifiziert.
 - Touch: virtueller Joystick links, Wischen rechts = Kamera, Buttons für Springen und Tag/Nacht.
+
+## Schritt 3 — erste Systeme (2026-11-08)
+- **LIFE:** Bargeld (Start 35 €), KIOSK mit 5 Artikeln.
+- **NIGHTLIFE / CONSEQUENCES:** Türsteher am NACHTFLUG entscheidet nach Uhrzeit, Anstehen, Alkohol,
+  Eintrittsgeld (15 €) und Ruf; Nerven, Abweisung und Einlass verändern den Ruf „Nachtleben“.
+- Regeln und Texte: `data/p001/economy_config.json`.

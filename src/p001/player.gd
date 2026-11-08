@@ -29,6 +29,8 @@ var _step_cfg: Dictionary = {}
 var _step_player: AudioStreamPlayer3D
 var _stride_acc: float = 0.0
 var _rng := RandomNumberGenerator.new()
+## False while a menu is open: no movement or jumping (gravity still applies).
+var input_enabled := true
 ## Look input from scripts/tests (degrees per call, x = yaw, y = pitch).
 var injected_look := Vector2.ZERO
 
@@ -231,10 +233,10 @@ func _physics_process(delta: float) -> void:
 		injected_look = Vector2.ZERO
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
-	elif Input.is_action_just_pressed("jump"):
+	elif input_enabled and Input.is_action_just_pressed("jump"):
 		velocity.y = cfg.get("jump_velocity", 3.6)
 
-	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back") if input_enabled else Vector2.ZERO
 	var cam_basis := _yaw_pivot.global_transform.basis
 	var dir := (cam_basis * Vector3(input.x, 0.0, input.y))
 	dir.y = 0.0

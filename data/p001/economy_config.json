@@ -1,0 +1,37 @@
+{
+ "schema": "stray.p001.economy/1",
+ "note": "Prototype 001 life systems: money, kiosk, NACHTFLUG door. Prices in EUR cents. Texts are player-facing (German).",
+ "start_cash_cents": 3500,
+ "kiosk": {
+  "title": "KIOSK",
+  "greeting": "Was darf's sein?",
+  "items": [
+   {"id": "water",   "name": "Wasser 0,5 l",  "price": 150, "tags": []},
+   {"id": "koelsch", "name": "Kölsch 0,33 l", "price": 180, "tags": ["alcohol"]},
+   {"id": "mate",    "name": "Mate 0,5 l",    "price": 250, "tags": ["caffeine"]},
+   {"id": "snack",   "name": "Chips",         "price": 220, "tags": []},
+   {"id": "gum",     "name": "Kaugummi",      "price": 120, "tags": ["fresh_breath"]}
+  ],
+  "too_poor": "Reicht nicht. Kost' %s.",
+  "bought": "Bitte schön. %s für %s."
+ },
+ "club": {
+  "name": "NACHTFLUG",
+  "entry_fee": 1500,
+  "queue_wait_seconds": 15.0,
+  "queue_spot_radius": 1.6,
+  "drunk_limit": 3,
+  "annoyed_cooldown_seconds": 30.0,
+  "lines": {
+   "closed":   "Wir haben zu. Komm heute Nacht wieder.",
+   "queue":    "Hinten anstellen, wie alle anderen.",
+   "drunk":    "Du hast genug für heute. Nicht mit dem Pegel.",
+   "broke":    "Eintritt ist %s. Haste nicht? Dann nicht.",
+   "annoyed":  "Ich hab nein gesagt. Geh weiter.",
+   "rep_low":  "Dich kenn ich. Heute nicht.",
+   "welcome":  "Passt. %s Eintritt. Viel Spaß.",
+   "inside":   "Du bist drin. (Der Club-Innenraum folgt in einem späteren Prototyp.)"
+  },
+  "reputation": {"rejected": -1, "pestered": -2, "admitted": 1, "min_nightlife": -3}
+ }
+}

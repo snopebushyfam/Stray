@@ -1,4 +1,5 @@
 RESULT street_layout_test passed=15 failed=0
+RESULT life_rules_test passed=20 failed=0
 PASS spawned player is on the floor
 PASS capsule bottom within 8 cm of sidewalk (-0.053 vs -0.055)
 PASS city ambience playing
@@ -30,5 +31,22 @@ PASS walkers moved (260.6 m total)
 PASS walkers do not overlap (min 1.67 m)
 PASS walker stops in front of the player (1.42 m)
 RESULT street_life_test passed=12 failed=0
+PASS start cash 35,00 € (35,00 €)
+PASS HUD shows cash
+PASS kiosk prompt near the counter
+PASS interact opens the kiosk menu
+PASS player movement paused while the menu is open
+PASS bought water for 1,50 €
+PASS HUD cash updated
+PASS Tschüss closes the menu
+PASS bouncer sends you to the back of the queue
+PASS no reputation lost for asking once
+PASS bouncer line shown
+PASS waited in the queue (16.3 s)
+PASS admitted after queueing (welcome)
+PASS entry fee 15 € paid (18,50 €)
+PASS nightlife reputation +1
+PASS closed during the day
+RESULT interaction_test passed=16 failed=0
 python data tests: OK
 ALL_TESTS_EXIT=0
