@@ -1,0 +1,51 @@
+# STRAY — Game Design Brief v0.1
+
+## Identität
+Arbeitstitel: **STRAY** — ein eigenständiges Third-Person-Open-World-Life-/Nightlife-RPG in einer komprimierten, fiktionalisierten Interpretation von Köln.
+
+## Spielerfantasie
+Du kommst neu nach Köln. Niemand kennt dich, du musst Geld verdienen, Kontakte knüpfen, deinen Alltag organisieren und entscheidest, wie dein Leben zwischen Arbeit, Nachtleben, Geld und sozialem Status verläuft.
+
+## Spielsäulen
+1. **Nightlife** — Begegnungen, Clubs, Bars, Kioske, Samstagabend in den Ringen.
+2. **Life** — Wohnung, Arbeit, Geld, Smartphone, Einkäufe, Mobilität.
+3. **Consequences** — soziale Reputation, Polizei-Aufmerksamkeit, finanzielle und zwischenmenschliche Folgen.
+
+## Geografische Prioritäten
+- **Friesenplatz / Hohenzollernring / Kölner Ringe**: zentrale Open-World-Startzone.
+- **NACHTFLUG und KIOSK**: erkennbare Orte der ersten Straßenprobe.
+- **Köln Hauptbahnhof und U-Bahn**: geplante Prolog-Erweiterung.
+- Später erweiterbare Innenräume: Wohnung, Club, Bar, Restaurant, Fitnessstudio, Fahrschule, Gebrauchtwagenhändler.
+
+## Spielbeginn (Vision)
+Ankunft am Kölner Hauptbahnhof, kurzes Steuerungs-/Interaktions-Tutorial, mit der U-Bahn zum Friesenplatz; erste Kontakte und Erkundung an einem Samstagabend. Die v0.1-Zeitscheibe verläuft bis Sonntagmorgen.
+
+## Vision für Systeme
+- Third-Person-Laufen, Kamera, Interaktion
+- NPCs: Ambient, Interactive, Persistent
+- Smartphone: Messenger, Maps, Bank, Jobs, Kontakte
+- Bargeld, Konto, Job, Miete und Käufe
+- Reputationen: Social / Nightlife / Police Attention
+- ÖPNV, Taxi, Verkehr, später eigene Fahrzeuge/Führerschein
+- Entscheidungsketten mit lokalen und längerfristigen Konsequenzen
+
+## Entwicklungsstrategie
+Die vollständige Vision ist **nicht** der erste Lieferumfang. Erst eine belegbar spielbare, schöne Straße bei Nacht. Danach NPCs / Verkehr; dann Nachtflug / Kiosk / Innenräume; dann Smartphone / Geld / Life-Simulation; dann Hbf-Prolog.
+
+## Prototype 001: The Street — Abnahmekriterien
+- Reale Third-Person-Steuerung im korrekt ausgewählten Unreal-Ziel-Level
+- 150 m glaubwürdige Straße, Gehwege und Gebäude im richtigen Maßstab
+- Club-Eingang NACHTFLUG, KIOSK, Licht bei Nacht, funktionierende Materialien
+- Korrekte Kollision / Spawn-Punkt, keine schwebenden Actors
+- Bildliche Sichtprüfung am echten Spiel oder dokumentiertes UNVERIFIZIERT, falls keine GUI/Engine vorhanden
+
+## Stil
+Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schilder, Licht, Verkehr und Fußgänger; realistische Dichte, aber für die Technik sinnvolle Optimierung.
+
+## Prototype 001 — Umsetzungsstand (2026-11-08)
+- Ort: **Hohenzollernring, 150 m** (s = −45 … +105 m) südlich des Friesenplatzes; reale
+  Gebäude aus Geobasis-NRW-LoD2, Straßenachse aus OpenStreetMap.
+- KIOSK: Ostseite, s = 48 m. NACHTFLUG: Westseite, s = 64 m, schräg gegenüber.
+- Spawn: Westgehweg, s = 22 m, Blick nach Norden; NACHTFLUG liegt voraus links, KIOSK gegenüber.
+- Steuerung: WASD/Maus bzw. Gamepad, Shift = rennen, Leertaste = springen, **N = Tag/Nacht**.
+- Status: Code + Daten fertig, **in Unreal UNVERIFIZIERT** — siehe `docs/TECHNICAL_PLAN.md` §6.

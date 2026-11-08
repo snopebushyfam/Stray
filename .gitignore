@@ -175,3 +175,9 @@ $RECYCLE.BIN/
 # the project root. Anchored so a reports/ folder elsewhere stays tracked.
 /reports/
 /test-results/
+
+# === STRAY ===
+# Raw geodata downloads (66 MB LoD2 tile, OSM extract): re-fetched by tools/geodata/build_p001.py
+tools/geodata/cache/
+# Unreal project-local
+*.sln

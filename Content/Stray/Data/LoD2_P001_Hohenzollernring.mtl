@@ -1,0 +1,8 @@
+newmtl M_LoD2_wall
+Kd 0.62 0.58 0.53
+
+newmtl M_LoD2_roof
+Kd 0.30 0.27 0.26
+
+newmtl M_LoD2_ground
+Kd 0.30 0.30 0.30

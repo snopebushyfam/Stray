@@ -1,0 +1,287 @@
+// STRAY - Prototype 001 street layout parsing and math. See StrayStreetLayout.h.
+#include "StrayStreetLayout.h"
+
+#include "Dom/JsonObject.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+
+FVector2D FStrayStreetDef::AxisEN() const
+{
+	const double B = FMath::DegreesToRadians(BearingDeg);
+	return FVector2D(FMath::Sin(B), FMath::Cos(B));
+}
+
+FVector2D FStrayStreetDef::RightEN() const
+{
+	const FVector2D U = AxisEN();
+	return FVector2D(U.Y, -U.X);
+}
+
+FVector2D FStrayStreetDef::ToEN(double S, double V) const
+{
+	return OriginEN + AxisEN() * S + RightEN() * V;
+}
+
+namespace
+{
+	/** Returns a sub-object or an invalid pointer (no log spam for optional sections). */
+	TSharedPtr<FJsonObject> Field(const TSharedPtr<FJsonObject>& Obj, const FString& Name)
+	{
+		const TSharedPtr<FJsonObject>* Out = nullptr;
+		if (Obj.IsValid() && Obj->TryGetObjectField(Name, Out) && Out)
+		{
+			return *Out;
+		}
+		return nullptr;
+	}
+
+	bool ReadVec2(const TSharedPtr<FJsonObject>& Obj, const FString& Key, FVector2D& Out)
+	{
+		const TArray<TSharedPtr<FJsonValue>>* Arr = nullptr;
+		if (!Obj.IsValid() || !Obj->TryGetArrayField(Key, Arr) || Arr->Num() < 2)
+		{
+			return false;
+		}
+		Out = FVector2D((*Arr)[0]->AsNumber(), (*Arr)[1]->AsNumber());
+		return true;
+	}
+
+	bool ReadColor(const TSharedPtr<FJsonObject>& Obj, const FString& Key, FLinearColor& Out)
+	{
+		const TArray<TSharedPtr<FJsonValue>>* Arr = nullptr;
+		if (!Obj.IsValid() || !Obj->TryGetArrayField(Key, Arr) || Arr->Num() < 3)
+		{
+			return false;
+		}
+		Out = FLinearColor((float)(*Arr)[0]->AsNumber(), (float)(*Arr)[1]->AsNumber(), (float)(*Arr)[2]->AsNumber());
+		return true;
+	}
+
+	double Num(const TSharedPtr<FJsonObject>& Obj, const FString& Key, double Default)
+	{
+		double V = Default;
+		if (Obj.IsValid())
+		{
+			Obj->TryGetNumberField(Key, V);
+		}
+		return V;
+	}
+
+	bool ReadFeature(const TSharedPtr<FJsonObject>& Obj, FStrayFacadeFeature& Out)
+	{
+		if (!Obj.IsValid() || !ReadVec2(Obj, TEXT("en"), Out.PosEN) || !ReadVec2(Obj, TEXT("normal_en"), Out.NormalEN))
+		{
+			return false;
+		}
+		Obj->TryGetStringField(TEXT("label"), Out.Label);
+		Out.Z = Num(Obj, TEXT("z"), 0.0);
+		Out.Width = Num(Obj, TEXT("width"), 0.0);
+		Out.Height = Num(Obj, TEXT("height"), 0.0);
+		ReadColor(Obj, TEXT("color"), Out.Color);
+		Obj->TryGetBoolField(TEXT("warm"), Out.bWarm);
+		Out.NormalEN = Out.NormalEN.GetSafeNormal();
+		return true;
+	}
+
+	void ReadPreset(const TSharedPtr<FJsonObject>& Obj, bool bDay, FStrayLightingPreset& Out)
+	{
+		if (!Obj.IsValid())
+		{
+			return;
+		}
+		Out.KeyLux = Num(Obj, bDay ? TEXT("sun_lux") : TEXT("moon_lux"), Out.KeyLux);
+		Out.KeyPitchDeg = Num(Obj, bDay ? TEXT("sun_pitch_deg") : TEXT("moon_pitch_deg"), Out.KeyPitchDeg);
+		Out.KeyYawDeg = Num(Obj, bDay ? TEXT("sun_yaw_deg") : TEXT("moon_yaw_deg"), Out.KeyYawDeg);
+		Out.SkyLightIntensity = Num(Obj, TEXT("skylight_intensity"), Out.SkyLightIntensity);
+		Out.ExposureMinEV100 = Num(Obj, TEXT("exposure_min_ev100"), Out.ExposureMinEV100);
+		Out.ExposureMaxEV100 = Num(Obj, TEXT("exposure_max_ev100"), Out.ExposureMaxEV100);
+		Out.FogDensity = Num(Obj, TEXT("fog_density"), Out.FogDensity);
+		ReadColor(Obj, TEXT("fog_inscatter"), Out.FogInscatter);
+	}
+}
+
+bool FStrayP001Layout::FromJsonString(const FString& Json, FStrayP001Layout& Out, FString& OutError)
+{
+	TSharedPtr<FJsonObject> Root;
+	const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Json);
+	if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
+	{
+		OutError = TEXT("layout is not valid JSON");
+		return false;
+	}
+
+	FString Schema;
+	if (!Root->TryGetStringField(TEXT("schema"), Schema) || Schema != TEXT("stray.p001.layout/1"))
+	{
+		OutError = FString::Printf(TEXT("unexpected schema '%s'"), *Schema);
+		return false;
+	}
+	if (!Root->TryGetStringField(TEXT("lod2_mesh"), Out.Lod2MeshRelPath))
+	{
+		OutError = TEXT("missing lod2_mesh");
+		return false;
+	}
+
+	const TSharedPtr<FJsonObject> Geo = Field(Root, TEXT("georef"));
+	const TArray<TSharedPtr<FJsonValue>>* Utm = nullptr;
+	if (Geo.IsValid() && Geo->TryGetArrayField(TEXT("local_origin_utm"), Utm) && Utm->Num() == 3)
+	{
+		Out.UtmOrigin = FVector((*Utm)[0]->AsNumber(), (*Utm)[1]->AsNumber(), (*Utm)[2]->AsNumber());
+	}
+
+	const TSharedPtr<FJsonObject> St = Field(Root, TEXT("street"));
+	if (!ReadVec2(St, TEXT("origin_en"), Out.Street.OriginEN))
+	{
+		OutError = TEXT("missing street.origin_en");
+		return false;
+	}
+	FStrayStreetDef& S = Out.Street;
+	S.BearingDeg = Num(St, TEXT("bearing_deg"), S.BearingDeg);
+	S.SStart = Num(St, TEXT("s_start"), S.SStart);
+	S.SEnd = Num(St, TEXT("s_end"), S.SEnd);
+	S.MedianHalfWidth = Num(St, TEXT("median_half_width"), S.MedianHalfWidth);
+	S.LaneDividerOffset = Num(St, TEXT("lane_divider_offset"), S.LaneDividerOffset);
+	S.CarriagewayHalfWidth = Num(St, TEXT("carriageway_half_width"), S.CarriagewayHalfWidth);
+	S.KerbHalfWidth = Num(St, TEXT("kerb_half_width"), S.KerbHalfWidth);
+	S.KerbHeight = Num(St, TEXT("kerb_height"), S.KerbHeight);
+	S.SidewalkWestOuter = Num(St, TEXT("sidewalk_west_outer"), S.SidewalkWestOuter);
+	S.SidewalkEastOuter = Num(St, TEXT("sidewalk_east_outer"), S.SidewalkEastOuter);
+	if (S.Length() <= 1.0 || S.KerbHalfWidth <= S.CarriagewayHalfWidth - 0.01)
+	{
+		OutError = TEXT("street segment is degenerate");
+		return false;
+	}
+
+	const TSharedPtr<FJsonObject> Ground = Field(Root, TEXT("ground_plane"));
+	ReadVec2(Ground, TEXT("min_en"), Out.GroundMinEN);
+	ReadVec2(Ground, TEXT("max_en"), Out.GroundMaxEN);
+	Out.GroundZ = Num(Ground, TEXT("z"), Out.GroundZ);
+
+	const TSharedPtr<FJsonObject> Lamps = Field(Root, TEXT("lamps"));
+	Out.LampHeight = Num(Lamps, TEXT("height"), Out.LampHeight);
+	Out.LampIntensityCd = Num(Lamps, TEXT("intensity_cd"), Out.LampIntensityCd);
+	Out.LampTemperatureK = Num(Lamps, TEXT("temperature_k"), Out.LampTemperatureK);
+	Out.LampAttenuationRadius = Num(Lamps, TEXT("attenuation_radius"), Out.LampAttenuationRadius);
+	Out.LampOuterConeDeg = Num(Lamps, TEXT("outer_cone_deg"), Out.LampOuterConeDeg);
+	if (Lamps.IsValid())
+	{
+		Lamps->TryGetBoolField(TEXT("cast_shadows"), Out.bLampShadows);
+		const TArray<TSharedPtr<FJsonValue>>* Positions = nullptr;
+		if (Lamps->TryGetArrayField(TEXT("positions"), Positions))
+		{
+			for (const TSharedPtr<FJsonValue>& V : *Positions)
+			{
+				FStrayLampDef L;
+				if (ReadVec2(V->AsObject(), TEXT("en"), L.PosEN) && ReadVec2(V->AsObject(), TEXT("arm_dir_en"), L.ArmDirEN))
+				{
+					Out.Lamps.Add(L);
+				}
+			}
+		}
+	}
+
+	auto ReadFeatureList = [](const TSharedPtr<FJsonObject>& Obj, TArray<FStrayFacadeFeature>& List)
+	{
+		const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
+		if (Obj.IsValid() && Obj->TryGetArrayField(TEXT("items"), Items))
+		{
+			for (const TSharedPtr<FJsonValue>& V : *Items)
+			{
+				FStrayFacadeFeature F;
+				if (ReadFeature(V->AsObject(), F))
+				{
+					List.Add(F);
+				}
+			}
+		}
+	};
+
+	const TSharedPtr<FJsonObject> Shops = Field(Root, TEXT("shopfronts"));
+	Out.ShopfrontIntensityCd = Num(Shops, TEXT("intensity_cd"), Out.ShopfrontIntensityCd);
+	Out.ShopfrontEmissiveNits = Num(Shops, TEXT("emissive_nits"), Out.ShopfrontEmissiveNits);
+	ReadFeatureList(Shops, Out.Shopfronts);
+
+	const TSharedPtr<FJsonObject> Win = Field(Root, TEXT("upper_windows"));
+	Out.WindowEmissiveNits = Num(Win, TEXT("emissive_nits"), Out.WindowEmissiveNits);
+	Out.WindowWidth = Num(Win, TEXT("width"), Out.WindowWidth);
+	Out.WindowHeight = Num(Win, TEXT("height"), Out.WindowHeight);
+	ReadFeatureList(Win, Out.Windows);
+
+	if (!ReadFeature(Field(Root, TEXT("kiosk")), Out.Kiosk) || !ReadFeature(Field(Root, TEXT("club")), Out.Club))
+	{
+		OutError = TEXT("missing kiosk or club feature");
+		return false;
+	}
+
+	const TSharedPtr<FJsonObject> Spawn = Field(Root, TEXT("spawn"));
+	if (!ReadVec2(Spawn, TEXT("en"), Out.SpawnEN) || !ReadVec2(Spawn, TEXT("yaw_dir_en"), Out.SpawnDirEN))
+	{
+		OutError = TEXT("missing spawn");
+		return false;
+	}
+
+	const TArray<TSharedPtr<FJsonValue>>* Views = nullptr;
+	if (Root->TryGetArrayField(TEXT("viewpoints"), Views))
+	{
+		for (const TSharedPtr<FJsonValue>& V : *Views)
+		{
+			const TSharedPtr<FJsonObject> O = V->AsObject();
+			FStrayViewpoint VP;
+			FVector2D Eye, Look;
+			if (O.IsValid() && ReadVec2(O, TEXT("en"), Eye) && ReadVec2(O, TEXT("look_en"), Look))
+			{
+				O->TryGetStringField(TEXT("name"), VP.Name);
+				VP.EyeEN = FVector(Eye.X, Eye.Y, Num(O, TEXT("h"), 1.7));
+				VP.TargetEN = FVector(Look.X, Look.Y, Num(O, TEXT("look_h"), 1.7));
+				Out.Viewpoints.Add(VP);
+			}
+		}
+	}
+
+	const TSharedPtr<FJsonObject> Lighting = Field(Root, TEXT("lighting"));
+	if (Lighting.IsValid())
+	{
+		ReadPreset(Field(Lighting, TEXT("night")), false, Out.Night);
+		ReadPreset(Field(Lighting, TEXT("day")), true, Out.Day);
+	}
+	return true;
+}
+
+bool FStrayP001Layout::LoadFromFile(const FString& AbsolutePath, FStrayP001Layout& Out, FString& OutError)
+{
+	FString Json;
+	if (!FFileHelper::LoadFileToString(Json, *AbsolutePath))
+	{
+		OutError = FString::Printf(TEXT("cannot read %s"), *AbsolutePath);
+		return false;
+	}
+	return FromJsonString(Json, Out, OutError);
+}
+
+FString FStrayP001Layout::DefaultLayoutPath()
+{
+	return FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() / TEXT("Stray/Data/P001_Layout.json"));
+}
+
+FTransform FStrayP001Layout::ComputeSpawnTransform(double CapsuleHalfHeightCm, double SpawnClearanceCm) const
+{
+	const double GroundTopCm = (IsOnSidewalk(SpawnEN) ? Street.KerbHeight : 0.0) * 100.0;
+	FVector Loc = StrayGeo::EnuToUnreal(SpawnEN.X, SpawnEN.Y, 0.0);
+	Loc.Z = GroundTopCm + CapsuleHalfHeightCm + SpawnClearanceCm;
+	return FTransform(FRotator(0.0, StrayGeo::EnDirToYaw(SpawnDirEN), 0.0), Loc);
+}
+
+bool FStrayP001Layout::IsOnSidewalk(const FVector2D& PosEN) const
+{
+	const FVector2D D = PosEN - Street.OriginEN;
+	const double S = FVector2D::DotProduct(D, Street.AxisEN());
+	const double V = FVector2D::DotProduct(D, Street.RightEN());
+	if (S < Street.SStart || S > Street.SEnd)
+	{
+		return false;
+	}
+	return (V >= Street.SidewalkWestOuter && V <= -Street.KerbHalfWidth)
+		|| (V >= Street.KerbHalfWidth && V <= Street.SidewalkEastOuter);
+}

@@ -1,3 +1,29 @@
+# STRAY
+
+Realistisches Third-Person-Open-World-Life-RPG in einem komprimierten Köln
+(Säulen: **Nightlife · Life · Consequences**). Unreal Engine 5.8, C++.
+
+| | |
+|---|---|
+| Design | [`docs/STRAY_GDD.md`](docs/STRAY_GDD.md) |
+| Technik, Audit, Abnahme | [`docs/TECHNICAL_PLAN.md`](docs/TECHNICAL_PLAN.md) |
+| Assets & Lizenzen | [`docs/ASSET_MANIFEST.md`](docs/ASSET_MANIFEST.md) |
+| Prototype 001 Datenvorschau | [`docs/prototype-001/`](docs/prototype-001/) |
+
+**Prototype 001 „The Street“** — 150 m Hohenzollernring bei Nacht aus amtlichen
+LoD2-Gebäudedaten (Geobasis NRW) und OSM, mit KIOSK, Club NACHTFLUG, Straßenlicht und
+Third-Person-Figur. **Status: Code und Daten fertig, in Unreal noch NICHT kompiliert oder
+gespielt** (Abnahme-Anleitung: `docs/TECHNICAL_PLAN.md` §6).
+
+Schnellstart (Windows, UE 5.8): `git lfs pull`, `Stray.uproject` öffnen (baut das C++-Modul),
+beim ersten Start entstehen Materialien und `L_P001_Street` automatisch, dann Play.
+
+Daten: Geobasis NRW (dl-de/zero-2-0) · © OpenStreetMap-Mitwirkende (ODbL).
+
+---
+
+*Das Repository basiert auf dem Claude-Code-Game-Studios-Template; dessen Beschreibung folgt.*
+
 <p align="center">
   <h1 align="center">Claude Code Game Studios</h1>
   <p align="center">
