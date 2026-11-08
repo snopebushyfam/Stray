@@ -62,3 +62,8 @@ Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schi
 - Handy-Apps: Bank (Konto 120 € + Bargeld, Buchungen), Karte (echte Grundrisse), Nachrichten
   (ereignisgesteuert), Kontakte, Jobs (Vorschau). Geldautomaten an echten OSM-Standorten.
 - Daten: `data/p001/phone_config.json`.
+
+## Club-Innenraum NACHTFLUG (2026-11-08)
+- Tanzfläche, Bar mit Clubpreisen, DJ, 12 Tanzende; Lea als erste Person mit Gedächtnis-Anlage
+  (Dialog wirkt auf sozialen Ruf, Name landet in den Kontakten).
+- Daten: `data/p001/club_interior.json`.

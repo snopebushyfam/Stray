@@ -5,6 +5,8 @@ extends CanvasLayer
 
 ## Emitted when the player picks a kiosk item (item id) or closes the menu ("").
 signal shop_choice(item_id: String)
+## Emitted when the player picks a dialogue option (index into the shown options).
+signal option_chosen(index: int)
 ## Emitted by the on-screen "Interagieren" button (touch devices).
 signal interact_pressed
 
@@ -135,6 +137,27 @@ func open_shop(title: String, greeting: String, items: Array) -> void:
 	bye.custom_minimum_size = Vector2(0, 40)
 	bye.pressed.connect(func(): shop_choice.emit(""))
 	shop_box.add_child(bye)
+	shop_panel.visible = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+## Dialogue choices: a line from the NPC, then one button per answer.
+func open_options(speaker: String, text: String, labels: Array) -> void:
+	for c in shop_box.get_children():
+		c.queue_free()
+	var head := Label.new()
+	head.text = "%s: %s" % [speaker, text]
+	head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	head.custom_minimum_size = Vector2(360, 0)
+	head.add_theme_font_size_override("font_size", 18)
+	shop_box.add_child(head)
+	for i in labels.size():
+		var b := Button.new()
+		b.text = String(labels[i])
+		b.custom_minimum_size = Vector2(0, 42)
+		var idx := i
+		b.pressed.connect(func(): option_chosen.emit(idx))
+		shop_box.add_child(b)
 	shop_panel.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 

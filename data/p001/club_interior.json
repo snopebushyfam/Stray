@@ -1,0 +1,205 @@
+{
+ "schema": "stray.p001.club/1",
+ "note": "NACHTFLUG interior for Prototype 001. A separate enclosed room below the street (Godot coordinates); the player is moved in on admission and out through the exit door. Prices in cents, texts German.",
+ "origin": [
+  0.0,
+  -60.0,
+  0.0
+ ],
+ "room": {
+  "width": 18.0,
+  "depth": 14.0,
+  "height": 5.0
+ },
+ "dance_floor": {
+  "center": [
+   0.0,
+   1.0
+  ],
+  "size": [
+   8.0,
+   6.0
+  ],
+  "tiles": 6,
+  "emission": 2.2,
+  "beat_bpm": 124.0
+ },
+ "bar": {
+  "center": [
+   -6.6,
+   -5.2
+  ],
+  "length": 6.0,
+  "depth": 0.9,
+  "height": 1.1
+ },
+ "dj": {
+  "center": [
+   6.8,
+   1.0
+  ]
+ },
+ "exit": {
+  "center": [
+   0.0,
+   6.6
+  ]
+ },
+ "dancers": {
+  "count": 12,
+  "seed": 77,
+  "anims": [
+   "Dance",
+   "Dance",
+   "Idle_Talking"
+  ]
+ },
+ "lights": [
+  {
+   "color": [
+    1.0,
+    0.1,
+    0.6
+   ],
+   "pos": [
+    -4.0,
+    4.6,
+    -2.0
+   ],
+   "spin_deg_s": 40.0
+  },
+  {
+   "color": [
+    0.2,
+    0.4,
+    1.0
+   ],
+   "pos": [
+    4.0,
+    4.6,
+    -2.0
+   ],
+   "spin_deg_s": -55.0
+  },
+  {
+   "color": [
+    0.6,
+    0.1,
+    1.0
+   ],
+   "pos": [
+    0.0,
+    4.6,
+    3.0
+   ],
+   "spin_deg_s": 30.0
+  },
+  {
+   "color": [
+    1.0,
+    0.75,
+    0.4
+   ],
+   "pos": [
+    -6.6,
+    3.0,
+    -5.2
+   ],
+   "spin_deg_s": 0.0
+  }
+ ],
+ "light_energy": 7.0,
+ "audio": {
+  "stream": "res://assets/audio/p001/club_music_loop.wav",
+  "volume_db": -4.0
+ },
+ "bar_menu": {
+  "title": "BAR",
+  "greeting": "Was trinkst du?",
+  "items": [
+   {
+    "id": "koelsch_bar",
+    "name": "Kölsch 0,2 l",
+    "price": 350,
+    "tags": [
+     "alcohol"
+    ]
+   },
+   {
+    "id": "water_bar",
+    "name": "Wasser 0,33 l",
+    "price": 300,
+    "tags": []
+   },
+   {
+    "id": "longdrink",
+    "name": "Longdrink",
+    "price": 900,
+    "tags": [
+     "alcohol"
+    ]
+   },
+   {
+    "id": "mate_bar",
+    "name": "Mate",
+    "price": 400,
+    "tags": [
+     "caffeine"
+    ]
+   }
+  ],
+  "too_poor": "Sorry, das reicht nicht. Kostet %s.",
+  "bought": "%s, bitte. %s."
+ },
+ "lea": {
+  "contact_id": "unbekannt",
+  "name": "Lea",
+  "stand": [
+   -2.6,
+   -4.4
+  ],
+  "dialogue": [
+   {
+    "text": "Hey! Du bist der von draußen aus der Schlange, oder?",
+    "options": [
+     {
+      "label": "Ja. Ich bin neu in Köln.",
+      "reply": "Neu hier? Dann willkommen am Ring. Ich bin Lea.",
+      "social": 1,
+      "reveal_name": true
+     },
+     {
+      "label": "Kann sein. Wer will das wissen?",
+      "reply": "Okay, okay ... cool bleiben. Ich bin Lea.",
+      "social": 0,
+      "reveal_name": true
+     },
+     {
+      "label": "Lass mich in Ruhe.",
+      "reply": "Wow. Na dann, schönen Abend noch.",
+      "social": -1,
+      "reveal_name": false
+     }
+    ]
+   }
+  ],
+  "after": "Lea: Wir sehen uns bestimmt nochmal. Schreib mir!"
+ },
+ "bartender": {
+  "stand": [
+   -6.6,
+   -6.2
+  ]
+ },
+ "ambient_energy": 1.6,
+ "wall_color": [
+  0.09,
+  0.07,
+  0.12
+ ],
+ "led_strip_color": [
+  1.0,
+  0.15,
+  0.65
+ ]
+}

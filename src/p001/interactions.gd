@@ -10,6 +10,11 @@ extends Node
 
 ## Emitted when the bouncer lets the player in (main.gd turns it into a phone message).
 signal club_admitted
+## Emitted when the player walks into / out of the club interior (audio switch in main.gd).
+signal club_entered
+signal club_left
+## Emitted after the conversation with Lea; `reveal` = she told her name.
+signal lea_met(reveal: bool, name: String)
 
 const RADIUS := 1.9
 
@@ -24,6 +29,11 @@ var ui: StrayUi
 ## Game clock (opening hours). Without one, the club counts as open whenever it is night.
 var clock: StrayGameClock
 var phone_cfg: Dictionary = {}
+## Club interior (set by main.gd before setup); null = no interior.
+var club: StrayClubInterior
+var bar_shop: StrayKioskShop
+var active_shop: StrayKioskShop
+var lea_talked := false
 ## Seconds the player has waited at the queue end (reset when they walk away).
 var queued_seconds: float = 0.0
 var points: Dictionary = {}  # id -> Vector3 (Godot)
@@ -58,6 +68,11 @@ func setup(p_layout: StrayStreetLayout, p_econ: Dictionary, p_player: StrayPlaye
 	life.reputation_changed.connect(func(_a, _v): ui.set_status(life))
 	ui.set_status(life)
 	ui.shop_choice.connect(_on_shop_choice)
+	ui.option_chosen.connect(_on_option)
+	if club:
+		bar_shop = StrayKioskShop.new(club.cfg.get("bar_menu", {}))
+		for id in ["bar", "lea", "exit"]:
+			points["club_" + id] = club.points[id]
 	ui.interact_pressed.connect(interact)
 	print("STRAY_DIAG interactions kiosk=%s club_door=%s queue_end=%s cash=%s" % [
 		points["kiosk"], points["club_door"], points["queue_end"], StrayLifeState.euro(life.cash_cents)])
@@ -146,6 +161,12 @@ func _physics_process(delta: float) -> void:
 			prompt = "[E] Kiosk"
 		"club_door":
 			prompt = "[E] Mit dem Türsteher reden"
+		"club_bar":
+			prompt = "[E] Bar"
+		"club_lea":
+			prompt = "[E] Ansprechen"
+		"club_exit":
+			prompt = "[E] Rausgehen"
 		_ when current.begins_with("atm_"):
 			prompt = "[E] Geldautomat (%s abheben)" % StrayLifeState.euro(int(phone_cfg.get("bank", {}).get("atm_withdraw_cents", 2000)))
 	if night and queued_seconds > 0.0 and current.is_empty() and _flat_dist(pp, points["queue_end"]) < 2.0:
@@ -166,12 +187,13 @@ func interact() -> void:
 		return
 	match current:
 		"kiosk":
-			if shop_open:
-				_close_shop()
-			else:
-				shop_open = true
-				player.input_enabled = false
-				ui.open_shop(econ["kiosk"].get("title", "KIOSK"), econ["kiosk"].get("greeting", ""), shop.items())
+			_open_menu(shop, econ["kiosk"])
+		"club_bar":
+			_open_menu(bar_shop, club.cfg.get("bar_menu", {}))
+		"club_lea":
+			_talk_to_lea()
+		"club_exit":
+			leave_club()
 		"club_door":
 			last_door_result = door.decide(life, club_is_open(), queued_seconds)
 			ui.show_message("Türsteher", last_door_result.text)
@@ -180,8 +202,11 @@ func interact() -> void:
 			if last_door_result.admitted:
 				queued_seconds = 0.0
 				club_admitted.emit()
-				await get_tree().create_timer(2.5).timeout
-				ui.show_message("", String(econ.get("club", {}).get("lines", {}).get("inside", "")), 6.0)
+				await get_tree().create_timer(1.5).timeout
+				if club:
+					enter_club()
+				else:
+					ui.show_message("", String(econ.get("club", {}).get("lines", {}).get("inside", "")), 6.0)
 
 
 ## True during the club's opening hours (game clock), or at night when there is no clock.
@@ -199,9 +224,74 @@ func withdraw_at_atm() -> bool:
 	return ok
 
 
+func _open_menu(which: StrayKioskShop, menu_cfg: Dictionary) -> void:
+	if shop_open:
+		_close_shop()
+		return
+	active_shop = which
+	shop_open = true
+	player.input_enabled = false
+	ui.open_shop(menu_cfg.get("title", ""), menu_cfg.get("greeting", ""), which.items())
+
+
+## Moves the player into the club interior, just inside the exit door, facing the room.
+func enter_club() -> void:
+	player.global_position = club.points["exit"] + Vector3(0, 0.95, -0.6)
+	player.velocity = Vector3.ZERO
+	player.face_yaw(0.0)
+	life.flags["inside_club"] = true
+	club.visible = true
+	club_entered.emit()
+	ui.show_message("", "NACHTFLUG – drinnen. Bar links, Tanzfläche in der Mitte.", 4.0)
+	print("STRAY_DIAG club entered pos=%s" % player.global_position)
+
+
+## Back to the street, in front of the club door.
+func leave_club() -> void:
+	var c := _frame(layout.club)
+	player.global_position = _gp(c.pos + c.n * 1.6 + c.t * 1.0) + Vector3(0, 0.95, 0)
+	player.velocity = Vector3.ZERO
+	var out := StrayStreetLayout.en_dir_to_godot(c.n)
+	player.face_yaw(atan2(-out.x, -out.z))
+	life.flags["inside_club"] = false
+	club_left.emit()
+	print("STRAY_DIAG club left pos=%s" % player.global_position)
+
+
+func _talk_to_lea() -> void:
+	var lea: Dictionary = club.cfg.get("lea", {})
+	if lea_talked:
+		ui.show_message("", String(lea.get("after", "")), 4.0)
+		return
+	var node: Dictionary = lea.get("dialogue", [{}])[0]
+	var labels: Array = []
+	for o in node.get("options", []):
+		labels.append(o.get("label", "..."))
+	shop_open = true
+	active_shop = null
+	player.input_enabled = false
+	ui.open_options("???", String(node.get("text", "")), labels)
+
+
+func _on_option(index: int) -> void:
+	var lea: Dictionary = club.cfg.get("lea", {})
+	var opts: Array = lea.get("dialogue", [{}])[0].get("options", [])
+	if index < 0 or index >= opts.size():
+		return
+	var o: Dictionary = opts[index]
+	life.change_reputation("social", int(o.get("social", 0)))
+	lea_talked = true
+	_close_shop()
+	var reveal: bool = o.get("reveal_name", false)
+	ui.show_message(String(lea.get("name", "Lea")) if reveal else "???", String(o.get("reply", "")), 5.0)
+	lea_met.emit(reveal, String(lea.get("name", "Lea")))
+	print("STRAY_DIAG lea option=%d social=%d reveal=%s" % [index, int(life.reputation["social"]), reveal])
+
+
 func buy(item_id: String) -> Dictionary:
-	var r := shop.buy(life, item_id)
-	ui.show_message("Kiosk", r.text, 3.5)
+	var which := active_shop if active_shop else shop
+	var r := which.buy(life, item_id)
+	ui.show_message("Bar" if which == bar_shop else "Kiosk", r.text, 3.5)
 	print("STRAY_DIAG kiosk item=%s ok=%s cash=%s" % [item_id, r.ok, StrayLifeState.euro(life.cash_cents)])
 	return r
 

@@ -5,6 +5,8 @@
                                             passing-car swells, faint high-frequency air
   assets/audio/p001/club_bass_loop.wav      8 bars @ 124 BPM, heard through a wall:
                                             kick + offbeat bass + muffled hats, low-passed
+  assets/audio/p001/club_music_loop.wav     same groove inside the club: full range, open hats,
+                                            clap, minor chord stabs
 Deterministic (fixed seeds). Mono, 44.1 kHz, 16 bit.
 Run: python3 tools/audio/synth_p001.py   (also prints loudness / spectrum checks)
 """
@@ -86,7 +88,7 @@ def city_ambience(seconds: float = 30.0) -> np.ndarray:
     return normalise(make_loop(x), -9.0)
 
 
-def club_bass(bpm: float = 124.0, bars: int = 8) -> np.ndarray:
+def club_bass(bpm: float = 124.0, bars: int = 8, through_wall: bool = True) -> np.ndarray:
     rng = np.random.default_rng(64)
     beat = 60.0 / bpm
     n = int(round(bars * 4 * beat * SR))
@@ -117,12 +119,38 @@ def club_bass(bpm: float = 124.0, bars: int = 8) -> np.ndarray:
         ln = int(0.05 * SR)
         if i + ln <= n:
             hats[i:i + ln] += rng.standard_normal(ln) * np.exp(-np.arange(ln) / SR * 80.0)
-    x += highpass(hats, 6000.0) * 0.08
-    # "Through the wall": strong low-pass, a little room smear.
-    x = lowpass(x, 220.0, 3)
-    smear = np.convolve(x, np.exp(-np.arange(int(0.08 * SR)) / (0.02 * SR)), mode="full")[:n]
-    x = 0.7 * x + 0.3 * smear / np.max(np.abs(smear))
-    return normalise(x, -3.0)
+    x += highpass(hats, 6000.0) * (0.08 if through_wall else 0.06)
+    if through_wall:
+        # "Through the wall": strong low-pass, a little room smear.
+        x = lowpass(x, 220.0, 3)
+        smear = np.convolve(x, np.exp(-np.arange(int(0.08 * SR)) / (0.02 * SR)), mode="full")[:n]
+        x = 0.7 * x + 0.3 * smear / np.max(np.abs(smear))
+        return normalise(x, -3.0)
+    # Inside: open hats on the offbeat, a minor-chord stab every 2 beats, clap on 2 and 4.
+    for b in range(bars * 4):
+        i = int((b + 0.5) * beat * SR)
+        ln = int(0.12 * SR)
+        if i + ln <= n:
+            x[i:i + ln] += highpass(rng.standard_normal(ln), 7000.0) * np.exp(-np.arange(ln) / SR * 25.0) * 0.035
+        if b % 2 == 1:
+            j = int(b * beat * SR)
+            cl = int(0.15 * SR)
+            if j + cl <= n:
+                x[j:j + cl] += lowpass(highpass(rng.standard_normal(cl), 900.0), 3000.0) * np.exp(-np.arange(cl) / SR * 30.0) * 0.35
+    chords = [[220.0, 261.63, 329.63], [196.0, 246.94, 293.66], [174.61, 220.0, 261.63], [196.0, 246.94, 329.63]]
+    for b in range(0, bars * 4, 2):
+        i = int((b + 0.75) * beat * SR)
+        ln = int(0.18 * SR)
+        if i + ln > n:
+            break
+        ct = np.arange(ln) / SR
+        stab = sum(np.sign(np.sin(2 * np.pi * f * ct)) for f in chords[(b // 8) % len(chords)])
+        x[i:i + ln] += lowpass(stab, 1800.0, 2) * np.exp(-ct * 14.0) * 0.12
+    x = lowpass(x, 7000.0, 2)                      # tame the top end (club PA, not a hi-fi)
+    fade = int(0.004 * SR)                          # 4 ms fade at the loop seam: no click
+    x[-fade:] *= np.linspace(1.0, 0.0, fade)
+    x[:fade] *= np.linspace(0.0, 1.0, fade)
+    return normalise(x, -1.5)
 
 
 def report(name: str, x: np.ndarray) -> None:
@@ -138,10 +166,13 @@ def report(name: str, x: np.ndarray) -> None:
 def main() -> None:
     city = city_ambience()
     club = club_bass()
+    inside = club_bass(through_wall=False)
     write_wav(OUT / "city_ambience_loop.wav", city)
     write_wav(OUT / "club_bass_loop.wav", club)
+    write_wav(OUT / "club_music_loop.wav", inside)
     report("city_ambience_loop", city)
     report("club_bass_loop", club)
+    report("club_music_loop", inside)
 
 
 if __name__ == "__main__":

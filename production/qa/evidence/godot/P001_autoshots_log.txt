@@ -7,6 +7,7 @@ STRAY_DIAG audio city=true club=true club_pos=(-18.62559, 1.483146, -65.92776) f
 STRAY_DIAG pedestrians walkers=15 queue=5
 STRAY_DIAG traffic cars=12 lanes=4
 STRAY_DIAG hud touch_controls=false
+STRAY_DIAG club_interior origin=(0.0, -60.0, 0.0) dancers=12 lights=4
 STRAY_DIAG interactions kiosk=(12.33402, -0.059635, -45.33917) club_door=(-17.64324, -0.138483, -65.74069) queue_end=(-15.38415, -0.187471, -71.72371) cash=35,00 €
 STRAY_DIAG phone clock=23:10 messages=2 contacts=2 account=120,00 €
 STRAY_DIAG ground_check on_floor=true gap_m=0.000 pos=(-23.221, 0.847268, -24.027)
@@ -35,4 +36,10 @@ STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_20_phone_
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_21_phone_map.png err=0 size=(1280, 720)
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_22_phone_messages.png err=0 size=(1280, 720)
 STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_23_phone_bank.png err=0 size=(1280, 720)
+STRAY_DIAG club entered pos=(0.0, -59.05, 5.2)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_30_club_dancefloor.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_31_club_bar.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/home/user/Stray/production/qa/evidence/godot/P001_32_club_lea_dialogue.png err=0 size=(1280, 720)
+STRAY_DIAG lea option=0 social=1 reveal=true
+STRAY_DIAG club left pos=(-17.83031, 0.813221, -64.75835)
 STRAY_DIAG autoshots=done dir=/home/user/Stray/production/qa/evidence/godot

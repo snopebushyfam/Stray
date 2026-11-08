@@ -12,6 +12,7 @@ const AUDIO_CONFIG := "res://data/p001/audio_config.json"
 const NPC_CONFIG := "res://data/p001/npc_config.json"
 const ECONOMY_CONFIG := "res://data/p001/economy_config.json"
 const PHONE_CONFIG := "res://data/p001/phone_config.json"
+const CLUB_CONFIG := "res://data/p001/club_interior.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
@@ -25,6 +26,7 @@ var interactions: StrayInteractions
 var clock: StrayGameClock
 var messages: StrayMessages
 var phone: StrayPhone
+var club: StrayClubInterior
 
 
 func _ready() -> void:
@@ -68,6 +70,12 @@ func _ready() -> void:
 	interactions.name = "Interactions"
 	interactions.clock = clock
 	interactions.phone_cfg = phone_cfg
+	club = StrayClubInterior.new()
+	club.name = "ClubInterior"
+	add_child(club)
+	club.setup(_load_json(CLUB_CONFIG), player_cfg.get("character", {}))
+	club.visible = false
+	interactions.club = club
 	add_child(interactions)
 	interactions.setup(builder.layout, _load_json(ECONOMY_CONFIG), player, builder, ui, player_cfg.get("character", {}))
 	_build_phone(phone_cfg)
@@ -117,10 +125,29 @@ func _build_phone(phone_cfg: Dictionary) -> void:
 		ui.status_label.visible = not open)  # the phone covers the top-right HUD; it shows time + money itself
 	messages.received.connect(func(m): if not phone.is_open: ui.show_message("📱 %s" % m.name, m.text, 5.0))
 	interactions.club_admitted.connect(func(): messages.trigger("club_admitted", clock.hhmm()))
+	interactions.club_entered.connect(_on_club_entered)
+	interactions.club_left.connect(_on_club_left)
+	interactions.lea_met.connect(func(reveal, lea_name):
+		if reveal and messages.contacts.has("unbekannt"):
+			messages.contacts["unbekannt"]["name"] = lea_name
+			messages.contacts["unbekannt"]["known"] = true)
 	interactions.life.cash_changed.connect(func(c): messages.check_cash(c, clock.hhmm()))
 	messages.trigger("start", clock.hhmm())
 	print("STRAY_DIAG phone clock=%s messages=%d contacts=%d account=%s" % [clock.hhmm(), messages.inbox.size(),
 		messages.known_contacts().size(), StrayLifeState.euro(interactions.life.account_cents)])
+
+
+func _on_club_entered() -> void:
+	club_audio.stop()
+	city_audio.volume_db -= 18.0
+	club.music.play()
+
+
+func _on_club_left() -> void:
+	club.music.stop()
+	city_audio.volume_db += 18.0
+	club_audio.play()
+	club.visible = false
 
 
 func _physics_process(_delta: float) -> void:
@@ -321,5 +348,21 @@ func _run_autoshots() -> void:
 		phone.open_app(app)
 		await _snap(dir, "P001_2%d_phone_%s.png" % [["home", "map", "messages", "bank"].find(app), app])
 	phone.toggle()
+	# Club interior: entrance view over the dance floor, the bar, then Lea's dialogue.
+	interactions.enter_club()
+	await get_tree().create_timer(1.0).timeout
+	await _snap(dir, "P001_30_club_dancefloor.png")
+	player.global_position = interactions.points["club_bar"] + Vector3(1.5, 0.95, 2.5)
+	player.face_yaw(deg_to_rad(30.0))
+	await get_tree().create_timer(0.8).timeout
+	await _snap(dir, "P001_31_club_bar.png")
+	player.global_position = interactions.points["club_lea"] + Vector3(0, 0.95, 0.4)
+	player.face_yaw(0.0)
+	await get_tree().create_timer(0.6).timeout
+	interactions.current = "club_lea"
+	interactions.interact()
+	await _snap(dir, "P001_32_club_lea_dialogue.png")
+	interactions._on_option(0)
+	interactions.leave_club()
 	print("STRAY_DIAG autoshots=done dir=%s" % dir)
 	get_tree().quit()

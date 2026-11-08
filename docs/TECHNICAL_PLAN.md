@@ -111,6 +111,22 @@ Nachrichten nur einmal), `phone_test` 17/17. Beim Lauf gefunden und behoben: Typ
 das offene Handy verdeckte die Geldanzeige; ein Rechenfehler in einem Test (6 h statt 60 min vorgespult —
 die Uhr war richtig). Offen: Miete hat noch keine Fälligkeit/Folge, Jobs nicht annehmbar, Akku ohne Wirkung.
 
+**Club-Innenraum NACHTFLUG (2026-11-08, gespielt + getestet):**
+
+| | Umsetzung |
+|---|---|
+| Raum | `club_interior.gd`: geschlossener Raum 18 × 14 × 5 m unter der Straße (unsichtbar bis zum Einlass); Wände, Decke, LED-Leisten, Notausgang-Schild |
+| Tanzfläche | 6 × 6 leuchtende Felder, Farbwechsel im Takt (124 BPM), 4 drehende Farbstrahler, 12 Tanzende (Dance / Idle_Talking), DJ am Pult |
+| Bar | Theke, Flaschenregal, Barkeeper; Clubpreise (Kölsch 3,50 €, Wasser 3,00 €, Longdrink 9,00 €, Mate 4,00 €) über dieselbe Kauflogik wie der Kiosk |
+| Lea | „Persistente“ NPC-Anlage: Dialog mit 3 Antworten → sozialer Ruf +1 / 0 / −1, bei freundlicher/neutraler Antwort erscheint die unbekannte Nummer als „Lea“ in den Kontakten |
+| Ablauf | Einlass → nach 1,5 s drinnen am Ausgang; „[E] Rausgehen“ → vor der Clubtür; drinnen Clubmusik (`club_music_loop.wav`, voll), draußen gedämpfter Bass + Stadt |
+| Daten | `data/p001/club_interior.json` (Raum, Licht, Tänzer, Barkarte, Dialog) |
+
+Test `club_test` 16/16 (Einlass → drinnen und auf dem Boden, Musik-Wechsel, Bar-Preis, Lea-Dialog,
+Kontakt, raus auf die Straße). Beim Sichttest gefunden und behoben: Raum zu dunkel, Lea stand halb in
+der Theke, Barkeeper fehlte, Clubmusik zu hell (9,4 kHz → 1,7 kHz) mit Klick am Schleifenpunkt.
+Offen: Lea hat nur einen Dialogschritt; Tanzen für den Spieler; Getränke ohne Wirkung.
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

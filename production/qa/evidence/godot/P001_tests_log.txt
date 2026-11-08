@@ -68,5 +68,22 @@ PASS ATM booking recorded
 PASS N jumps to 14:00 with daylight
 PASS back to 23:30, night, club open
 RESULT phone_test passed=17 failed=0
+PASS interior hidden while outside
+PASS admitted -> inside the club
+PASS player is in the interior (y=-59.1)
+PASS standing on the club floor
+PASS club music on, street bass off
+PASS 12 dancers on the floor
+PASS bar prompt
+PASS bar menu open
+PASS Kölsch at the bar costs 3,50 €
+PASS Lea prompt
+PASS dialogue options shown
+PASS friendly answer: social +1
+PASS Lea saved in contacts
+PASS dialogue closed, movement back
+PASS back on the street (y=0.8)
+PASS street audio back, interior hidden
+RESULT club_test passed=16 failed=0
 python data tests: OK
 ALL_TESTS_EXIT=0
