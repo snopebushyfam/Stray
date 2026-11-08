@@ -2980,6 +2980,775 @@
    }
   ]
  },
+ "furniture": {
+  "traffic_signals": [
+   {
+    "s": -41.4,
+    "source": "osm",
+    "ford_s": -44.0
+   }
+  ],
+  "crossings": [
+   {
+    "s": -34.52,
+    "v": 16.52,
+    "source": "osm"
+   },
+   {
+    "s": -48.23,
+    "v": 4.66,
+    "source": "osm"
+   },
+   {
+    "s": -48.39,
+    "v": -3.37,
+    "source": "osm"
+   }
+  ],
+  "trees": [
+   {
+    "en": [
+     -14.215,
+     -45.309
+    ],
+    "source": "osm"
+   },
+   {
+    "en": [
+     -34.948,
+     -40.735
+    ],
+    "source": "osm"
+   }
+  ],
+  "waste_baskets": [
+   {
+    "en": [
+     4.085,
+     37.736
+    ],
+    "source": "osm"
+   },
+   {
+    "en": [
+     -17.509,
+     41.644
+    ],
+    "source": "osm"
+   }
+  ],
+  "bicycle_parking": [
+   {
+    "en": [
+     2.982,
+     56.394
+    ],
+    "s": 58.8,
+    "v": 6.81,
+    "source": "osm"
+   },
+   {
+    "en": [
+     10.34,
+     93.032
+    ],
+    "s": 96.17,
+    "v": 7.0,
+    "source": "osm"
+   }
+  ],
+  "entrances": [
+   {
+    "en": [
+     -3.686,
+     -44.652
+    ],
+    "normal_en": [
+     -0.983,
+     0.186
+    ],
+    "s": -41.65,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     17.795,
+     68.012
+    ],
+    "normal_en": [
+     -0.981,
+     0.196
+    ],
+    "s": 73.04,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     4.24,
+     -1.399
+    ],
+    "normal_en": [
+     -0.983,
+     0.185
+    ],
+    "s": 2.32,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     6.618,
+     9.887
+    ],
+    "normal_en": [
+     -0.983,
+     0.186
+    ],
+    "s": 13.86,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     3.369,
+     -7.349
+    ],
+    "normal_en": [
+     -0.983,
+     0.185
+    ],
+    "s": -3.68,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     19.87,
+     78.924
+    ],
+    "normal_en": [
+     -0.984,
+     0.177
+    ],
+    "s": 84.15,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     22.618,
+     93.573
+    ],
+    "normal_en": [
+     -0.982,
+     0.189
+    ],
+    "s": 99.06,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     16.27,
+     60.375
+    ],
+    "normal_en": [
+     -0.981,
+     0.196
+    ],
+    "s": 65.26,
+    "kind": "shop",
+    "source": "osm"
+   },
+   {
+    "en": [
+     0.946,
+     -20.217
+    ],
+    "normal_en": [
+     -0.983,
+     0.185
+    ],
+    "s": -16.78,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     3.891,
+     -4.571
+    ],
+    "normal_en": [
+     -0.983,
+     0.185
+    ],
+    "s": -0.86,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     7.197,
+     12.953
+    ],
+    "normal_en": [
+     -0.983,
+     0.186
+    ],
+    "s": 16.98,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     7.621,
+     15.199
+    ],
+    "normal_en": [
+     -0.983,
+     0.186
+    ],
+    "s": 19.26,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     8.294,
+     18.769
+    ],
+    "normal_en": [
+     -0.983,
+     0.185
+    ],
+    "s": 22.89,
+    "kind": "staircase",
+    "source": "osm"
+   },
+   {
+    "en": [
+     10.46,
+     30.218
+    ],
+    "normal_en": [
+     -0.982,
+     0.188
+    ],
+    "s": 34.55,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     11.01,
+     33.084
+    ],
+    "normal_en": [
+     -0.982,
+     0.188
+    ],
+    "s": 37.46,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     13.813,
+     47.755
+    ],
+    "normal_en": [
+     -0.982,
+     0.187
+    ],
+    "s": 52.4,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     15.475,
+     56.399
+    ],
+    "normal_en": [
+     -0.981,
+     0.196
+    ],
+    "s": 61.2,
+    "kind": "staircase",
+    "source": "osm"
+   },
+   {
+    "en": [
+     20.505,
+     82.451
+    ],
+    "normal_en": [
+     -0.984,
+     0.177
+    ],
+    "s": 87.74,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     18.617,
+     72.127
+    ],
+    "normal_en": [
+     -0.981,
+     0.196
+    ],
+    "s": 77.24,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     8.835,
+     21.638
+    ],
+    "normal_en": [
+     -0.983,
+     0.185
+    ],
+    "s": 25.81,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     -31.001,
+     4.176
+    ],
+    "normal_en": [
+     0.982,
+     -0.187
+    ],
+    "s": 1.02,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     -32.6,
+     -4.18
+    ],
+    "normal_en": [
+     0.982,
+     -0.188
+    ],
+    "s": -7.48,
+    "kind": "yes",
+    "source": "osm"
+   },
+   {
+    "en": [
+     5.235,
+     2.991
+    ],
+    "normal_en": [
+     -0.983,
+     0.185
+    ],
+    "s": 6.82,
+    "kind": "yes",
+    "source": "osm"
+   }
+  ],
+  "cameras": [
+   {
+    "en": [
+     -17.593,
+     74.588
+    ],
+    "normal_en": [
+     0.983,
+     -0.185
+    ],
+    "source": "osm"
+   }
+  ],
+  "parked_cars": [
+   {
+    "en": [
+     -28.413,
+     -25.167
+    ],
+    "s": -27.27,
+    "side": -1,
+    "length": 4.2,
+    "color": [
+     0.3,
+     0.31,
+     0.33
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -26.211,
+     -13.921
+    ],
+    "s": -15.82,
+    "side": -1,
+    "length": 4.4,
+    "color": [
+     0.14,
+     0.2,
+     0.16
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -23.727,
+     -1.228
+    ],
+    "s": -2.88,
+    "side": -1,
+    "length": 4.8,
+    "color": [
+     0.85,
+     0.86,
+     0.87
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -22.61,
+     4.478
+    ],
+    "s": 2.93,
+    "side": -1,
+    "length": 4.2,
+    "color": [
+     0.1,
+     0.12,
+     0.2
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -21.509,
+     10.105
+    ],
+    "s": 8.67,
+    "side": -1,
+    "length": 4.6,
+    "color": [
+     0.45,
+     0.06,
+     0.05
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -20.145,
+     17.073
+    ],
+    "s": 15.77,
+    "side": -1,
+    "length": 4.6,
+    "color": [
+     0.55,
+     0.56,
+     0.58
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -18.963,
+     23.108
+    ],
+    "s": 21.92,
+    "side": -1,
+    "length": 4.4,
+    "color": [
+     0.45,
+     0.06,
+     0.05
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -17.666,
+     29.734
+    ],
+    "s": 28.67,
+    "side": -1,
+    "length": 4.8,
+    "color": [
+     0.1,
+     0.12,
+     0.2
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -16.352,
+     36.449
+    ],
+    "s": 35.51,
+    "side": -1,
+    "length": 4.6,
+    "color": [
+     0.45,
+     0.06,
+     0.05
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -14.999,
+     43.361
+    ],
+    "s": 42.55,
+    "side": -1,
+    "length": 4.4,
+    "color": [
+     0.45,
+     0.06,
+     0.05
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -13.834,
+     49.313
+    ],
+    "s": 48.62,
+    "side": -1,
+    "length": 4.8,
+    "color": [
+     0.85,
+     0.86,
+     0.87
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -12.514,
+     56.057
+    ],
+    "s": 55.49,
+    "side": -1,
+    "length": 4.6,
+    "color": [
+     0.3,
+     0.31,
+     0.33
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -11.128,
+     63.138
+    ],
+    "s": 62.71,
+    "side": -1,
+    "length": 4.8,
+    "color": [
+     0.3,
+     0.31,
+     0.33
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -6.251,
+     88.056
+    ],
+    "s": 88.1,
+    "side": -1,
+    "length": 4.2,
+    "color": [
+     0.7,
+     0.68,
+     0.62
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -3.967,
+     99.724
+    ],
+    "s": 99.99,
+    "side": -1,
+    "length": 4.8,
+    "color": [
+     0.14,
+     0.2,
+     0.16
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -11.766,
+     -26.848
+    ],
+    "s": -25.73,
+    "side": 1,
+    "length": 4.2,
+    "color": [
+     0.7,
+     0.68,
+     0.62
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -9.437,
+     -14.952
+    ],
+    "s": -13.61,
+    "side": 1,
+    "length": 4.8,
+    "color": [
+     0.3,
+     0.31,
+     0.33
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -5.874,
+     3.251
+    ],
+    "s": 4.94,
+    "side": 1,
+    "length": 4.6,
+    "color": [
+     0.02,
+     0.02,
+     0.025
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -4.609,
+     9.714
+    ],
+    "s": 11.53,
+    "side": 1,
+    "length": 4.4,
+    "color": [
+     0.14,
+     0.2,
+     0.16
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     -3.411,
+     15.835
+    ],
+    "s": 17.77,
+    "side": 1,
+    "length": 4.8,
+    "color": [
+     0.14,
+     0.2,
+     0.16
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     1.695,
+     41.922
+    ],
+    "s": 44.35,
+    "side": 1,
+    "length": 4.2,
+    "color": [
+     0.02,
+     0.02,
+     0.025
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     6.217,
+     65.024
+    ],
+    "s": 67.89,
+    "side": 1,
+    "length": 4.6,
+    "color": [
+     0.45,
+     0.06,
+     0.05
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     7.449,
+     71.318
+    ],
+    "s": 74.3,
+    "side": 1,
+    "length": 4.6,
+    "color": [
+     0.45,
+     0.06,
+     0.05
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     8.546,
+     76.923
+    ],
+    "s": 80.01,
+    "side": 1,
+    "length": 4.4,
+    "color": [
+     0.02,
+     0.02,
+     0.025
+    ],
+    "source": "procedural"
+   },
+   {
+    "en": [
+     9.686,
+     82.748
+    ],
+    "s": 85.95,
+    "side": 1,
+    "length": 4.6,
+    "color": [
+     0.3,
+     0.31,
+     0.33
+    ],
+    "source": "procedural"
+   }
+  ]
+ },
  "kiosk": {
   "label": "KIOSK",
   "s": 48.0,
@@ -3124,7 +3893,8 @@
    "building geometry, heights and facade lines: Geobasis NRW LoD2 tile LoD2_32_355_5645_1_NW.gml",
    "street axis + carriageway centrelines: OpenStreetMap ways named Hohenzollernring (highway=primary)",
    "kiosk facade: ground floor of a real LoD2 building; position chosen near an OSM shop=kiosk node",
-   "terrain + street longitudinal profile, crown and kerb heights: Geobasis NRW DGM1 tile dgm1_32_355_5645_1_nw_2022.tif"
+   "terrain + street longitudinal profile, crown and kerb heights: Geobasis NRW DGM1 tile dgm1_32_355_5645_1_nw_2022.tif",
+   "traffic signal, crossing, trees, waste baskets, bike racks, building entrances, cameras: OSM nodes"
   ],
   "assumed": [
    "lane widths (3.4 m), median (1.2 m), parking strip (2.0 m)",
@@ -3132,6 +3902,7 @@
    "sidewalk cross-fall: linear from kerb to the median facade line, facade height >= LoD2 base",
    "street lamp positions/spacing/intensity (procedural, NOT from OSM - only few lamps are mapped)",
    "shopfront/window placement and colours (procedural, deterministic seed)",
+   "parked cars: procedural (seed 5150), kept clear of the OSM signal and bike racks",
    "NACHTFLUG and KIOSK signage are fictional; no real business is represented"
   ],
   "osm_carriageway_offsets_m": [

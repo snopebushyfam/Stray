@@ -231,6 +231,74 @@ def write_terrain(dgm: Dgm, fr: Frame, cross: dict, profile, s0, s1, min_en, max
             "z_min": round(zmin, 3), "z_max": round(zmax, 3), "carved_vertices": carved}
 
 
+def osm_nodes(path: Path, fr: Frame, s0: float, s1: float):
+    """Tagged OSM nodes near the segment, as (s, v, tags) in the street frame."""
+    import pyproj
+    t = pyproj.Transformer.from_crs(4326, 25832, always_xy=True)
+    out = []
+    for n in ET.parse(path).getroot().iter("node"):
+        tags = {k.get("k"): k.get("v") for k in n.iter("tag")}
+        if not tags:
+            continue
+        x, y = t.transform(float(n.get("lon")), float(n.get("lat")))
+        s, v = fr.sv((x - ORIGIN[0], y - ORIGIN[1]))
+        if s0 - 8 <= s <= s1 + 8 and abs(v) < 26:
+            out.append((float(s), float(v), tags))
+    return out
+
+
+def street_furniture(nodes, fr: Frame, buildings, cross: dict, s0: float, s1: float, rng: random.Random,
+                     keep_clear=()):
+    """Street furniture: real OSM positions where mapped, plus clearly marked procedural parked cars."""
+    k = cross["kerb_half_width"]
+    inside = lambda s: s0 + 0.5 <= s <= s1 - 0.5
+    f = {"traffic_signals": [], "crossings": [], "trees": [], "waste_baskets": [], "bicycle_parking": [],
+         "entrances": [], "cameras": [], "parked_cars": []}
+    for s, v, tg in nodes:
+        en = r2(fr.en(s, v))
+        if tg.get("highway") == "traffic_signals" and inside(s):
+            f["traffic_signals"].append({"s": round(s, 2), "source": "osm"})
+        elif tg.get("highway") == "crossing":
+            f["crossings"].append({"s": round(s, 2), "v": round(v, 2), "source": "osm"})
+        elif tg.get("natural") == "tree" and inside(s):
+            f["trees"].append({"en": en, "source": "osm"})
+        elif tg.get("amenity") == "waste_basket" and inside(s):
+            f["waste_baskets"].append({"en": en, "source": "osm"})
+        elif tg.get("amenity") == "bicycle_parking" and inside(s):
+            f["bicycle_parking"].append({"en": en, "s": round(s, 2), "v": round(v, 2), "source": "osm"})
+        elif "entrance" in tg and inside(s) and abs(v) > k:
+            hit = facade_hit(fr, buildings, s, 1 if v > 0 else -1)
+            if hit and abs(hit[0] - v) < 2.5:  # snap the door onto the real facade
+                f["entrances"].append({"en": r2(hit[1]), "normal_en": r2(hit[2]), "s": round(s, 2),
+                                       "kind": tg.get("entrance"), "source": "osm"})
+        elif tg.get("man_made") == "surveillance" and inside(s):
+            hit = facade_hit(fr, buildings, s, 1 if v > 0 else -1)
+            if hit:
+                f["cameras"].append({"en": r2(hit[1]), "normal_en": r2(hit[2]), "source": "osm"})
+    # Signalised crossing: OSM maps the crossing just south of the segment and the signal at
+    # s = -41.4; the pedestrian ford is drawn 3 m south of the signal inside the segment.
+    for sig in f["traffic_signals"]:
+        sig["ford_s"] = round(max(sig["s"] - 3.0, s0 + 1.0), 2)
+    # Parked cars (procedural, deterministic): parking strips between edge line and kerb.
+    blocked = [(c["s"], 0) for c in f["traffic_signals"]] + [(b["s"], 1 if b["v"] > 0 else -1) for b in f["bicycle_parking"]]
+    lane_v = (cross["carriageway_half_width"] + k) / 2.0
+    palette = [[0.02, 0.02, 0.025], [0.55, 0.56, 0.58], [0.85, 0.86, 0.87], [0.10, 0.12, 0.20],
+               [0.30, 0.31, 0.33], [0.45, 0.06, 0.05], [0.14, 0.20, 0.16], [0.70, 0.68, 0.62]]
+    for side in (-1, 1):
+        s = s0 + 4.0
+        while s < s1 - 4.0:
+            length = rng.choice([4.2, 4.4, 4.6, 4.8])
+            mid = s + length / 2
+            near_block = any(abs(mid - bs) < 8.0 and (bside in (0, side)) for bs, bside in blocked) \
+                or any(math.hypot(mid - ks, side * lane_v - kv) < 4.5 for ks, kv in keep_clear)
+            if not near_block and rng.random() > 0.22:
+                f["parked_cars"].append({"en": r2(fr.en(s + length / 2, side * lane_v)), "s": round(s + length / 2, 2),
+                                         "side": side, "length": length, "color": rng.choice(palette),
+                                         "source": "procedural"})
+            s += length + rng.uniform(0.7, 2.6)
+    return f
+
+
 def r2(x):
     return [round(float(x[0]), 3), round(float(x[1]), 3)]
 
@@ -340,6 +408,12 @@ def main():
                         windows.append({"en": r2(pt), "normal_en": r2(n), "z": round(4.4 + f * 3.2 + 0.9, 2),
                                         "warm": rng.random() < 0.75})
 
+    # Camera viewpoints (defined below) must not end up inside a parked car.
+    view_eyes = [(club["s"] - 13, club["facade_v"] + 13.0), (kiosk["s"] - 12, kiosk["facade_v"] - 11.0)]
+    furniture = street_furniture(osm_nodes(a.osm, fr, s0, s1), fr, buildings, cross, s0, s1, random.Random(5150),
+                                 keep_clear=view_eyes)
+    print("furniture:", {k_: len(v_) for k_, v_ in furniture.items()})
+
     def view(name, s, v, h, look_s, look_v, look_h):
         p, q = fr.en(s, v), fr.en(look_s, look_v)
         return {"name": name, "en": r2(p), "h": h, "look_en": r2(q), "look_h": look_h}
@@ -369,6 +443,7 @@ def main():
                   "positions": lamps},
         "shopfronts": {"intensity_cd": 220.0, "emissive_nits": 35.0, "items": shopfronts},
         "upper_windows": {"emissive_nits": 6.0, "width": 1.2, "height": 1.5, "items": windows},
+        "furniture": furniture,
         "kiosk": kiosk,
         "club": club,
         "spawn": {"s": 22.0, "v": round(west_face + 4.0, 2), "en": r2(fr.en(22.0, west_face + 4.0)),
@@ -391,13 +466,15 @@ def main():
                 "building geometry, heights and facade lines: Geobasis NRW LoD2 tile " + TILE,
                 "street axis + carriageway centrelines: OpenStreetMap ways named Hohenzollernring (highway=primary)",
                 "kiosk facade: ground floor of a real LoD2 building; position chosen near an OSM shop=kiosk node",
-                "terrain + street longitudinal profile, crown and kerb heights: Geobasis NRW DGM1 tile " + DGM_TILE],
+                "terrain + street longitudinal profile, crown and kerb heights: Geobasis NRW DGM1 tile " + DGM_TILE,
+                "traffic signal, crossing, trees, waste baskets, bike racks, building entrances, cameras: OSM nodes"],
             "assumed": [
                 "lane widths (3.4 m), median (1.2 m), parking strip (2.0 m)",
                 "kerb height clamped to 0.10-0.25 m and profile smoothed over 15 m (DGM1 is 1 m resolution)",
                 "sidewalk cross-fall: linear from kerb to the median facade line, facade height >= LoD2 base",
                 "street lamp positions/spacing/intensity (procedural, NOT from OSM - only few lamps are mapped)",
                 "shopfront/window placement and colours (procedural, deterministic seed)",
+                "parked cars: procedural (seed 5150), kept clear of the OSM signal and bike racks",
                 "NACHTFLUG and KIOSK signage are fictional; no real business is represented",
                 ],
             "osm_carriageway_offsets_m": [[w, l, round(o, 2)] for w, l, o in carriageways],

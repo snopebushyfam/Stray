@@ -29,11 +29,29 @@ GODOT=godot tests/run_tests.sh                             # Unit- + Lauf-Tests 
 godot --headless --path . --export-release "Web" build/web/index.html   # Web-Build (WebGL 2)
 ```
 
-**Testergebnis 2026-11-08:** `street_layout_test` 15/15, `walk_test` 9/9 (Spawn auf Gehweg,
+**Testergebnis 2026-11-08 (Stand Ausbau 1):** `street_layout_test` 15/15, `walk_test` 11/11 (zusätzlich: freie Bordsteinstelle gefunden, geparktes Auto blockiert); erste Fassung `walk_test` 9/9 (Spawn auf Gehweg,
 4,8 m in 3 s gegangen, Bordstein hinab, Fassade blockiert, Endwand hält, nicht durch die Welt
 gefallen), Python 12/12. Gegenprobe: ohne Straßen-/Gebäudekollision schlagen 3 Lauf-Tests fehl.
 Gefundene und behobene Fehler beim echten Lauf: Schaufenster flimmerten (Z-Fighting), Lampen zu
 schwach, Schattenkeile an Lampen (Spot-Schatten im Compatibility-Renderer → Lampenschatten aus).
+
+**Ausbau 1 „glaubwürdige Straße“ (2026-11-08, gespielt + getestet):**
+
+| Element | Quelle | Umsetzung |
+|---|---|---|
+| Fassaden mit Stockwerken, Fensterrahmen, Glas, nachts zufällig erleuchtete Fenster (stabil pro Fenster) | prozedural | `assets/shaders/spatial_env_facade.gdshader` (Weltkoordinaten, keine UVs nötig) |
+| Asphalt (Körnung, Flecken), Betonplatten 40 × 40 cm mit Fugen, Bordstein-/Mittelstreifensteine | prozedural | `assets/shaders/spatial_env_street.gdshader`, an der Straßenachse ausgerichtet |
+| Fußgängerampel + Furt + Haltlinien | **OSM** `highway=traffic_signals` (s = −41,4 m) | Masten an beiden Bordsteinen + Mittelstreifen, Fahrzeug grün / Fußgänger rot |
+| 2 Bäume, 2 Mülleimer, 2 Fahrradständer (je 5 Bügel), 1 Überwachungskamera | **OSM**-Knoten | mit Kollision (Stamm, Mülleimer, Bügel) |
+| Hauseingänge (5 von 23 frei platzierbar, Rest unter Schaufenstern) | **OSM** `entrance=*`, auf die echte Fassade eingerastet | Tür, Rahmen, Leuchte |
+| 25 geparkte Autos | **prozedural** (Seed 5150), Abstand zu Ampel, Fahrradständern und Kamerapunkten | Karosserie, Fenster, Räder, Kollisionsbox |
+
+Beim Lauf gefunden und behoben: Putz wirkte blockig (Schachbrett) → weiches Rauschen + Schmutzkante
+unten; ein Auto parkte im KIOSK-Kamerapunkt → Kamerapunkte bleiben frei; Metallic-Lack wirkte im
+Compatibility-Renderer schwarz → Metallic 0,1. Der Lauf-Test fand zu Recht, dass ein geparktes Auto
+den Weg vom Gehweg versperrt; er sucht nun eine freie Stelle und prüft das Blockieren eigens.
+Noch offen in Schritt 1: echte Spielfigur mit Animationen, Ton. Die Unreal-Fassung kennt die
+Möbel und Shader noch nicht.
 
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).

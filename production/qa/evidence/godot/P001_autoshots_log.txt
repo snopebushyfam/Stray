@@ -1,3 +1,5 @@
+STRAY_DIAG signal s=-41.4 ford_s=-44.0
+STRAY_DIAG furniture {"bike_racks":2,"bins":2,"cars":25,"doors":5,"signals":1,"trees":2}
 STRAY_DIAG lighting=night
 STRAY_DIAG build=ok lod2=1 buildings=155 lod2_tris=6028 terrain=1 terrain_tris=27000 street_tris=3028 profile_rows=53 lights=45 shadow_lights=3 street_len_m=150.0
 STRAY_DIAG spawn pos=(-23.221, 0.895296, -24.027) yaw_deg=-11.1

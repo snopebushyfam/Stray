@@ -24,6 +24,7 @@ var _env: WorldEnvironment
 var _key: DirectionalLight3D
 var _lamp_lights: Array[SpotLight3D] = []
 var _materials: Dictionary = {}
+var _facade_mat: ShaderMaterial
 
 
 ## Builds the whole street. `layout_path` / `render_path` are res:// or absolute paths.
@@ -53,6 +54,7 @@ func build(layout_path: String = "res://data/p001/P001_Layout.json",
 	_build_kiosk()
 	_build_club()
 	_build_end_barriers()
+	_build_furniture()
 	set_day_mode(false)
 	print("STRAY_DIAG build=ok lod2=%d buildings=%d lod2_tris=%d terrain=%d terrain_tris=%d street_tris=%d profile_rows=%d lights=%d shadow_lights=%d street_len_m=%.1f" % [
 		int(stats.lod2), stats.buildings, stats.lod2_triangles, int(stats.terrain), stats.terrain_triangles,
@@ -77,6 +79,8 @@ func set_day_mode(day: bool) -> void:
 	_key.light_energy = p.get("moon_energy", 0.1)
 	_key.light_color = _col(p.get("moon_color", [1, 1, 1]))
 	_key.rotation_degrees = Vector3(p.get("moon_pitch_deg", -30.0), p.get("moon_yaw_deg", 0.0), 0.0)
+	if _facade_mat:
+		_facade_mat.set_shader_parameter("night_factor", p.get("facade_night_factor", 0.0 if day else 1.0))
 	var lamps_on: bool = p.get("street_lamps_on", true)
 	for l in _lamp_lights:
 		l.visible = lamps_on
@@ -220,7 +224,7 @@ func _build_buildings() -> void:
 		stats.error = "LoD2 mesh missing"
 		return
 	var mats := {
-		"M_LoD2_wall": _surface(_color_of("facade"), 0.9),
+		"M_LoD2_wall": _facade_material(),
 		"M_LoD2_roof": _surface(_color_of("roof"), 0.8),
 		"M_LoD2_ground": _surface(_color_of("terrain"), 0.95),
 	}
@@ -237,6 +241,37 @@ func _build_buildings() -> void:
 	stats.lod2 = true
 	stats.buildings = m.objects.size()
 	stats.lod2_triangles = m.triangle_count
+
+
+## Facade ShaderMaterial (world-space window grid) or a flat fallback when the shader is missing.
+func _facade_material() -> Material:
+	var cfg: Dictionary = render.get("facade", {})
+	var shader: Shader = load(cfg.get("shader", "")) if cfg.has("shader") else null
+	if shader == null:
+		return _surface(_color_of("facade"), 0.9)
+	_facade_mat = ShaderMaterial.new()
+	_facade_mat.shader = shader
+	_facade_mat.set_shader_parameter("plaster_color", _col(cfg.get("plaster", [0.46, 0.42, 0.37])))
+	_facade_mat.set_shader_parameter("frame_color", _col(cfg.get("frame", [0.18, 0.17, 0.16])))
+	_facade_mat.set_shader_parameter("glass_color", _col(cfg.get("glass", [0.03, 0.03, 0.04])))
+	for key in ["lit_ratio", "lit_energy", "ground_floor_top", "storey_height", "window_spacing"]:
+		if cfg.has(key):
+			_facade_mat.set_shader_parameter(key, cfg[key])
+	return _facade_mat
+
+
+## Street ShaderMaterial (asphalt / paving / kerb) aligned to the street axis, or a flat fallback.
+func _street_material(kind: int, color: Color) -> Material:
+	var shader: Shader = load(render.get("street_shader", "")) if render.has("street_shader") else null
+	if shader == null:
+		return _surface(color, 0.85)
+	var m := ShaderMaterial.new()
+	m.shader = shader
+	m.set_shader_parameter("surface_kind", kind)
+	m.set_shader_parameter("base_color", color)
+	var ax := StrayStreetLayout.en_dir_to_godot(layout.axis_en())
+	m.set_shader_parameter("street_axis", Vector2(ax.x, ax.z))
+	return m
 
 
 # --------------------------------------------------------------------------------------------
@@ -278,7 +313,10 @@ func _build_street_surface() -> void:
 	var right := StrayStreetLayout.en_dir_to_godot(L.right_en())
 	var along := StrayStreetLayout.en_dir_to_godot(L.axis_en())
 	var sections := ["asphalt", "median", "paving", "kerb", "terrain"]
-	var roughness := [0.9, 0.85, 0.8, 0.7, 0.95]
+	var section_mats: Array[Material] = [
+		_street_material(0, _color_of("asphalt")), _street_material(2, _color_of("median")),
+		_street_material(1, _color_of("paving")), _street_material(2, _color_of("kerb")),
+		_surface(_color_of("terrain"), 0.95)]
 	var all_faces := PackedVector3Array()
 	var holder := Node3D.new()
 	holder.name = "StreetSurface"
@@ -351,7 +389,7 @@ func _build_street_surface() -> void:
 			arrays[Mesh.ARRAY_VERTEX] = soups[i].verts
 			arrays[Mesh.ARRAY_NORMAL] = soups[i].normals
 			mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-			mesh.surface_set_material(mesh.get_surface_count() - 1, _surface(_color_of(sections[i]), roughness[i]))
+			mesh.surface_set_material(mesh.get_surface_count() - 1, section_mats[i])
 			all_faces.append_array(soups[i].verts)
 			stats.street_triangles += soups[i].verts.size() / 3
 		var mi := MeshInstance3D.new()
@@ -477,6 +515,8 @@ func _build_shopfronts() -> void:
 
 
 func _build_windows() -> void:
+	if not render.get("use_window_instances", true):
+		return  # the facade shader draws (and lights) the upper-floor windows
 	var w: float = layout.upper_windows.get("width", 1.2)
 	var hh: float = layout.upper_windows.get("height", 1.5)
 	var warm: Array[Transform3D] = []
@@ -631,3 +671,198 @@ func _build_end_barriers() -> void:
 		add_child(body)
 	_multimesh(red, _surface(Color(0.5, 0.02, 0.02), 0.6), "BarriersRed")
 	_multimesh(white, _surface(Color(0.7, 0.7, 0.7), 0.6), "BarriersWhite")
+
+
+# --------------------------------------------------------------------------------------------
+# Street furniture (OSM positions; parked cars procedural)
+# --------------------------------------------------------------------------------------------
+
+func _fcol(key: String, fallback: Array) -> Color:
+	return _col(render.get("furniture", {}).get(key, fallback))
+
+
+func _cyl(pos: Vector3, radius: float, height: float, mat: Material, collide: bool) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var c := CylinderMesh.new()
+	c.top_radius = radius
+	c.bottom_radius = radius
+	c.height = height
+	mi.mesh = c
+	mi.material_override = mat
+	mi.position = pos
+	add_child(mi)
+	if collide:
+		var body := StaticBody3D.new()
+		var cs := CollisionShape3D.new()
+		var sh := CylinderShape3D.new()
+		sh.radius = radius
+		sh.height = height
+		cs.shape = sh
+		body.add_child(cs)
+		body.position = pos
+		add_child(body)
+	return mi
+
+
+func _build_furniture() -> void:
+	var f: Dictionary = layout.furniture
+	if f.is_empty():
+		return
+	var counts := {}
+	var axis_basis := Basis.looking_at(-StrayStreetLayout.en_dir_to_godot(layout.axis_en()), Vector3.UP)
+
+	# Trees (real OSM positions): trunk with collision + two crown spheres.
+	for t in f.get("trees", []):
+		var p := StrayStreetLayout._v2(t["en"])
+		var g := _g(p)
+		_cyl(_gp(p, g + 1.6), 0.16, 3.2, _surface(_fcol("trunk", [0.16, 0.11, 0.07]), 0.9), true)
+		for c in [[0.0, 4.6, 2.3], [0.6, 5.6, 1.7]]:
+			var crown := MeshInstance3D.new()
+			var sm := SphereMesh.new()
+			sm.radius = c[2]
+			sm.height = c[2] * 1.7
+			crown.mesh = sm
+			crown.material_override = _surface(_fcol("tree_crown", [0.07, 0.16, 0.06]), 0.95)
+			crown.position = _gp(p + layout.axis_en() * float(c[0]), g + float(c[1]))
+			add_child(crown)
+	counts["trees"] = f.get("trees", []).size()
+
+	# Waste baskets (OSM).
+	for w in f.get("waste_baskets", []):
+		var p := StrayStreetLayout._v2(w["en"])
+		_cyl(_gp(p, _g(p) + 0.45), 0.22, 0.9, _surface(_fcol("bin", [0.3, 0.3, 0.31]), 0.6), true)
+	counts["bins"] = f.get("waste_baskets", []).size()
+
+	# Bicycle racks (OSM): five "Kreuzberger Bügel" across the parking strip.
+	for b in f.get("bicycle_parking", []):
+		var rack := _surface(_fcol("rack", [0.55, 0.56, 0.58]), 0.3)
+		for i in 5:
+			var p: Vector2 = layout.to_en(float(b["s"]) - 2.4 + i * 1.2, float(b["v"]))
+			var g := _g(p)
+			for side in [-0.35, 0.35]:
+				_box(Transform3D(axis_basis, _gp(p + layout.axis_en() * side, g + 0.4)), Vector3(0.05, 0.8, 0.05), rack, true)
+			_box(Transform3D(axis_basis, _gp(p, g + 0.8)), Vector3(0.05, 0.05, 0.75), rack)
+	counts["bike_racks"] = f.get("bicycle_parking", []).size()
+
+	# Building entrances (OSM), skipped where a shopfront / landmark already occupies the facade.
+	var occupied: Array[Vector2] = []
+	for sf in layout.shopfronts.get("items", []):
+		occupied.append(StrayStreetLayout._v2(sf["en"]))
+	occupied.append(StrayStreetLayout._v2(layout.kiosk["en"]))
+	occupied.append(StrayStreetLayout._v2(layout.club["en"]))
+	var doors := 0
+	for e in f.get("entrances", []):
+		var p := StrayStreetLayout._v2(e["en"])
+		var free := true
+		for o in occupied:
+			if o.distance_to(p) < 3.2:
+				free = false
+				break
+		if not free:
+			continue
+		var n := StrayStreetLayout._v2(e["normal_en"]).normalized()
+		var bas := StrayStreetLayout.facing_basis(n)
+		var g := _g(p + n)
+		var glass: bool = e.get("kind", "yes") == "shop"
+		_box(Transform3D(bas, _gp(p + n * 0.05, g + 1.2)), Vector3(1.5, 2.5, 0.12), _surface(Color(0.1, 0.09, 0.08), 0.5))
+		_box(Transform3D(bas, _gp(p + n * 0.12, g + 1.12)), Vector3(1.2, 2.2, 0.04),
+			_surface(_fcol("door_glass" if glass else "door_wood", [0.16, 0.1, 0.06]), 0.25 if glass else 0.6))
+		_box(Transform3D(bas, _gp(p + n * 0.16, g + 2.45)), Vector3(0.3, 0.08, 0.06), _emissive(Color(1.0, 0.85, 0.6), 2.5))
+		occupied.append(p)
+		doors += 1
+	counts["doors"] = doors
+
+	# Surveillance cameras (OSM).
+	for c in f.get("cameras", []):
+		var p := StrayStreetLayout._v2(c["en"])
+		var n := StrayStreetLayout._v2(c["normal_en"]).normalized()
+		_box(Transform3D(StrayStreetLayout.facing_basis(n), _gp(p + n * 0.25, _g(p + n) + 3.4)), Vector3(0.12, 0.12, 0.35), _surface(Color(0.8, 0.8, 0.78), 0.4))
+
+	# Traffic signal + pedestrian ford (OSM signal position).
+	for sig in f.get("traffic_signals", []):
+		_build_signal(float(sig["s"]), float(sig.get("ford_s", float(sig["s"]) - 3.0)), axis_basis)
+	counts["signals"] = f.get("traffic_signals", []).size()
+
+	# Parked cars (procedural placeholders, collision boxes).
+	for car in f.get("parked_cars", []):
+		_build_car(StrayStreetLayout._v2(car["en"]), float(car["length"]), _col(car["color"]), axis_basis)
+	counts["cars"] = f.get("parked_cars", []).size()
+	print("STRAY_DIAG furniture %s" % JSON.stringify(counts))
+
+
+func _build_signal(s_sig: float, s_ford: float, axis_basis: Basis) -> void:
+	var L := layout
+	var housing := _surface(_fcol("signal_housing", [0.05, 0.05, 0.05]), 0.5)
+	var red := _emissive(Color(1.0, 0.08, 0.05), render.get("furniture", {}).get("signal_red_emission", 5.0))
+	var green := _emissive(Color(0.1, 1.0, 0.45), render.get("furniture", {}).get("signal_green_emission", 5.0))
+	# Poles on both kerbs and the median; vehicle heads face oncoming traffic (northbound east side,
+	# southbound west side), pedestrian heads face across the street.
+	for v in [-L.kerb_half_width - 0.5, 0.0, L.kerb_half_width + 0.5]:
+		var p: Vector2 = L.to_en(s_sig, v)
+		var g := _g(p)
+		_cyl(_gp(p, g + 1.75), 0.06, 3.5, housing, true)
+		var toward_south := -L.axis_en() if v >= 0.0 else L.axis_en()
+		var head_basis := StrayStreetLayout.facing_basis(toward_south if v != 0.0 else -L.axis_en())
+		var head := p + toward_south * 0.12
+		_box(Transform3D(head_basis, _gp(head, g + 3.0)), Vector3(0.3, 0.9, 0.22), housing)
+		var off := StrayStreetLayout.en_dir_to_godot(toward_south if v != 0.0 else -L.axis_en()) * 0.12
+		# Vehicles have green (bottom lamp lit), pedestrians red.
+		_box(Transform3D(head_basis, _gp(head, g + 3.28) + off), Vector3(0.2, 0.2, 0.02), _surface(Color(0.08, 0.01, 0.01), 0.3))
+		_box(Transform3D(head_basis, _gp(head, g + 2.72) + off), Vector3(0.2, 0.2, 0.02), green)
+		if v != 0.0:
+			var across := L.right_en() * (1.0 if v < 0.0 else -1.0)
+			var ped_basis := StrayStreetLayout.facing_basis(across)
+			_box(Transform3D(ped_basis, _gp(p + across * 0.1, g + 2.3)), Vector3(0.25, 0.5, 0.15), housing)
+			_box(Transform3D(ped_basis, _gp(p + across * 0.18, g + 2.42)), Vector3(0.16, 0.16, 0.02), red)
+	# Ford markings: two dashed lines across the carriageways (German signalised crossing).
+	var xforms: Array[Transform3D] = []
+	for ds in [-2.0, 2.0]:
+		var v := -L.kerb_half_width + 0.3
+		while v < L.kerb_half_width - 0.3:
+			if absf(v) > L.median_half_width + 0.2:
+				var pp: Vector2 = L.to_en(s_ford + ds, v)
+				xforms.append(Transform3D(axis_basis * Basis.from_scale(Vector3(0.5, 0.02, 0.12)), _gp(pp, L.road_z(s_ford + ds, v) + 0.006)))
+			v += 1.0
+	_multimesh(xforms, _surface(_color_of("paint"), 0.6), "PedestrianFord")
+	var stop: Array[Transform3D] = []
+	for v_stop in [-L.carriageway_half_width * 0.5 - 0.3, L.carriageway_half_width * 0.5 + 0.3]:
+		var sp: Vector2 = L.to_en(s_ford + (-3.2 if v_stop > 0.0 else 3.2), v_stop)
+		stop.append(Transform3D(axis_basis * Basis.from_scale(Vector3(L.carriageway_half_width - 1.0, 0.02, 0.4)), _gp(sp, L.road_z(s_ford, v_stop) + 0.006)))
+	_multimesh(stop, _surface(_color_of("paint"), 0.6), "StopLines")
+	print("STRAY_DIAG signal s=%.1f ford_s=%.1f" % [s_sig, s_ford])
+
+
+func _build_car(p: Vector2, length: float, color: Color, axis_basis: Basis) -> void:
+	var g := layout.ground_z_at(p)
+	var paint := StandardMaterial3D.new()
+	paint.albedo_color = color
+	paint.roughness = 0.3
+	# Low metallic: the Compatibility renderer has no sky reflections, metal paint would read black.
+	paint.metallic = 0.1
+	var glass := _surface(_fcol("car_glass", [0.02, 0.025, 0.03]), 0.05)
+	var tyre := _surface(_fcol("tyre", [0.02, 0.02, 0.02]), 0.9)
+	var w := 1.8
+	# Body (lower) + cabin; axis_basis local Z runs along the street.
+	_box(Transform3D(axis_basis, _gp(p, g + 0.62)), Vector3(w, 0.62, length), paint)
+	_box(Transform3D(axis_basis, _gp(p - layout.axis_en() * length * 0.05, g + 1.17)), Vector3(w * 0.9, 0.5, length * 0.52), glass)
+	_box(Transform3D(axis_basis, _gp(p - layout.axis_en() * length * 0.05, g + 1.44)), Vector3(w * 0.88, 0.05, length * 0.48), paint)
+	for ds in [-length * 0.32, length * 0.32]:
+		for dv in [-w * 0.45, w * 0.45]:
+			var wp: Vector2 = p + layout.axis_en() * ds + layout.right_en() * dv
+			var wheel := MeshInstance3D.new()
+			var c := CylinderMesh.new()
+			c.top_radius = 0.32
+			c.bottom_radius = 0.32
+			c.height = 0.22
+			wheel.mesh = c
+			wheel.material_override = tyre
+			wheel.transform = Transform3D(axis_basis * Basis(Vector3.FORWARD, PI * 0.5), _gp(wp, g + 0.32))
+			add_child(wheel)
+	var body := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(w, 1.45, length)
+	cs.shape = sh
+	body.add_child(cs)
+	body.transform = Transform3D(axis_basis, _gp(p, g + 0.75))
+	add_child(body)

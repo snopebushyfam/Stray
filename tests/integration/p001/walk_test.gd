@@ -49,6 +49,28 @@ func _place(s: float, v: float, face_dir_en: Vector2) -> void:
 	await _frames(30)
 
 
+## A street position (s) on `side` with no parked car within 4 m, or -1.
+func _free_parking_s(side: int) -> float:
+	var s := 10.0
+	while s < 90.0:
+		var clear := true
+		for car in L.furniture.get("parked_cars", []):
+			if int(car["side"]) == side and absf(float(car["s"]) - s) < float(car["length"]) * 0.5 + 1.5:
+				clear = false
+				break
+		if clear:
+			return s
+		s += 0.5
+	return -1.0
+
+
+func _first_car(side: int) -> Dictionary:
+	for car in L.furniture.get("parked_cars", []):
+		if int(car["side"]) == side and float(car["s"]) > 0.0:
+			return car
+	return {}
+
+
 func _run() -> void:
 	main = load("res://src/p001/main.tscn").instantiate()
 	root.add_child(main)
@@ -69,12 +91,23 @@ func _run() -> void:
 	check(walked > 3.0 and walked < 6.5, "walked %.2f m in 3 s (walk speed 1.6 m/s)" % walked)
 	check(player.is_on_floor(), "still on the floor after walking")
 
-	# 3. Step off the kerb onto the road (move right = towards the street centre, east).
-	await _place(30.0, -L.kerb_half_width - 1.0, L.axis_en())
+	# 3. Step off the kerb onto the road (move right = towards the street centre, east),
+	#    at a spot with no parked car on the west side.
+	var free_s := _free_parking_s(-1)
+	check(free_s > 0.0, "found a kerb section without a parked car (s=%.1f)" % free_s)
+	await _place(free_s, -L.kerb_half_width - 1.0, L.axis_en())
 	await _hold("move_right", 2.0)
 	var sv := _sv()
 	check(sv.y > -L.kerb_half_width, "crossed the kerb onto the carriageway (v=%.2f)" % sv.y)
 	check(absf((player.global_position.y - half) - L.ground_z_at(L.to_en(sv.x, sv.y))) < 0.1, "standing on the road surface")
+
+	# 3b. Parked cars block: walk from the sidewalk into the first west-side car.
+	var car := _first_car(-1)
+	if not car.is_empty():
+		var car_s: float = car["s"]
+		await _place(car_s, -L.kerb_half_width - 1.0, L.axis_en())
+		await _hold("move_right", 2.0)
+		check(_sv().y < -L.kerb_half_width + 0.6, "parked car blocks the way (v=%.2f)" % _sv().y)
 
 	# 4. Facade collision: run west into the NACHTFLUG building for 3 s.
 	var club_sv := L.to_street(Vector2(L.club["en"][0], L.club["en"][1]))

@@ -30,7 +30,8 @@
   "exposure": 1.25,
   "glow_intensity": 0.9,
   "glow_bloom": 0.08,
-  "street_lamps_on": true
+  "street_lamps_on": true,
+  "facade_night_factor": 1.0
  },
  "day": {
   "background": [
@@ -61,7 +62,8 @@
   "exposure": 0.9,
   "glow_intensity": 0.2,
   "glow_bloom": 0.0,
-  "street_lamps_on": false
+  "street_lamps_on": false,
+  "facade_night_factor": 0.0
  },
  "street_lamp": {
   "energy": 16.0,
@@ -142,5 +144,80 @@
    0.08,
    0.09
   ]
+ },
+ "facade": {
+  "shader": "res://assets/shaders/spatial_env_facade.gdshader",
+  "plaster": [
+   0.46,
+   0.42,
+   0.37
+  ],
+  "frame": [
+   0.18,
+   0.17,
+   0.16
+  ],
+  "glass": [
+   0.025,
+   0.03,
+   0.04
+  ],
+  "lit_ratio": 0.28,
+  "lit_energy": 1.1,
+  "ground_floor_top": 4.4,
+  "storey_height": 3.2,
+  "window_spacing": 2.6
+ },
+ "street_shader": "res://assets/shaders/spatial_env_street.gdshader",
+ "use_window_instances": false,
+ "furniture": {
+  "tree_crown": [
+   0.07,
+   0.16,
+   0.06
+  ],
+  "trunk": [
+   0.16,
+   0.11,
+   0.07
+  ],
+  "bin": [
+   0.3,
+   0.3,
+   0.31
+  ],
+  "rack": [
+   0.55,
+   0.56,
+   0.58
+  ],
+  "door_wood": [
+   0.16,
+   0.1,
+   0.06
+  ],
+  "door_glass": [
+   0.02,
+   0.025,
+   0.03
+  ],
+  "signal_housing": [
+   0.05,
+   0.05,
+   0.05
+  ],
+  "signal_red_emission": 5.0,
+  "signal_green_emission": 5.0,
+  "car_glass": [
+   0.02,
+   0.025,
+   0.03
+  ],
+  "tyre": [
+   0.02,
+   0.02,
+   0.02
+  ],
+  "car_light_emission": 2.0
  }
 }

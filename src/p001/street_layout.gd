@@ -50,6 +50,8 @@ var spawn_en := Vector2.ZERO
 var spawn_dir_en := Vector2(0, 1)
 var viewpoints: Array = []
 var lighting: Dictionary = {}
+## OSM street furniture + procedural parked cars (see tools/geodata/build_p001.py).
+var furniture: Dictionary = {}
 
 
 ## Converts local EN(U) metres to Godot space.
@@ -145,6 +147,7 @@ func parse(text: String) -> String:
 	spawn_en = _v2(sp["en"])
 	spawn_dir_en = _v2(sp.get("yaw_dir_en", [0, 1]))
 	viewpoints = root.get("viewpoints", [])
+	furniture = root.get("furniture", {})
 	lighting = root.get("lighting", {})
 	return ""
 
