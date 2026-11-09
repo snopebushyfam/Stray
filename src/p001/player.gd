@@ -18,6 +18,8 @@ var _visual: Node3D
 var _gravity: float = 9.81
 var _frames: int = 0
 var _look_touch_index: int = -1
+## Number of ledges climbed (kerbs, median) - diagnostics / tests.
+var step_count := 0
 ## Touch controls active (set by main.gd): pushing the joystick to its edge then runs.
 var touch_mode := false
 ## "Rennen" toggle button on touch screens.
@@ -267,6 +269,41 @@ func wants_run() -> bool:
 	return false
 
 
+## Steps up onto a low ledge (kerbs 0.10-0.25 m, the 0.12 m median) that stopped the capsule.
+## Without this the player could walk down from a sidewalk but never back up - an invisible wall
+## at every kerb (tablet report R9.2). Only ledges up to `max_step_height` count; walls, cars and
+## benches are higher and still block. Uses test_move (no collision changes, nothing removed).
+func _try_step_up(h_motion: Vector3, delta: float) -> void:
+	var blocked := false
+	for k in get_slide_collision_count():
+		var n := get_slide_collision(k).get_normal()
+		if n.y < 0.7 and n.y > -0.1 and Vector2(n.x, n.z).dot(Vector2(h_motion.x, h_motion.z)) < 0.0:
+			blocked = true
+			break
+	if not blocked or h_motion.length() < 0.05:
+		return
+	var step_h: float = cfg.get("max_step_height", 0.3)
+	var radius: float = cfg.get("capsule_radius", 0.35)
+	var fwd := h_motion.normalized() * maxf(h_motion.length() * delta, radius * 0.5)
+	var xf := global_transform
+	if test_move(xf, Vector3.UP * step_h):
+		return  # no head room
+	var up_xf := xf.translated(Vector3.UP * step_h)
+	if test_move(up_xf, fwd):
+		return  # still blocked at step height: a real wall
+	var probe := KinematicCollision3D.new()
+	var fwd_xf := up_xf.translated(fwd)
+	if not test_move(fwd_xf, Vector3.DOWN * (step_h + 0.05), probe):
+		return  # nothing to stand on (would be a drop, not a step)
+	if probe.get_normal().y < cos(floor_max_angle):
+		return  # landing too steep
+	var landed := fwd_xf.origin + probe.get_travel()
+	if landed.y - xf.origin.y < 0.02:
+		return
+	global_position = landed
+	step_count += 1
+
+
 func _look(delta_deg: Vector2) -> void:
 	_yaw_pivot.rotation.y -= deg_to_rad(delta_deg.x)
 	var p := _pitch_pivot.rotation_degrees.x - delta_deg.y
@@ -296,7 +333,10 @@ func _physics_process(delta: float) -> void:
 		var want := atan2(-dir.x, -dir.z)
 		var turn := deg_to_rad(cfg.get("turn_speed_deg", 540.0)) * delta
 		_visual.rotation.y = rotate_toward(_visual.rotation.y, want, turn)
+	var pre_step_velocity := velocity
 	move_and_slide()
+	if dir.length() > 0.05:
+		_try_step_up(Vector3(pre_step_velocity.x, 0.0, pre_step_velocity.z), delta)
 	_update_animation()
 	_update_footsteps(delta)
 

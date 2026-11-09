@@ -31,7 +31,9 @@
   "glow_intensity": 0.9,
   "glow_bloom": 0.08,
   "street_lamps_on": true,
-  "facade_night_factor": 1.0
+  "facade_night_factor": 1.0,
+  "key_shadows": false,
+  "key_shadows_note": "R9.2: moon shadow invisible at energy 0.06 but costs a full shadow pass; sun shadows stay on by day"
  },
  "day": {
   "background": [
@@ -63,7 +65,8 @@
   "glow_intensity": 0.2,
   "glow_bloom": 0.0,
   "street_lamps_on": false,
-  "facade_night_factor": 0.0
+  "facade_night_factor": 0.0,
+  "key_shadows": true
  },
  "street_lamp": {
   "energy": 16.0,

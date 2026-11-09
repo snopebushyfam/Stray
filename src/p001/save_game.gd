@@ -40,6 +40,8 @@ static func capture(main: Node) -> Dictionary:
 static func apply(main: Node, d: Dictionary) -> String:
 	if int(d.get("version", -1)) < 1 or int(d.get("version", -1)) > VERSION:
 		return "unsupported save version %s" % d.get("version", "?")
+	# A menu open at save/load time must not survive into the loaded place (R9.2).
+	main.interactions.close_all_panels()
 	main.interactions.life.from_dict(d.get("life", {}))
 	# Order matters: messages + rent first, so the day_changed fired by restoring the clock finds
 	# the rent already processed up to the saved day (no double debit, no duplicate messages).

@@ -112,6 +112,7 @@ func option(index: int) -> void:
 
 ## Goes down to the platform of `station_id`.
 func enter_station(station_id: String) -> void:
+	ix.close_all_panels()
 	transit.station = station_id
 	station_node.set_station(transit.station_name(station_id))
 	station_node.visible = true
@@ -163,6 +164,7 @@ func ride() -> Dictionary:
 
 ## Climbs the stairs to the surface entrance of the current station.
 func leave_station() -> void:
+	ix.close_all_panels()
 	var st := transit.station
 	station_node.visible = false
 	ix.life.flags["inside_metro"] = false

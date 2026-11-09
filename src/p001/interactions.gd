@@ -188,7 +188,10 @@ func _physics_process(delta: float) -> void:
 			best_d = d
 	if best != current:
 		current = best
-		if shop_open and current != "kiosk":
+		# A shop menu stays open only at its own counter (KIOSK menu at the KIOSK, bar menu at the
+		# bar). Before R9.2 any menu survived next to the KIOSK - loading a street save there left
+		# "BAR - Was trinkst du?" on the street.
+		if shop_open and not (current == "kiosk" and active_shop == shop) and not (current == "club_bar" and active_shop == bar_shop):
 			_close_shop()
 	var prompt := ""
 	match current:
@@ -307,6 +310,7 @@ func _open_menu(which: StrayKioskShop, menu_cfg: Dictionary) -> void:
 
 ## Moves the player into the club interior, just inside the exit door, facing the room.
 func enter_club() -> void:
+	close_all_panels()
 	player.global_position = club.points["exit"] + Vector3(0, 0.95, -0.6)
 	player.velocity = Vector3.ZERO
 	player.face_yaw(0.0)
@@ -320,6 +324,7 @@ func enter_club() -> void:
 
 ## Back to the street, in front of the club door.
 func leave_club() -> void:
+	close_all_panels()
 	var c := _frame(layout.club)
 	player.global_position = _gp(c.pos + c.n * 1.6 + c.t * 1.0) + Vector3(0, 0.95, 0)
 	player.velocity = Vector3.ZERO
@@ -350,6 +355,7 @@ func _home_door_entrance() -> Dictionary:
 
 
 func enter_home() -> void:
+	close_all_panels()
 	var t: Dictionary = home.cfg.get("texts", {})
 	if rent and rent.evicted:
 		ui.show_message("", String(t.get("locked_out", "")), 4.0)
@@ -367,6 +373,7 @@ func enter_home() -> void:
 
 
 func leave_home() -> void:
+	close_all_panels()
 	var door: Dictionary = home.get_meta("street_door", {})
 	if not door.is_empty():
 		var hf := _frame(door)
@@ -618,6 +625,18 @@ func open_extension_options(owner: Object, title: String, text: String, labels: 
 ## Closes any open panel and gives control back to the player.
 func close_panel() -> void:
 	_close_shop()
+
+
+## Closes every open menu / option panel and gives control back (location changes, loading).
+func close_all_panels() -> void:
+	if police_check_open:
+		return  # the police check resolves itself; never silently dismiss it
+	options_owner = null
+	_options_context = ""
+	active_shop = null
+	if shop_open or ui.shop_panel.visible:
+		_close_shop()
+	player.input_enabled = true
 
 
 func _close_shop() -> void:

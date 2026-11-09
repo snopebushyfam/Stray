@@ -79,6 +79,8 @@ func set_day_mode(day: bool) -> void:
 	_key.light_energy = p.get("moon_energy", 0.1)
 	_key.light_color = _col(p.get("moon_color", [1, 1, 1]))
 	_key.rotation_degrees = Vector3(p.get("moon_pitch_deg", -30.0), p.get("moon_yaw_deg", 0.0), 0.0)
+	# R9.2: the moon (energy ~0.06) casts no visible shadow, but its shadow map re-renders the scene.
+	_key.shadow_enabled = bool(p.get("key_shadows", true))
 	if _facade_mat:
 		_facade_mat.set_shader_parameter("night_factor", p.get("facade_night_factor", 0.0 if day else 1.0))
 	var lamps_on: bool = p.get("street_lamps_on", true)

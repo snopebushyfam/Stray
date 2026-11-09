@@ -73,10 +73,11 @@ func _make_police(c: Car) -> void:
 	c.cruise = minf(c.cruise, 9.0)
 	var white := _mat("police_body", Color(0.85, 0.87, 0.9))
 	var stripe := _mat("police_stripe", Color(0.1, 0.25, 0.6))
-	var paint: Variant = c.root.get_meta("paint", null)
+	# Rebuild the (merged) car visual in police colours, keep the spinning wheels.
 	for child in c.root.get_children():
-		if child is MeshInstance3D and (child as MeshInstance3D).material_override == paint:
-			(child as MeshInstance3D).material_override = white
+		if child.name == "CarBody":
+			(child as MeshInstance3D).mesh = StrayCarModel.car_mesh(c.length, 1.8, white.albedo_color, true, false,
+				cfg.get("headlight_emission", 4.0), cfg.get("taillight_emission", 3.0))
 	_box(c.root, Vector3(0, 0.75, 0), Vector3(1.82, 0.12, c.length * 0.9), stripe)
 	for x in [-0.35, 0.35]:
 		var m := StandardMaterial3D.new()
