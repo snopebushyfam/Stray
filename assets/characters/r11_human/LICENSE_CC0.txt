@@ -1,0 +1,11 @@
+stray_r11_male.glb - built with tools/character/build_r11_human.py (MPFB 2.0.18 in Blender 4.5 LTS).
+
+All assets in this model are CC0 1.0 (public domain dedication), verified on the MakeHuman asset-pack
+pages (static.makehumancommunity.org/assets/assetpacks/*.html, column "License") and in the asset
+file headers ("This asset was explicitly released as CC0 in september 2020"):
+- MakeHuman basemesh + macro targets, skin young_caucasian_male (makehuman_system_assets, CC0)
+- eyes low-poly + brown material, eyebrow001, eyelashes02, hair short02 (makehuman_system_assets, CC0)
+- clothes male_casualsuit05, shoes05 (makehuman_system_assets, CC0)
+- rig: MPFB "game_engine" skeleton definition (MPFB data; the generated model is not GPL-encumbered
+  per the MakeHuman licensing FAQ: assets/output CC0, code GPL)
+Animations used in game: Quaternius Universal Animation Library (CC0), retargeted at runtime.

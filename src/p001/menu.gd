@@ -11,6 +11,10 @@ signal save_requested
 signal load_requested
 signal main_menu
 signal quit_requested
+## R11: switch the player figure (R10 mannequin <-> R11 human prototype).
+signal character_toggle
+## Label text for the figure button, set by main.gd.
+var character_label := ""
 
 var txt: Dictionary = {}
 var mode := ""  # "start" | "pause" | ""
@@ -97,6 +101,8 @@ func show_pause(has_save: bool, note: String = "") -> void:
 	_button(String(txt.get("save", "Speichern")), save_requested)
 	var load_b := _button(String(txt.get("load", "Laden")), load_requested)
 	load_b.disabled = not has_save
+	if not character_label.is_empty():
+		_button(character_label, character_toggle)
 	_button(String(txt.get("main_menu", "Hauptmenü")), main_menu)
 	_note = _label(note, 14, Color(1, 1, 1, 0.6))
 	_show()

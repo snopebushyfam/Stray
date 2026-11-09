@@ -32,6 +32,7 @@ static func capture(main: Node) -> Dictionary:
 			"region": main.region,
 			"lea_talked": main.interactions.lea_talked,
 			"battery": main.phone.battery,
+			"character_variant": main.player.character_variant,
 		},
 	}
 
@@ -54,6 +55,9 @@ static func apply(main: Node, d: Dictionary) -> String:
 	var w: Dictionary = d.get("world", {})
 	main.interactions.lea_talked = bool(w.get("lea_talked", false))
 	main.phone.battery = float(w.get("battery", main.phone.battery))
+	main.player.set_character_variant(String(w.get("character_variant", "r10")))
+	if main.menu:
+		main.menu.character_label = main._character_label()
 	var inside := bool(w.get("inside_club", false))
 	var at_home := bool(w.get("inside_home", false))
 	if inside:

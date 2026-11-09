@@ -65,6 +65,8 @@
  },
  "character": {
   "scene": "res://assets/characters/quaternius_ual/UAL1_Standard.glb",
+  "human_scene": "res://assets/characters/r11_human/stray_r11_male.glb",
+  "human_note": "R11 prototype (MakeHuman CC0, docs/R11_REAL_HUMAN_PROTOTYPE.md); switch in the pause menu",
   "source": "Quaternius Universal Animation Library (CC0 1.0), assets/characters/quaternius_ual/LICENSE_CC0.txt",
   "yaw_offset_deg": 180.0,
   "body_color": [

@@ -18,6 +18,8 @@ var _visual: Node3D
 var _gravity: float = 9.81
 var _frames: int = 0
 var _look_touch_index: int = -1
+## Visible character: "r10" (default, dressed mannequin) or "r11" (MakeHuman prototype).
+var character_variant := "r10"
 ## Number of ledges climbed (kerbs, median) - diagnostics / tests.
 var step_count := 0
 ## Touch controls active (set by main.gd): pushing the joystick to its edge then runs.
@@ -119,14 +121,25 @@ func _load_character(c: Dictionary, h: float) -> bool:
 	var scene: PackedScene = load(c["scene"])
 	if scene == null:
 		return false
-	var model: Node3D = scene.instantiate()
+	var model: Node3D
+	var human_path := String(c.get("human_scene", ""))
+	if character_variant == "r11" and ResourceLoader.exists(human_path):
+		# R11 prototype: MakeHuman character driven by the UAL animations (human_rig.gd).
+		var rig := StrayHumanRig.new()
+		if rig.setup(load(human_path), scene):
+			model = rig
+		else:
+			rig.free()
+			character_variant = "r10"
+	if model == null:
+		model = scene.instantiate()
+		# R10: dressed with an everyday outfit (look "player"), see character_look.gd.
+		if not StrayCharacterLook.apply(model, String(c.get("look", "player"))):
+			push_warning("STRAY_DIAG character look not applied")
 	model.name = "Character"
 	model.rotation.y = deg_to_rad(c.get("yaw_offset_deg", 180.0))  # glTF faces +Z, Godot forward is -Z
 	model.position.y = -h * 0.5  # model feet at y = 0, capsule centre at the body origin
 	_visual.add_child(model)
-	# R10: dressed with an everyday outfit (look "player"), see character_look.gd.
-	if not StrayCharacterLook.apply(model, String(c.get("look", "player"))):
-		push_warning("STRAY_DIAG character look not applied")
 	var players := model.find_children("*", "AnimationPlayer", true, false)
 	if players.is_empty():
 		return true
@@ -134,6 +147,22 @@ func _load_character(c: Dictionary, h: float) -> bool:
 	_anim_names = c.get("anims", {})
 	_set_anim("idle", 1.0)
 	return true
+
+
+## Swaps the visible character between "r10" (dressed mannequin, default) and "r11" (MakeHuman
+## prototype). Animation state, collision and camera are untouched.
+func set_character_variant(v: String) -> void:
+	if v == character_variant and _visual.get_node_or_null("Character") != null:
+		return
+	character_variant = v
+	var old := _visual.get_node_or_null("Character")
+	if old:
+		_visual.remove_child(old)
+		old.queue_free()
+	_anim = null
+	anim_state = ""
+	_load_character(cfg.get("character", {}), float(cfg.get("capsule_height", 1.8)))
+	print("STRAY_DIAG character_variant=%s" % character_variant)
 
 
 func _set_anim(state: String, speed_scale: float) -> void:

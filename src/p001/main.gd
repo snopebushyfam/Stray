@@ -132,6 +132,8 @@ func _ready() -> void:
 	clock.day_changed.connect(_on_day_changed)
 	clock.hour_changed.connect(_on_hour_changed)
 	interactions.club_left.connect(func(): save_game("club_left"))
+	if "--r11" in OS.get_cmdline_user_args():
+		player.set_character_variant("r11")  # evidence / testing: start with the R11 figure
 	if "--autoshots" in OS.get_cmdline_user_args():
 		_run_autoshots.call_deferred()
 	elif "--r9shots" in OS.get_cmdline_user_args():
@@ -171,6 +173,11 @@ func _setup_menu_and_save() -> void:
 	menu.load_requested.connect(func():
 		var ok := load_game()
 		_start_playing(String(menu.txt.get("loaded", "")) if ok else String(menu.txt.get("load_failed", ""))))
+	menu.character_label = _character_label()
+	menu.character_toggle.connect(func():
+		player.set_character_variant("r10" if player.character_variant == "r11" else "r11")
+		menu.character_label = _character_label()
+		menu.show_pause(StraySaveGame.exists(save_path)))
 	menu.main_menu.connect(func():
 		save_game("main_menu")
 		get_tree().paused = false
@@ -187,6 +194,10 @@ func _setup_menu_and_save() -> void:
 
 
 ## Evidence capture of the start and pause menus (cmdline: -- --menushots [--shots-dir=...]).
+func _character_label() -> String:
+	return "Figur: Mensch (R11, Test)" if player.character_variant == "r11" else "Figur: Standard (R10)"
+
+
 func _run_menushots() -> void:
 	var dir := _shots_dir()
 	DirAccess.make_dir_recursive_absolute(dir)

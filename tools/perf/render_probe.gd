@@ -30,6 +30,9 @@ func _run() -> void:
 	var m: Node = load("res://src/p001/main.tscn").instantiate()
 	root.add_child(m)
 	await _frames(40)
+	if "--r11" in OS.get_cmdline_user_args():
+		m.player.set_character_variant("r11")
+		await _frames(10)
 	var L: StrayStreetLayout = m.builder.layout
 	var pl: StrayPlayer = m.player
 	var lights := 0
