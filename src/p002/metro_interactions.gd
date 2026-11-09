@@ -115,7 +115,8 @@ func enter_station(station_id: String) -> void:
 	transit.station = station_id
 	station_node.set_station(transit.station_name(station_id))
 	station_node.visible = true
-	_place(station_node.points["exit"] + Vector3(-1.5, 0.0, -1.0), -PI * 0.5)
+	# Face along the platform (-X, towards machine and train door); +PI/2 makes -Z point to -X.
+	_place(station_node.points["exit"] + Vector3(-1.5, 0.0, -1.0), PI * 0.5)
 	ix.player.set_indoor_camera(true)
 	ix.life.flags["inside_metro"] = true
 	metro_entered.emit(station_id)

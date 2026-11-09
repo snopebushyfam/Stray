@@ -456,7 +456,7 @@ def main():
             view("street_south_overview", s0 + 2, 0.0, 5.0, s0 + 60, 0.0, 3.0),
             view("nachtflug_entrance", club["s"] - 13, club["facade_v"] + 13.0, 1.7, club["s"], club["facade_v"], 2.8),
             view("kiosk_front", kiosk["s"] - 12, kiosk["facade_v"] - 11.0, 1.7, kiosk["s"], kiosk["facade_v"], 2.2),
-            view("street_north_to_south", s1 - 4, 2.0, 2.0, s0 + 40, 0.0, 2.0),
+            view("street_north_to_south", s1 - 4, 0.0, 2.0, s0 + 40, 0.0, 2.0),
             view("high_overview", s0 - 20, 30.0, 40.0, (s0 + s1) / 2, 0.0, 0.0),
         ],
         "lighting": {"night": {"moon_lux": 0.25, "moon_pitch_deg": -28.0, "moon_yaw_deg": 200.0,

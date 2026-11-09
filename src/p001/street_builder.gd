@@ -522,7 +522,11 @@ func _build_shopfronts() -> void:
 		var b := StrayStreetLayout.facing_basis(n)
 		_box(Transform3D(b, _gp(pos, zc)), Vector3(w + 0.35, hh + 0.35, 0.16), _surface(_color_of("metal"), 0.4))
 		# Panel sits 3 cm proud of the frame's front face (frame front = 0.08 m) - no z-fighting.
-		_box(Transform3D(b, _gp(pos + n * 0.12, zc)), Vector3(w, hh, 0.02), _emissive(c, cfg.get("emission", 2.0)))
+		_box(Transform3D(b, _gp(pos + n * 0.12, zc)), Vector3(w, hh, 0.02), _emissive(c * float(cfg.get("panel_tint", 1.0)), cfg.get("emission", 2.0)))
+		# Mullion + stall riser in front of the glow: reads as a shop window, not a light board.
+		var frame_mat := _surface(_color_of("metal"), 0.4)
+		_box(Transform3D(b, _gp(pos + n * 0.15, zc)), Vector3(0.08, hh, 0.03), frame_mat)
+		_box(Transform3D(b, _gp(pos + n * 0.15, zc - hh * 0.5 + 0.25)), Vector3(w, 0.5, 0.03), frame_mat)
 		var omni := OmniLight3D.new()
 		omni.light_color = c
 		omni.light_energy = cfg.get("energy", 1.5)

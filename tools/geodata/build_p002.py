@@ -213,8 +213,8 @@ def main():
              "look_en": r2(door_p), "look_h": 6.0},
             {"name": "dom_from_vorplatz", "en": r2(door_p + out_n * 8.0), "h": 1.7,
              "look_en": r2(dom), "look_h": 25.0},
-            {"name": "hbf_overview", "en": r2(HBF + np.array([-150.0, -60.0])), "h": 35.0,
-             "look_en": r2(HBF + np.array([-70.0, -90.0])), "look_h": 0.0},
+            {"name": "hbf_overview", "en": r2(HBF + np.array([-60.0, -40.0])), "h": 70.0,
+             "look_en": r2(HBF + np.array([-110.0, -140.0])), "look_h": 0.0},
         ],
         "provenance": {
             "measured": [

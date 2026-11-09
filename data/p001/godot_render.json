@@ -82,7 +82,9 @@
  "shopfront": {
   "energy": 1.2,
   "range": 6.5,
-  "emission": 1.15
+  "emission": 0.75,
+  "panel_tint": 0.8,
+  "note": "QA 2026-11-09: 1.15 rendered the panels as flat white boards at night"
  },
  "upper_window_emission": 0.9,
  "kiosk": {

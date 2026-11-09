@@ -53,15 +53,15 @@ func _ready() -> void:
 	prompt_label.anchor_bottom = 1.0
 	prompt_label.offset_left = -300
 	prompt_label.offset_right = 300
-	prompt_label.offset_top = -150
-	prompt_label.offset_bottom = -115
+	prompt_label.offset_top = -185
+	prompt_label.offset_bottom = -150
 	prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	prompt_label.add_theme_font_size_override("font_size", 20)
 	prompt_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	prompt_label.add_theme_constant_override("outline_size", 6)
 	add_child(prompt_label)
 
-	message_panel = _panel(Vector2(-330, -105), Vector2(330, -20))
+	message_panel = _panel(Vector2(-330, -140), Vector2(330, -20))  # 4 lines at 18 px
 	message_label = Label.new()
 	message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	message_label.add_theme_font_size_override("font_size", 18)

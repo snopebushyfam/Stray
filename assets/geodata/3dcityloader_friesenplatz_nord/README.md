@@ -14,7 +14,9 @@ DGM1-Gelände (1 m), Kartentextur (0,20 m), LoD2-Gebäude NRW.
 
 Durch Abgleich der Gebäude-Eckpunkte mit der amtlichen Kachel `LoD2_32_355_5645_1_NW.gml`:
 
-* DXF-Ursprung (0, 0) = **UTM32 E 355232,703 / N 5645294,630** (1.006 Eckpunkte passen danach mit 0,000 m Abstand).
+* DXF-Ursprung (0, 0) = **UTM32 E 355232,703 / N 5645294,630**. Nachmessung 2026-11-09 (eindeutige Eckpunkte):
+  276 von 350 liegen exakt (< 1 cm) auf der amtlichen Kachel, 74 weichen bis 5,6 m ab (nicht am Ausschnittrand) –
+  vermutlich anderer Datenstand/Aufbereitung. Die frühere Angabe „1.006 Eckpunkte mit 0,000 m“ zählte Duplikate.
   Die World-Datei der Textur liegt 0,1 m daneben (E 355232,803 / N 5645294,530 unten links).
 * Höhe: DXF z = 0 entspricht ca. **45,43 m NHN** (Geländeminimum). Gebäude streuen ±1 m
   gegen die amtlichen Höhen — der Konverter setzt sie vermutlich auf sein Gelände.
@@ -23,5 +25,5 @@ Durch Abgleich der Gebäude-Eckpunkte mit der amtlichen Kachel `LoD2_32_355_5645
 
 ## Verwendung
 
-Noch **nicht** im Spiel verwendet. Vorgesehen für die nördliche Erweiterung über den Friesenplatz.
+Noch **nicht** im Spiel verwendet; Entscheidung und Vorgehen: `docs/QA_VISUAL_AUDIT.md` § 5. Vorgesehen für die nördliche Erweiterung über den Friesenplatz.
 P001 nutzt dieselben amtlichen Quellen direkt (LoD2 + DGM1 über `tools/geodata/build_p001.py`).

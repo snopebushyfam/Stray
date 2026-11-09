@@ -57,6 +57,8 @@ func _draw() -> void:
 		draw_circle(p, 6.0, m.color)
 		draw_string(font, p + Vector2(8, 5), m.label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
 	var pp := _to_px(player_en)
+	if not Rect2(Vector2.ZERO, size).has_point(pp):
+		draw_string(font, Vector2(8, size.y - 12), "Du bist nicht auf dieser Karte (Hbf/U-Bahn)", HORIZONTAL_ALIGNMENT_LEFT, size.x - 16, 12, Color(1.0, 0.85, 0.35))
 	var d := Vector2(player_dir_en.x, -player_dir_en.y).normalized()
 	var side := Vector2(-d.y, d.x)
 	draw_colored_polygon(PackedVector2Array([pp + d * 11.0, pp - d * 6.0 + side * 6.0, pp - d * 6.0 - side * 6.0]), Color(0.2, 0.75, 1.0))

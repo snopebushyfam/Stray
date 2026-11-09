@@ -56,6 +56,9 @@ func _run() -> void:
 	await _frames(20)
 	check(life.flags.get("inside_metro", false) and m.region == "metro" and m.metro.visible, "on the platform")
 	check(m.player.is_on_floor() and m.player.global_position.y < -95.0, "standing on the platform floor")
+	# QA 2026-11-09: the player used to face the end wall (camera looked at a grey wall).
+	var fwd: Vector3 = -m.player.camera.global_transform.basis.z
+	check(fwd.x < -0.7, "looking along the platform towards the train (fwd=%s)" % fwd)
 
 	# Ticket.
 	var cash0 := life.cash_cents
