@@ -37,7 +37,8 @@ func _ready() -> void:
 
 	objective_label = Label.new()
 	objective_label.offset_left = 12
-	objective_label.offset_top = 52
+	# Touch devices have the Tag/Nacht, Menü and Handy buttons there: goal goes below them.
+	objective_label.offset_top = 150 if touch else 52
 	objective_label.offset_right = 760
 	objective_label.add_theme_font_size_override("font_size", 20)
 	objective_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.35))

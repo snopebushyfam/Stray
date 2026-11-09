@@ -222,6 +222,12 @@ Tests: `prologue_test` 11/11, `prologue_it_test` 17/17. Gefundener Fehler: das A
 vor dem Prolog-Schritt (Laden → falscher Schritt). Regressionstest zuerst rot gesehen, dann behoben
 (Speichern verzögert). Beim Sichttest korrigiert: Kamera hinter der Friesenplatz-Stele (Ausstieg 6 m südlich).
 
+**R7 Web-Version für itch.io (2026-11-09, Paket geprüft, Upload offen):** `tools/release/package_itch.sh`
+baut den Web-Export (ohne Threads) und `build/stray_web_itch.zip`; `build/.gdignore` verhindert, dass Godot
+den Export als Projekt-Assets importiert. Das ZIP lief entpackt im iframe mit Touch-Eingabe (Prolog per
+Fingertipp gestartet). Beim Sichttest behoben: die Zielzeile lag auf Tablets unter den Touch-Knöpfen.
+Anleitung: `docs/RELEASE_ITCH.md`.
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

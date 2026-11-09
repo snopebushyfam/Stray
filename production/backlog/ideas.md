@@ -14,7 +14,7 @@ angehängt, nicht sofort umgesetzt.
 | R4 ✅ | Konsequenzen-Grundgerüst: Polizei-Aufmerksamkeit, Ruf wirkt auf NPCs/Preise/Einlass (erledigt 2026-11-09) | Säule CONSEQUENCES über den Türsteher hinaus |
 | R5 ✅ | Zweites Gebiet + Verbindung: Hbf + U-Bahn (Prolog-Ort) (erledigt 2026-11-09) | Open World statt eine Straße |
 | R6 ✅ | Prolog / Einstieg: Ankunft Hbf → Tutorial → U-Bahn → Friesenplatz (erledigt 2026-11-09) | Spielbarer Anfang |
-| R7 | Tablet/Web-Version veröffentlichen (itch.io oder GitHub Pages) | Testen auf echter Hardware |
+| R7 🟡 | Tablet/Web-Version auf itch.io: Paket + Anleitung fertig (`docs/RELEASE_ITCH.md`, 2026-11-09); Upload + Test auf dem echten Tablet durch dich offen | Testen auf echter Hardware |
 
 ## Detail-Ideen (nach dem Rohbau)
 
@@ -77,6 +77,11 @@ angehängt, nicht sofort umgesetzt.
 - Zwischensequenz/Kamerafahrt zum Dom beim Start; Prolog überspringen (Menüpunkt)
 - Erol als Figur im KIOSK, erstes Gespräch statt nur Nachricht; Schlüssel beim Nachbarn abholen
 - Wegweiser-Pfeil / Markierung auf der Handy-Karte für das aktuelle Ziel
+
+### Release (aus R7)
+- Upload automatisieren (butler + itch.io-API-Schlüssel, z. B. per GitHub Action)
+- Ladebildschirm/Icon im STRAY-Stil statt Godot-Standard; Versionsnummer im Menü
+- Touch: Tastatur-Hinweiszeile auf Tablets ausblenden; Knöpfe größer; Kamera-Empfindlichkeit einstellbar
 
 ### Speichern
 - Mehrere Spielstand-Slots; Speichern im Browser über Neustart hinweg testen
