@@ -140,11 +140,7 @@ func _spawn_bouncer(c: Dictionary, character_cfg: Dictionary) -> void:
 	root.rotation.y = atan2(-face.x, -face.z)
 	model.rotation.y = deg_to_rad(character_cfg.get("yaw_offset_deg", 180.0))
 	model.scale = Vector3.ONE * 1.1
-	var black := StandardMaterial3D.new()
-	black.albedo_color = Color(0.03, 0.03, 0.035)
-	for mi in model.find_children("*", "MeshInstance3D", true, false):
-		for i in (mi as MeshInstance3D).mesh.get_surface_count():
-			(mi as MeshInstance3D).set_surface_override_material(i, black)
+	StrayCharacterLook.apply(model, "bouncer")  # R10: black bomber, bald
 	root.add_child(model)
 	add_child(root)
 	var ap: Array = model.find_children("*", "AnimationPlayer", true, false)

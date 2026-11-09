@@ -145,7 +145,8 @@ func _build_bar() -> void:
 	add_child(bar_light)
 
 
-func _character(character_cfg: Dictionary, color: Color, anim: String, pos: Vector3, yaw: float, scale_f: float = 1.0) -> Node3D:
+## `look`: character_looks.json id (R10); `color` is only used without the look shader.
+func _character(character_cfg: Dictionary, color: Color, anim: String, pos: Vector3, yaw: float, scale_f: float = 1.0, look: String = "") -> Node3D:
 	var root := Node3D.new()
 	root.position = pos
 	root.rotation.y = yaw
@@ -155,10 +156,11 @@ func _character(character_cfg: Dictionary, color: Color, anim: String, pos: Vect
 	var model: Node3D = load(character_cfg["scene"]).instantiate()
 	model.rotation.y = deg_to_rad(character_cfg.get("yaw_offset_deg", 180.0))
 	model.scale = Vector3.ONE * scale_f
-	var m := _mat(color, 0.7)
-	for mi in model.find_children("*", "MeshInstance3D", true, false):
-		for i in (mi as MeshInstance3D).mesh.get_surface_count():
-			(mi as MeshInstance3D).set_surface_override_material(i, m)
+	if look.is_empty() or not StrayCharacterLook.apply(model, look):
+		var m := _mat(color, 0.7)
+		for mi in model.find_children("*", "MeshInstance3D", true, false):
+			for i in (mi as MeshInstance3D).mesh.get_surface_count():
+				(mi as MeshInstance3D).set_surface_override_material(i, m)
 	root.add_child(model)
 	var aps := model.find_children("*", "AnimationPlayer", true, false)
 	if not aps.is_empty():
@@ -183,7 +185,7 @@ func _build_dj(character_cfg: Dictionary) -> void:
 	var c: Array = cfg.get("dj", {}).get("center", [6.8, 1.0])
 	_box(Vector3(c[0], 0.55, c[1]), Vector3(1.0, 1.1, 2.4), _mat(Color(0.04, 0.04, 0.05), 0.4))
 	_box(Vector3(float(c[0]) - 0.52, 0.8, c[1]), Vector3(0.04, 0.5, 2.2), _mat(Color(0.1, 0.3, 1.0), 0.5, 2.5), false)
-	_character(character_cfg, Color(0.1, 0.1, 0.12), "Dance", Vector3(float(c[0]) + 0.9, 0.0, c[1]), -PI * 0.5)
+	_character(character_cfg, Color(0.1, 0.1, 0.12), "Dance", Vector3(float(c[0]) + 0.9, 0.0, c[1]), -PI * 0.5, 1.0, "club_black_shirt")
 
 
 func _build_lights() -> void:
@@ -219,20 +221,21 @@ func _build_dancers(character_cfg: Dictionary) -> void:
 			continue
 		placed.append(p)
 		var col := Color.from_hsv(_rng.randf(), 0.55, _rng.randf_range(0.3, 0.8))
+		var club_looks := StrayCharacterLook.group("club")
 		dancers.append(_character(character_cfg, col, anims[_rng.randi() % anims.size()], Vector3(p.x, 0.0, p.y),
-			_rng.randf_range(0, TAU), _rng.randf_range(0.93, 1.06)))
+			_rng.randf_range(0, TAU), _rng.randf_range(0.93, 1.06), String(club_looks[dancers.size() % club_looks.size()]) if not club_looks.is_empty() else ""))
 
 
 func _build_bartender(character_cfg: Dictionary) -> void:
 	var st: Array = cfg.get("bartender", {}).get("stand", [-6.6, -6.2])
-	_character(character_cfg, Color(0.08, 0.08, 0.09), "Idle", Vector3(st[0], 0.0, st[1]), PI)  # faces the guests (+Z)
+	_character(character_cfg, Color(0.08, 0.08, 0.09), "Idle", Vector3(st[0], 0.0, st[1]), PI, 1.0, "bartender")  # faces the guests (+Z)
 
 
 func _build_lea(character_cfg: Dictionary) -> void:
 	var lea: Dictionary = cfg.get("lea", {})
 	var st: Array = lea.get("stand", [-3.6, -5.0])
 	# Lea leans at the end of the bar, facing the room.
-	_character(character_cfg, Color(0.55, 0.12, 0.2), "Idle_Talking", Vector3(st[0], 0.0, st[1]), PI, 0.97)  # faces the room (+Z)
+	_character(character_cfg, Color(0.55, 0.12, 0.2), "Idle_Talking", Vector3(st[0], 0.0, st[1]), PI, 0.97, "lea")  # faces the room (+Z)
 	points["lea"] = to_global(Vector3(float(st[0]), 0.0, float(st[1]) + 1.1))
 
 

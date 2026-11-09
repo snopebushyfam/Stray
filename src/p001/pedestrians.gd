@@ -65,18 +65,9 @@ func _make_character(ped: Dictionary, color_index: int) -> Array:
 	var scene: PackedScene = load(_char_cfg.get("scene", ""))
 	var model: Node3D = scene.instantiate()
 	model.rotation.y = deg_to_rad(_char_cfg.get("yaw_offset_deg", 180.0))
-	var colors: Array = ped.get("outfit_colors", [[0.3, 0.3, 0.3]])
-	var c: Array = colors[color_index % colors.size()]
-	var body := StandardMaterial3D.new()
-	body.albedo_color = Color(c[0], c[1], c[2])
-	body.roughness = 0.75
-	var joints := StandardMaterial3D.new()
-	joints.albedo_color = Color(c[0], c[1], c[2]) * 0.45
-	for mi in model.find_children("*", "MeshInstance3D", true, false):
-		var m := mi as MeshInstance3D
-		for i in m.mesh.get_surface_count():
-			var src := m.mesh.surface_get_material(i)
-			m.set_surface_override_material(i, joints if src != null and "Joint" in src.resource_name else body)
+	# R10: everyday outfits (character_looks.json); the walkers use the "street" group.
+	var looks := StrayCharacterLook.group(String(ped.get("look_group", "street")))
+	StrayCharacterLook.apply(model, String(looks[color_index % looks.size()]) if not looks.is_empty() else "")
 	var players := model.find_children("*", "AnimationPlayer", true, false)
 	return [model, players[0] if not players.is_empty() else null]
 
@@ -117,7 +108,7 @@ func _build_queue(q: Dictionary, ped: Dictionary) -> void:
 	var t := Vector2(n.y, -n.x)
 	for i in int(q.get("count", 5)):
 		var p: Vector2 = pos + n * float(q.get("out", 2.7)) + t * (float(q.get("start_along", -1.8)) - i * float(q.get("spacing", 0.9)))
-		var made := _make_character(ped, i + 3)
+		var made := _make_character(ped.merged({"look_group": "queue"}), i + 3)
 		var model: Node3D = made[0]
 		var root := Node3D.new()
 		root.position = StrayStreetLayout.en_to_godot(p.x, p.y, layout.ground_z_at(p))

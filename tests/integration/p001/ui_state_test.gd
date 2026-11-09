@@ -83,6 +83,11 @@ func _run() -> void:
 	await _frames(10)
 	ix.interact()
 	check(m.ui.shop_panel.visible and ix.active_shop == ix.shop, "KIOSK menu opens normally")
+	# E) Police attention in the HUD: plain letters/digits (the ●/○ symbols broke on a tablet).
+	m.ui.police_heat = 50.0
+	m.ui.set_status(ix.life)
+	var st: String = m.ui.status_label.text
+	check("Polizei 3/5 - beobachtet" in st and not ("●" in st or "○" in st), "police status readable: '%s'" % st.replace("\n", " | "))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
 	print("RESULT ui_state_test passed=%d failed=%d" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)

@@ -124,17 +124,9 @@ func _load_character(c: Dictionary, h: float) -> bool:
 	model.rotation.y = deg_to_rad(c.get("yaw_offset_deg", 180.0))  # glTF faces +Z, Godot forward is -Z
 	model.position.y = -h * 0.5  # model feet at y = 0, capsule centre at the body origin
 	_visual.add_child(model)
-	var body := StandardMaterial3D.new()
-	body.albedo_color = Color(c.get("body_color", [0.14, 0.16, 0.21])[0], c.get("body_color", [0.14, 0.16, 0.21])[1], c.get("body_color", [0.14, 0.16, 0.21])[2])
-	body.roughness = 0.7
-	var joints := StandardMaterial3D.new()
-	var jc: Array = c.get("joint_color", [0.05, 0.05, 0.06])
-	joints.albedo_color = Color(jc[0], jc[1], jc[2])
-	for mi in model.find_children("*", "MeshInstance3D", true, false):
-		var m := mi as MeshInstance3D
-		for i in m.mesh.get_surface_count():
-			var src := m.mesh.surface_get_material(i)
-			m.set_surface_override_material(i, joints if src != null and "Joint" in src.resource_name else body)
+	# R10: dressed with an everyday outfit (look "player"), see character_look.gd.
+	if not StrayCharacterLook.apply(model, String(c.get("look", "player"))):
+		push_warning("STRAY_DIAG character look not applied")
 	var players := model.find_children("*", "AnimationPlayer", true, false)
 	if players.is_empty():
 		return true

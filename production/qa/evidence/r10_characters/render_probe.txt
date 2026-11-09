@@ -1,0 +1,15 @@
+PROBE scene mesh_instances=846 lights=83
+PROBE ring_spawn             objects=  743 draw_calls=  539 primitives= 187013
+PROBE nachtflug              objects=  519 draw_calls=  300 primitives= 149120
+PROBE kiosk                  objects=  544 draw_calls=  326 primitives= 147526
+PROBE club_inside            objects=  392 draw_calls=  105 primitives= 122015
+PROBE metro                  objects=  285 draw_calls=   63 primitives=   8898
+PROBE hbf                    objects=  459 draw_calls=  149 primitives=  49351
+---
+PROBE scene mesh_instances=846 lights=83
+PROBE ring_spawn             objects=  718 draw_calls=  514 primitives= 163546
+PROBE nachtflug              objects=  498 draw_calls=  279 primitives= 140492
+PROBE kiosk                  objects=  530 draw_calls=  313 primitives= 134045
+PROBE club_inside            objects=  375 draw_calls=   88 primitives= 112947
+PROBE metro                  objects=  284 draw_calls=   62 primitives=  14908
+PROBE hbf                    objects=  457 draw_calls=  147 primitives=  48341

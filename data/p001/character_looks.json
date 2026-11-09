@@ -1,0 +1,33 @@
+{
+ "schema": "stray.p001.character_looks/1",
+ "note": "R10: outfits for the CC0 Quaternius UAL mannequin (spatial_char_clothing.gdshader). Colours sRGB 0..1. Generic everyday clothing; no brands.",
+ "groups": {
+  "player": ["player"],
+  "street": ["street_navy_jacket", "street_grey_hoodie", "street_beige_coat", "street_leather", "street_denim", "street_red_puffer", "street_green_parka", "street_tshirt"],
+  "queue": ["club_black_shirt", "club_white_tee", "club_burgundy", "street_leather", "club_satin", "street_grey_hoodie"],
+  "club": ["club_black_shirt", "club_white_tee", "club_burgundy", "club_satin", "club_neon", "club_denim_crop", "street_leather"],
+  "bouncer": ["bouncer"],
+  "staff": ["bartender"],
+  "lea": ["lea"]
+ },
+ "looks": {
+  "player":              {"skin": [0.72, 0.53, 0.41], "hair": [0.1, 0.07, 0.05], "top": [0.24, 0.27, 0.2], "trim": [0.14, 0.15, 0.12], "pants": [0.1, 0.13, 0.22], "shoes": [0.82, 0.82, 0.8], "sole": [0.95, 0.95, 0.93], "collar": 1, "zipper": 0, "top_roughness": 0.9},
+  "street_navy_jacket":  {"skin": [0.85, 0.68, 0.56], "hair": [0.32, 0.22, 0.12], "top": [0.1, 0.13, 0.25], "trim": [0.75, 0.75, 0.72], "pants": [0.2, 0.2, 0.21], "shoes": [0.1, 0.08, 0.07], "sole": [0.1, 0.08, 0.07], "collar": 1, "zipper": 1, "top_roughness": 0.6},
+  "street_grey_hoodie":  {"skin": [0.55, 0.38, 0.27], "hair": [0.05, 0.04, 0.04], "top": [0.42, 0.42, 0.43], "trim": [0.3, 0.3, 0.31], "pants": [0.08, 0.08, 0.09], "shoes": [0.9, 0.9, 0.88], "sole": [0.95, 0.95, 0.93], "collar": 1, "zipper": 0, "top_roughness": 0.92},
+  "street_beige_coat":   {"skin": [0.88, 0.72, 0.6], "hair": [0.55, 0.42, 0.25], "top": [0.62, 0.52, 0.38], "trim": [0.4, 0.32, 0.22], "pants": [0.12, 0.12, 0.13], "shoes": [0.25, 0.15, 0.09], "sole": [0.2, 0.12, 0.08], "collar": 1, "zipper": 1, "top_roughness": 0.85},
+  "street_leather":      {"skin": [0.8, 0.62, 0.5], "hair": [0.08, 0.06, 0.05], "top": [0.07, 0.065, 0.06], "trim": [0.6, 0.6, 0.62], "pants": [0.14, 0.18, 0.3], "shoes": [0.06, 0.06, 0.06], "sole": [0.06, 0.06, 0.06], "collar": 0, "zipper": 1, "top_roughness": 0.45},
+  "street_denim":        {"skin": [0.65, 0.46, 0.34], "hair": [0.15, 0.1, 0.07], "top": [0.22, 0.33, 0.5], "trim": [0.7, 0.55, 0.3], "pants": [0.12, 0.12, 0.12], "shoes": [0.85, 0.82, 0.75], "sole": [0.95, 0.95, 0.93], "collar": 0, "zipper": 1, "top_roughness": 0.9},
+  "street_red_puffer":   {"skin": [0.9, 0.74, 0.63], "hair": [0.45, 0.2, 0.08], "top": [0.55, 0.08, 0.07], "trim": [0.1, 0.1, 0.1], "pants": [0.08, 0.08, 0.1], "shoes": [0.12, 0.12, 0.12], "sole": [0.9, 0.9, 0.88], "collar": 1, "zipper": 1, "top_roughness": 0.5},
+  "street_green_parka":  {"skin": [0.45, 0.31, 0.22], "hair": [0.04, 0.03, 0.03], "top": [0.25, 0.28, 0.17], "trim": [0.5, 0.45, 0.35], "pants": [0.3, 0.27, 0.22], "shoes": [0.35, 0.22, 0.12], "sole": [0.2, 0.14, 0.1], "collar": 1, "zipper": 1, "top_roughness": 0.85},
+  "street_tshirt":       {"skin": [0.78, 0.58, 0.44], "hair": [0.2, 0.14, 0.09], "top": [0.85, 0.85, 0.83], "trim": [0.75, 0.75, 0.73], "pants": [0.2, 0.28, 0.42], "shoes": [0.15, 0.15, 0.16], "sole": [0.95, 0.95, 0.93], "short_sleeves": 1, "collar": 0, "zipper": 0, "top_roughness": 0.9},
+  "club_black_shirt":    {"skin": [0.82, 0.64, 0.52], "hair": [0.07, 0.05, 0.04], "top": [0.05, 0.05, 0.055], "trim": [0.05, 0.05, 0.055], "pants": [0.1, 0.1, 0.11], "shoes": [0.05, 0.05, 0.05], "sole": [0.95, 0.95, 0.93], "short_sleeves": 1, "top_roughness": 0.8},
+  "club_white_tee":      {"skin": [0.5, 0.34, 0.24], "hair": [0.03, 0.03, 0.03], "top": [0.9, 0.9, 0.9], "trim": [0.9, 0.9, 0.9], "pants": [0.06, 0.06, 0.07], "shoes": [0.9, 0.9, 0.88], "sole": [0.95, 0.95, 0.93], "short_sleeves": 1, "top_roughness": 0.9},
+  "club_burgundy":       {"skin": [0.88, 0.7, 0.58], "hair": [0.6, 0.45, 0.25], "top": [0.4, 0.06, 0.12], "trim": [0.3, 0.05, 0.1], "pants": [0.07, 0.07, 0.08], "shoes": [0.07, 0.07, 0.07], "sole": [0.07, 0.07, 0.07], "short_sleeves": 0, "top_roughness": 0.6},
+  "club_satin":          {"skin": [0.7, 0.5, 0.38], "hair": [0.1, 0.06, 0.05], "top": [0.6, 0.55, 0.35], "trim": [0.5, 0.45, 0.3], "pants": [0.05, 0.05, 0.05], "shoes": [0.05, 0.05, 0.05], "sole": [0.05, 0.05, 0.05], "short_sleeves": 1, "top_roughness": 0.35},
+  "club_neon":           {"skin": [0.84, 0.66, 0.54], "hair": [0.12, 0.08, 0.06], "top": [0.15, 0.6, 0.55], "trim": [0.1, 0.4, 0.38], "pants": [0.12, 0.12, 0.14], "shoes": [0.9, 0.9, 0.88], "sole": [0.95, 0.95, 0.93], "short_sleeves": 1, "top_roughness": 0.8},
+  "club_denim_crop":     {"skin": [0.6, 0.42, 0.3], "hair": [0.06, 0.04, 0.03], "top": [0.3, 0.12, 0.35], "trim": [0.2, 0.08, 0.25], "pants": [0.2, 0.3, 0.45], "shoes": [0.85, 0.85, 0.83], "sole": [0.95, 0.95, 0.93], "short_sleeves": 1, "top_roughness": 0.85},
+  "bouncer":             {"skin": [0.62, 0.44, 0.32], "hair": [0.62, 0.44, 0.32], "top": [0.04, 0.04, 0.045], "trim": [0.12, 0.12, 0.13], "pants": [0.05, 0.05, 0.055], "shoes": [0.04, 0.04, 0.04], "sole": [0.04, 0.04, 0.04], "collar": 1, "zipper": 1, "bald": 1, "top_roughness": 0.55},
+  "bartender":           {"skin": [0.8, 0.6, 0.47], "hair": [0.15, 0.1, 0.06], "top": [0.06, 0.06, 0.065], "trim": [0.6, 0.6, 0.62], "pants": [0.06, 0.06, 0.065], "shoes": [0.06, 0.06, 0.06], "sole": [0.06, 0.06, 0.06], "short_sleeves": 1, "top_roughness": 0.8},
+  "lea":                 {"skin": [0.86, 0.68, 0.56], "hair": [0.28, 0.1, 0.06], "top": [0.5, 0.1, 0.18], "trim": [0.12, 0.12, 0.13], "pants": [0.06, 0.06, 0.07], "shoes": [0.06, 0.06, 0.06], "sole": [0.06, 0.06, 0.06], "collar": 0, "zipper": 1, "top_roughness": 0.45}
+ }
+}

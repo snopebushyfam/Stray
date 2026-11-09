@@ -112,15 +112,14 @@ func _panel(top_left: Vector2, bottom_right: Vector2) -> PanelContainer:
 
 
 var clock_text: String = ""
-## Police attention 0..100 (shown as 5 dots when > 0).
+## Police attention 0..100 (shown as "Polizei n/5 - <word>" when > 0).
 var police_heat: float = 0.0
 
 
 func set_status(state: StrayLifeState) -> void:
 	var dots := ""
 	if police_heat > 0.5:
-		var n := clampi(int(ceil(police_heat / 20.0)), 1, 5)
-		dots = "\nPolizei " + "●".repeat(n) + "○".repeat(5 - n)
+		dots = "\n" + police_text(police_heat)
 	status_label.text = "%sBargeld %s\nRuf Nachtleben %+d%s" % [("%s\n" % clock_text) if not clock_text.is_empty() else "",
 		StrayLifeState.euro(state.cash_cents), int(state.reputation.get("nightlife", 0)), dots]
 
@@ -128,6 +127,14 @@ func set_status(state: StrayLifeState) -> void:
 ## Shows the current goal ("" hides it).
 func set_objective(text: String) -> void:
 	objective_label.text = text
+
+
+## Police attention as plain text (R10): "Polizei 3/5 - beobachtet". The former ●/○ symbols
+## rendered badly on a tablet; letters and digits exist in every font.
+static func police_text(heat: float) -> String:
+	var n := clampi(int(ceil(heat / 20.0)), 1, 5)
+	var words := ["", "unauffällig", "aufmerksam", "beobachtet", "gesucht", "Fahndung"]
+	return "Polizei %d/5 - %s" % [n, words[n]]
 
 
 func show_prompt(text: String) -> void:
