@@ -84,6 +84,8 @@ func set_day_mode(day: bool) -> void:
 	var lamps_on: bool = p.get("street_lamps_on", true)
 	for l in _lamp_lights:
 		l.visible = lamps_on
+	for gl in _glow_nodes:
+		gl.visible = not day
 	print("STRAY_DIAG lighting=%s" % ("day" if day else "night"))
 
 
@@ -154,6 +156,50 @@ func _box(xf: Transform3D, size: Vector3, mat: Material, collide: bool = false, 
 	return mi
 
 
+var _glow_nodes: Array[MeshInstance3D] = []
+var _glow_tex: GradientTexture2D
+
+
+## Additive camera-facing halo (night atmosphere around lamps and signs; hidden by day).
+## Size/energy from render.glow["<kind>_size"/"<kind>_energy"].
+func _glow(pos: Vector3, kind: String, c: Color) -> MeshInstance3D:
+	var g: Dictionary = render.get("glow", {})
+	if g.is_empty():
+		return null
+	if _glow_tex == null:
+		var grad := Gradient.new()
+		grad.set_color(0, Color(1, 1, 1, 1))
+		grad.set_color(1, Color(1, 1, 1, 0))
+		grad.add_point(0.35, Color(1, 1, 1, 0.25))
+		_glow_tex = GradientTexture2D.new()
+		_glow_tex.gradient = grad
+		_glow_tex.fill = GradientTexture2D.FILL_RADIAL
+		_glow_tex.fill_from = Vector2(0.5, 0.5)
+		_glow_tex.fill_to = Vector2(1.0, 0.5)
+		_glow_tex.width = 64
+		_glow_tex.height = 64
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	m.albedo_texture = _glow_tex
+	m.albedo_color = Color(c.r, c.g, c.b, float(g.get(kind + "_energy", 0.4)))
+	m.no_depth_test = false
+	m.disable_fog = true
+	var mi := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	var sz: float = g.get(kind + "_size", 1.0)
+	q.size = Vector2(sz, sz)
+	mi.mesh = q
+	mi.material_override = m
+	mi.position = pos
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	_glow_nodes.append(mi)
+	return mi
+
+
 func _count_light(shadows: bool) -> void:
 	stats.lights += 1
 	if shadows:
@@ -189,6 +235,11 @@ func _build_environment() -> void:
 	_key = DirectionalLight3D.new()
 	_key.name = "KeyLight"
 	_key.shadow_enabled = true
+	# R9: per-building facade colours made shadow acne visible as speckles on glass and signs.
+	var sh: Dictionary = render.get("key_shadow", {})
+	_key.shadow_bias = float(sh.get("bias", 0.1))
+	_key.shadow_normal_bias = float(sh.get("normal_bias", 2.0))
+	_key.directional_shadow_max_distance = float(sh.get("max_distance", 100.0))
 	add_child(_key)
 	_count_light(true)
 
@@ -235,7 +286,7 @@ func _build_buildings() -> void:
 		# One mesh per building: each stays under the per-object light limit.
 		var mi := MeshInstance3D.new()
 		mi.name = o.name
-		mi.mesh = StrayObjMesh.build_mesh(o, mats, mats["M_LoD2_wall"])
+		mi.mesh = StrayObjMesh.build_mesh(o, mats, mats["M_LoD2_wall"], StrayObjMesh.building_params(o))
 		holder.add_child(mi)
 	_static_concave(m.collision_faces(), "Lod2Collision")
 	stats.lod2 = true
@@ -272,7 +323,7 @@ func _facade_material() -> Material:
 	_facade_mat.set_shader_parameter("plaster_color", _col(cfg.get("plaster", [0.46, 0.42, 0.37])))
 	_facade_mat.set_shader_parameter("frame_color", _col(cfg.get("frame", [0.18, 0.17, 0.16])))
 	_facade_mat.set_shader_parameter("glass_color", _col(cfg.get("glass", [0.03, 0.03, 0.04])))
-	for key in ["lit_ratio", "lit_energy", "ground_floor_top", "storey_height", "window_spacing"]:
+	for key in ["lit_ratio", "lit_energy", "shop_energy", "street_bounce"]:
 		if cfg.has(key):
 			_facade_mat.set_shader_parameter(key, cfg[key])
 	return _facade_mat
@@ -508,6 +559,7 @@ func _build_lamps() -> void:
 		add_child(spot)
 		_lamp_lights.append(spot)
 		_count_light(spot.shadow_enabled)
+		_glow(_gp(pos + arm * 1.5, g + h - 0.45), "lamp", lamp_col)
 
 
 func _build_shopfronts() -> void:
@@ -520,6 +572,16 @@ func _build_shopfronts() -> void:
 		var c := _col(f.get("color", [1, 0.85, 0.65]))
 		var zc := _g(pos + n) + 0.30 + hh * 0.5
 		var b := StrayStreetLayout.facing_basis(n)
+		if not cfg.get("panels", true):
+			# Shop glazing comes from the facade shader; keep only the light spilling onto the sidewalk.
+			var spill := OmniLight3D.new()
+			spill.light_color = c
+			spill.light_energy = cfg.get("energy", 1.5)
+			spill.omni_range = cfg.get("range", 7.0)
+			spill.position = _gp(pos + n * 0.9, zc)
+			add_child(spill)
+			_count_light(false)
+			continue
 		_box(Transform3D(b, _gp(pos, zc)), Vector3(w + 0.35, hh + 0.35, 0.16), _surface(_color_of("metal"), 0.4))
 		# Panel sits 3 cm proud of the frame's front face (frame front = 0.08 m) - no z-fighting.
 		_box(Transform3D(b, _gp(pos + n * 0.12, zc)), Vector3(w, hh, 0.02), _emissive(c * float(cfg.get("panel_tint", 1.0)), cfg.get("emission", 2.0)))
@@ -592,11 +654,15 @@ func _build_kiosk() -> void:
 	_box(Transform3D(b, _at(fr, 0.0, 0.05, 1.55)), Vector3(5.2, 3.1, 0.20), _surface(_color_of("metal"), 0.35))
 	_box(Transform3D(b, _at(fr, -0.7, 0.16, 1.35)), Vector3(3.1, 2.2, 0.04), _emissive(warm, cfg.get("window_emission", 3.0)))
 	_box(Transform3D(b, _at(fr, 1.75, 0.16, 1.15)), Vector3(1.05, 2.25, 0.04), _surface(Color(0.01, 0.01, 0.012), 0.05))
-	_box(Transform3D(b, _at(fr, 0.0, 0.20, 3.45)), Vector3(4.6, 0.75, 0.25), _emissive(Color(0.95, 0.95, 0.92), cfg.get("sign_emission", 4.0)))
+	_box(Transform3D(b, _at(fr, 0.0, 0.20, 3.45)), Vector3(4.6, 0.75, 0.25), _emissive(Color(0.93, 0.9, 0.84), cfg.get("sign_emission", 4.0)))
 	_label("KIOSK", _at(fr, 0.0, 0.34, 3.45), b, 0.006, Color(0.6, 0.02, 0.02), 96)
 	_label("Getränke · Snacks · Tabak · 24/7", _at(fr, 0.0, 0.36, 2.95), b, 0.0025, Color(1.0, 0.94, 0.82), 64)
 	_box(Transform3D(b, _at(fr, 0.0, 0.75, 2.95)), Vector3(5.2, 0.08, 1.3), _surface(Color(0.25, 0.03, 0.03), 0.6))
-	_box(Transform3D(b, _at(fr, -2.4, 0.45, 0.95)), Vector3(0.8, 1.9, 0.7), _emissive(Color(0.85, 0.92, 1.0), 1.6), true)
+	# Drinks fridge: shaded cabinet with a dimly lit glass door (was a flat white emissive block).
+	_box(Transform3D(b, _at(fr, -2.4, 0.45, 0.95)), Vector3(0.8, 1.9, 0.7), _surface(Color(0.75, 0.76, 0.78), 0.5), true)
+	var fridge_glass := _emissive(Color(0.45, 0.62, 0.78), cfg.get("fridge_emission", 1.6))
+	_box(Transform3D(b, _at(fr, -2.4, 0.81, 1.0)), Vector3(0.66, 1.55, 0.02), fridge_glass)
+	_glow(_at(fr, 0.0, 0.9, 3.45), "kiosk", Color(1.0, 0.9, 0.75))
 	var spot := SpotLight3D.new()
 	spot.light_color = warm
 	spot.light_energy = cfg.get("light_energy", 2.5)
@@ -623,6 +689,7 @@ func _build_club() -> void:
 	_box(Transform3D(b, _at(fr, 0.0, 2.21, 3.35)), Vector3(4.4, 0.2, 0.03), _emissive(ice, cfg.get("canopy_emission", 5.0)))
 	_box(Transform3D(b, _at(fr, 0.0, 0.20, 4.15)), Vector3(4.4, 0.9, 0.12), _surface(Color(0.01, 0.01, 0.012), 0.3))
 	_label("NACHTFLUG", _at(fr, 0.0, 0.28, 4.15), b, 0.0075, Color(1.0, 0.35, 0.8), 112)
+	_glow(_at(fr, 0.0, 1.0, 4.1), "neon", Color(1.0, 0.3, 0.75))
 	for i in 4:
 		var along := -2.6 + i * 1.2
 		var post := MeshInstance3D.new()
@@ -874,30 +941,12 @@ func _build_signal(s_sig: float, s_ford: float, axis_basis: Basis) -> void:
 
 func _build_car(p: Vector2, length: float, color: Color, axis_basis: Basis) -> void:
 	var g := layout.ground_z_at(p)
-	var paint := StandardMaterial3D.new()
-	paint.albedo_color = color
-	paint.roughness = 0.3
-	# Low metallic: the Compatibility renderer has no sky reflections, metal paint would read black.
-	paint.metallic = 0.1
-	var glass := _surface(_fcol("car_glass", [0.02, 0.025, 0.03]), 0.05)
-	var tyre := _surface(_fcol("tyre", [0.02, 0.02, 0.02]), 0.9)
 	var w := 1.8
-	# Body (lower) + cabin; axis_basis local Z runs along the street.
-	_box(Transform3D(axis_basis, _gp(p, g + 0.62)), Vector3(w, 0.62, length), paint)
-	_box(Transform3D(axis_basis, _gp(p - layout.axis_en() * length * 0.05, g + 1.17)), Vector3(w * 0.9, 0.5, length * 0.52), glass)
-	_box(Transform3D(axis_basis, _gp(p - layout.axis_en() * length * 0.05, g + 1.44)), Vector3(w * 0.88, 0.05, length * 0.48), paint)
-	for ds in [-length * 0.32, length * 0.32]:
-		for dv in [-w * 0.45, w * 0.45]:
-			var wp: Vector2 = p + layout.axis_en() * ds + layout.right_en() * dv
-			var wheel := MeshInstance3D.new()
-			var c := CylinderMesh.new()
-			c.top_radius = 0.32
-			c.bottom_radius = 0.32
-			c.height = 0.22
-			wheel.mesh = c
-			wheel.material_override = tyre
-			wheel.transform = Transform3D(axis_basis * Basis(Vector3.FORWARD, PI * 0.5), _gp(wp, g + 0.32))
-			add_child(wheel)
+	var root := Node3D.new()
+	# Car model local -Z = front; parked cars face along the street axis.
+	root.transform = Transform3D(axis_basis.rotated(Vector3.UP, PI), _gp(p, g))
+	add_child(root)
+	StrayCarModel.build(root, length, w, color, false)
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()

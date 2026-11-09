@@ -73,11 +73,10 @@ func _make_police(c: Car) -> void:
 	c.cruise = minf(c.cruise, 9.0)
 	var white := _mat("police_body", Color(0.85, 0.87, 0.9))
 	var stripe := _mat("police_stripe", Color(0.1, 0.25, 0.6))
+	var paint: Variant = c.root.get_meta("paint", null)
 	for child in c.root.get_children():
-		if child is MeshInstance3D and (child as MeshInstance3D).mesh is BoxMesh:
-			var mi := child as MeshInstance3D
-			if mi.position.y > 0.5 and mi.position.y < 0.7 or mi.position.y > 1.4:
-				mi.material_override = white
+		if child is MeshInstance3D and (child as MeshInstance3D).material_override == paint:
+			(child as MeshInstance3D).material_override = white
 	_box(c.root, Vector3(0, 0.75, 0), Vector3(1.82, 0.12, c.length * 0.9), stripe)
 	for x in [-0.35, 0.35]:
 		var m := StandardMaterial3D.new()
@@ -86,7 +85,7 @@ func _make_police(c: Car) -> void:
 		m.emission_enabled = true
 		m.emission = Color(0.1, 0.3, 1.0)
 		m.emission_energy_multiplier = 0.3
-		_box(c.root, Vector3(x, 1.53, c.length * 0.05), Vector3(0.5, 0.12, 0.25), m)
+		_box(c.root, Vector3(x, 1.4, c.length * 0.06), Vector3(0.5, 0.12, 0.25), m)
 		c.light_bar.append(m)
 
 
@@ -129,34 +128,14 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, m: Material) -> MeshInsta
 func _build_car(c: Car) -> void:
 	var colors: Array = cfg.get("colors", [[0.3, 0.3, 0.3]])
 	var col: Array = colors[_rng.randi() % colors.size()]
-	var paint := _mat("paint", Color(col[0], col[1], col[2]))
-	var glass := _mat("glass", Color(0.02, 0.025, 0.03))
-	var tyre := _mat("tyre", Color(0.02, 0.02, 0.02))
 	var w := 1.8
 	var L := c.length
 	c.root = Node3D.new()
 	add_child(c.root)
-	_box(c.root, Vector3(0, 0.62, 0), Vector3(w, 0.62, L), paint)
-	_box(c.root, Vector3(0, 1.17, L * 0.05), Vector3(w * 0.9, 0.5, L * 0.52), glass)
-	_box(c.root, Vector3(0, 1.44, L * 0.05), Vector3(w * 0.88, 0.05, L * 0.48), paint)
-	var head := _mat("head", Color(1.0, 0.95, 0.85), cfg.get("headlight_emission", 4.0))
-	var tail := _mat("tail", Color(0.9, 0.05, 0.03), cfg.get("taillight_emission", 3.0))
-	for x in [-w * 0.36, w * 0.36]:
-		_box(c.root, Vector3(x, 0.72, -L * 0.5 - 0.01), Vector3(0.32, 0.12, 0.02), head)
-		_box(c.root, Vector3(x, 0.78, L * 0.5 + 0.01), Vector3(0.30, 0.10, 0.02), tail)
-	for z in [-L * 0.32, L * 0.32]:
-		for x in [-w * 0.45, w * 0.45]:
-			var wheel := MeshInstance3D.new()
-			var cyl := CylinderMesh.new()
-			cyl.top_radius = 0.32
-			cyl.bottom_radius = 0.32
-			cyl.height = 0.22
-			wheel.mesh = cyl
-			wheel.material_override = tyre
-			wheel.position = Vector3(x, 0.32, z)
-			wheel.rotation = Vector3(0, 0, PI * 0.5)
-			c.root.add_child(wheel)
-			c.wheels.append(wheel)
+	# One material per colour (before R9 all cars shared the first car's paint).
+	for wheel in StrayCarModel.build(c.root, L, w, Color(col[0], col[1], col[2]), true,
+			cfg.get("headlight_emission", 4.0), cfg.get("taillight_emission", 3.0)):
+		c.wheels.append(wheel)
 	c.body = AnimatableBody3D.new()
 	c.body.collision_layer = CAR_LAYER
 	c.body.collision_mask = 0

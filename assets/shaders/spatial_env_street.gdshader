@@ -47,6 +47,14 @@ void fragment() {
 		float patch = vnoise(st * 0.35);
 		albedo *= 0.75 + 0.5 * g * (0.8 + 0.4 * patch);
 		rough = mix(0.95, 0.55, sheen * patch);
+		// R9: rectangular repair patches (newer, darker asphalt) on a 6 x 3 m grid, ~1 in 6 cells.
+		vec2 pc = floor(st / vec2(6.0, 3.0));
+		vec2 pf = st / vec2(6.0, 3.0) - pc;
+		float has_patch = step(0.83, hash12(pc + 7.0)) * step(0.15, pf.x) * step(pf.x, 0.75) * step(0.2, pf.y) * step(pf.y, 0.8);
+		albedo *= 1.0 - 0.28 * has_patch;
+		// Fine cracks: thin dark lines where a stretched noise crosses its mid value.
+		float cr = vnoise(st * vec2(0.9, 2.3) + 13.0);
+		albedo *= 1.0 - 0.35 * (1.0 - smoothstep(0.0, 0.012, abs(cr - 0.5))) * step(0.55, vnoise(st * 0.2 + 3.0));
 	} else if (surface_kind == 1) {
 		// Concrete slabs with dark joints and per-slab tone.
 		vec2 cell = floor(st / slab_size);
@@ -55,6 +63,10 @@ void fragment() {
 		bool joint = f.x < jw.x || f.y < jw.y;
 		float tone = 1.0 - color_variation + 2.0 * color_variation * hash12(cell);
 		albedo *= joint ? 0.45 : tone * (0.9 + 0.2 * vnoise(st * 23.0));
+		// R9: chewing-gum spots and darker weathered slabs (city sidewalk).
+		float gum = step(0.985, hash12(floor(st * 7.0) + 3.0));
+		albedo *= 1.0 - 0.45 * gum * (joint ? 0.0 : 1.0);
+		albedo *= 1.0 - 0.12 * step(0.9, hash12(cell + 11.0));
 		rough = joint ? 0.98 : 0.85;
 	} else {
 		// Kerb / median stone: long blocks (1 m) along the axis.

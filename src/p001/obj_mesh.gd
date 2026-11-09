@@ -99,7 +99,9 @@ static func load_file(path: String) -> StrayObjMesh:
 
 
 ## Builds a flat-shaded ArrayMesh for one object; `materials` maps material name -> Material.
-static func build_mesh(obj: ObjObject, materials: Dictionary, fallback: Material) -> ArrayMesh:
+## `vertex_color` (optional) is written to every vertex: the facade shader reads per-building
+## parameters from it (material seed, window seed, height, base).
+static func build_mesh(obj: ObjObject, materials: Dictionary, fallback: Material, vertex_color: Variant = null) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	for mat_name in obj.surfaces:
 		var tris: PackedVector3Array = obj.surfaces[mat_name]
@@ -115,9 +117,28 @@ static func build_mesh(obj: ObjObject, materials: Dictionary, fallback: Material
 		arrays.resize(Mesh.ARRAY_MAX)
 		arrays[Mesh.ARRAY_VERTEX] = tris
 		arrays[Mesh.ARRAY_NORMAL] = normals
+		if vertex_color != null:
+			var cols := PackedColorArray()
+			cols.resize(tris.size())
+			cols.fill(vertex_color)
+			arrays[Mesh.ARRAY_COLOR] = cols
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		mesh.surface_set_material(mesh.get_surface_count() - 1, materials.get(mat_name, fallback))
 	return mesh
+
+
+## Per-building shader parameters packed into a vertex colour: r = material seed, g = window
+## seed (both stable hashes of the building id), b = height / 100 m, a = (base + 10 m) / 20 m.
+static func building_params(obj: ObjObject) -> Color:
+	var lo := INF
+	var hi := -INF
+	for mat_name in obj.surfaces:
+		for v in obj.surfaces[mat_name]:
+			lo = minf(lo, v.y)
+			hi = maxf(hi, v.y)
+	var h := hash(obj.name)
+	return Color(float(h & 0xFFFF) / 65535.0, float((h >> 16) & 0xFFFF) / 65535.0,
+		clampf((hi - lo) / 100.0, 0.0, 1.0), clampf((lo + 10.0) / 20.0, 0.0, 1.0))
 
 
 ## All triangles of all objects, for a ConcavePolygonShape3D.

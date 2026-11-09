@@ -129,6 +129,8 @@ func _ready() -> void:
 	interactions.club_left.connect(func(): save_game("club_left"))
 	if "--autoshots" in OS.get_cmdline_user_args():
 		_run_autoshots.call_deferred()
+	elif "--r9shots" in OS.get_cmdline_user_args():
+		_run_compare_shots.call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -170,7 +172,7 @@ func _setup_menu_and_save() -> void:
 		save_game("quit")
 		get_tree().quit())
 	# The start screen only appears when this scene is the game itself (not inside tests/tools).
-	if get_tree().current_scene == self and not "--autoshots" in OS.get_cmdline_user_args():
+	if get_tree().current_scene == self and not "--autoshots" in OS.get_cmdline_user_args() and not "--r9shots" in OS.get_cmdline_user_args():
 		get_tree().paused = true
 		menu.show_start(StraySaveGame.exists(save_path))
 		if "--menushots" in OS.get_cmdline_user_args():
@@ -442,7 +444,14 @@ func _hud_title(id: String) -> String:
 	return "STRAY · " + String(titles.get(id, "Hohenzollernring, Köln")) + " (LoD2/DGM1 Geobasis NRW, © OSM)"
 
 
+var _fps_log_left := 5.0
+
+
 func _process(delta: float) -> void:
+	_fps_log_left -= delta
+	if _fps_log_left <= 0.0:
+		_fps_log_left = 5.0
+		print("STRAY_DIAG fps=%d region=%s" % [Engine.get_frames_per_second(), region])
 	if menu and menu.mode.is_empty() and not save_path.is_empty():
 		_autosave_left -= delta
 		if _autosave_left <= 0.0:
@@ -737,6 +746,57 @@ func _autoshots_transit(dir: String, cam: Camera3D) -> void:
 	metro_ix.ride()
 	metro_ix.leave_station()
 	await get_tree().create_timer(0.5).timeout
+
+
+## R9 before/after comparison: three fixed views (same camera, time, wait) + an FPS sample.
+## Cmdline: -- --r9shots --shots-dir=<dir> [--shot-prefix=<name>]
+func _run_compare_shots() -> void:
+	var dir := _shots_dir()
+	DirAccess.make_dir_recursive_absolute(dir)
+	var prefix := "R9"
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--shot-prefix="):
+			prefix = a.trim_prefix("--shot-prefix=")
+	var L := builder.layout
+	await get_tree().create_timer(2.0).timeout
+	var frames0 := Engine.get_frames_drawn()
+	var t0 := Time.get_ticks_msec()
+	await get_tree().create_timer(3.0).timeout
+	print("STRAY_DIAG r9 fps=%.1f" % [(Engine.get_frames_drawn() - frames0) * 1000.0 / float(Time.get_ticks_msec() - t0)])
+	await _snap(dir, "%s_1_spawn_night.png" % prefix)
+	var cam := Camera3D.new()
+	cam.fov = 70.0
+	add_child(cam)
+	var c := StrayStreetLayout._v2(L.club["en"])
+	var cn := StrayStreetLayout._v2(L.club["normal_en"]).normalized()
+	var k := StrayStreetLayout._v2(L.kiosk["en"])
+	var kn := StrayStreetLayout._v2(L.kiosk["normal_en"]).normalized()
+	var views := [
+		# NACHTFLUG: from the club's sidewalk, 11 m south, 4 m out, looking at the door.
+		["2_nachtflug", c + cn * 6.5 - L.axis_en() * 13.0, 1.7, c + cn * 0.5, 2.6],
+		# KIOSK + opposite side: east sidewalk 14 m south of the kiosk, looking north-west across the Ring.
+		["3_kiosk_opposite", k + kn * 2.5 - L.axis_en() * 14.0, 1.7, k + kn * 18.0 + L.axis_en() * 12.0, 3.0],
+	]
+	for day in [false, true]:
+		builder.set_day_mode(day)
+		_sync_area_daymode(day)
+		if day:
+			player.camera.make_current()
+			await _snap(dir, "%s_1_spawn_day.png" % prefix)
+		for v in views:
+			var eye: Vector2 = v[1]
+			var look: Vector2 = v[3]
+			cam.global_position = StrayStreetLayout.en_to_godot(eye.x, eye.y, L.ground_z_at(eye) + float(v[2]))
+			cam.look_at(StrayStreetLayout.en_to_godot(look.x, look.y, L.ground_z_at(look) + float(v[4])), Vector3.UP)
+			cam.make_current()
+			await _snap(dir, "%s_%s_%s.png" % [prefix, v[0], "day" if day else "night"])
+	print("STRAY_DIAG r9shots=done dir=%s" % dir)
+	get_tree().quit()
+
+
+func _sync_area_daymode(day: bool) -> void:
+	if area and area.area:
+		area.set_day_mode(day)
 
 
 func _run_autoshots() -> void:

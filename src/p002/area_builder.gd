@@ -175,7 +175,7 @@ func _build_buildings() -> void:
 		var mi := MeshInstance3D.new()
 		mi.name = o.name
 		var aabb := AABB()
-		mi.mesh = StrayObjMesh.build_mesh(o, mats, mats["M_LoD2_wall"])
+		mi.mesh = StrayObjMesh.build_mesh(o, mats, mats["M_LoD2_wall"], StrayObjMesh.building_params(o))
 		aabb = mi.mesh.get_aabb()
 		if aabb.size.y > 80.0:
 			for s in mi.mesh.get_surface_count():
