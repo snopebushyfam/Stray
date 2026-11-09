@@ -49,6 +49,24 @@ func _deliver(d: Dictionary, time_text: String) -> void:
 	received.emit(m)
 
 
+func to_dict() -> Dictionary:
+	return {"inbox": inbox.duplicate(true), "unread": unread, "delivered": _delivered.keys(), "contacts": contacts.duplicate(true)}
+
+
+## Restores state. Contacts keep config entries; saved names/known flags override them.
+func from_dict(d: Dictionary) -> void:
+	inbox.clear()
+	for m in d.get("inbox", []):
+		inbox.append((m as Dictionary).duplicate())
+	unread = int(d.get("unread", 0))
+	_delivered = {}
+	for id in d.get("delivered", []):
+		_delivered[String(id)] = true
+	var sc: Dictionary = d.get("contacts", {})
+	for id in sc:
+		contacts[id] = {"name": String(sc[id].get("name", id)), "known": bool(sc[id].get("known", false))}
+
+
 func mark_all_read() -> void:
 	unread = 0
 

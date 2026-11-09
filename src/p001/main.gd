@@ -13,6 +13,7 @@ const NPC_CONFIG := "res://data/p001/npc_config.json"
 const ECONOMY_CONFIG := "res://data/p001/economy_config.json"
 const PHONE_CONFIG := "res://data/p001/phone_config.json"
 const CLUB_CONFIG := "res://data/p001/club_interior.json"
+const GAME_CONFIG := "res://data/p001/game_config.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
@@ -27,6 +28,11 @@ var clock: StrayGameClock
 var messages: StrayMessages
 var phone: StrayPhone
 var club: StrayClubInterior
+var menu: StrayMenu
+var game_cfg: Dictionary = {}
+## Save file path (tests override it before the node enters the tree).
+var save_path: String = ""
+var _autosave_left: float = 0.0
 
 
 func _ready() -> void:
@@ -79,6 +85,9 @@ func _ready() -> void:
 	add_child(interactions)
 	interactions.setup(builder.layout, _load_json(ECONOMY_CONFIG), player, builder, ui, player_cfg.get("character", {}))
 	_build_phone(phone_cfg)
+	_setup_menu_and_save()
+	interactions.club_entered.connect(func(): save_game("club_entered"))
+	interactions.club_left.connect(func(): save_game("club_left"))
 	if "--autoshots" in OS.get_cmdline_user_args():
 		_run_autoshots.call_deferred()
 
@@ -86,6 +95,104 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_day_night"):
 		toggle_day_night()
+	elif event.is_action_pressed("pause") and menu and menu.mode.is_empty():
+		open_pause_menu()
+
+
+# --------------------------------------------------------------------------------------------
+# Menus + save game (R1)
+# --------------------------------------------------------------------------------------------
+
+func _setup_menu_and_save() -> void:
+	game_cfg = _load_json(GAME_CONFIG)
+	var sv: Dictionary = game_cfg.get("save", {})
+	if save_path.is_empty():
+		save_path = String(sv.get("path", "user://stray_save_1.json"))
+	_autosave_left = float(sv.get("autosave_seconds", 90.0))
+	menu = StrayMenu.new()
+	menu.name = "Menu"
+	add_child(menu)
+	menu.setup(game_cfg.get("menu", {}))
+	menu.new_game.connect(_on_new_game)
+	menu.continue_game.connect(func():
+		var ok := load_game()
+		_start_playing("" if ok else String(menu.txt.get("load_failed", ""))))
+	menu.resume.connect(func(): _start_playing(""))
+	menu.save_requested.connect(func():
+		menu.set_note(String(menu.txt.get("saved", "")) if save_game("menu") else "Speichern fehlgeschlagen."))
+	menu.load_requested.connect(func():
+		var ok := load_game()
+		_start_playing(String(menu.txt.get("loaded", "")) if ok else String(menu.txt.get("load_failed", ""))))
+	menu.main_menu.connect(func():
+		save_game("main_menu")
+		get_tree().paused = false
+		get_tree().reload_current_scene())
+	menu.quit_requested.connect(func():
+		save_game("quit")
+		get_tree().quit())
+	# The start screen only appears when this scene is the game itself (not inside tests/tools).
+	if get_tree().current_scene == self and not "--autoshots" in OS.get_cmdline_user_args():
+		get_tree().paused = true
+		menu.show_start(StraySaveGame.exists(save_path))
+		if "--menushots" in OS.get_cmdline_user_args():
+			_run_menushots.call_deferred()
+
+
+## Evidence capture of the start and pause menus (cmdline: -- --menushots [--shots-dir=...]).
+func _run_menushots() -> void:
+	var dir := _shots_dir()
+	DirAccess.make_dir_recursive_absolute(dir)
+	await get_tree().create_timer(2.0).timeout
+	await _snap(dir, "P001_40_start_menu.png")
+	_start_playing("")
+	await get_tree().create_timer(1.5).timeout
+	open_pause_menu()
+	await get_tree().create_timer(0.5).timeout
+	await _snap(dir, "P001_41_pause_menu.png")
+	print("STRAY_DIAG menushots=done")
+	get_tree().quit()
+
+
+func _on_new_game() -> void:
+	_start_playing("")
+	messages.trigger("start", clock.hhmm())
+
+
+func _start_playing(note: String) -> void:
+	menu.hide_menu()
+	get_tree().paused = false
+	if not note.is_empty():
+		ui.show_message("", note, 3.0)
+
+
+func open_pause_menu() -> void:
+	get_tree().paused = true
+	menu.show_pause(StraySaveGame.exists(save_path))
+
+
+## Writes the save file. `reason` only goes to the log.
+func save_game(reason: String = "") -> bool:
+	var err := StraySaveGame.write(save_path, StraySaveGame.capture(self))
+	print("STRAY_DIAG save reason=%s path=%s ok=%s %s" % [reason, save_path, err.is_empty(), err])
+	return err.is_empty()
+
+
+## Loads the save file into the running game. False when missing/corrupt/unsupported.
+func load_game() -> bool:
+	var d := StraySaveGame.read(save_path)
+	if d.is_empty():
+		print("STRAY_DIAG load path=%s ok=false (missing or corrupt)" % save_path)
+		return false
+	var err := StraySaveGame.apply(self, d)
+	_sync_daylight()
+	ui.set_status(interactions.life)
+	print("STRAY_DIAG load path=%s ok=%s time=%s %s" % [save_path, err.is_empty(), clock.hhmm(), err])
+	return err.is_empty()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and menu:
+		save_game("window_closed")
 
 
 ## Debug / touch: jump the clock to the afternoon or to late night; lighting follows the clock.
@@ -100,6 +207,11 @@ func _sync_daylight() -> void:
 
 
 func _process(delta: float) -> void:
+	if menu and menu.mode.is_empty() and not save_path.is_empty():
+		_autosave_left -= delta
+		if _autosave_left <= 0.0:
+			_autosave_left = float(game_cfg.get("save", {}).get("autosave_seconds", 90.0))
+			save_game("autosave")
 	if clock:
 		clock.advance(delta)
 		if ui and interactions and ui.clock_text != clock.hhmm():
@@ -132,7 +244,9 @@ func _build_phone(phone_cfg: Dictionary) -> void:
 			messages.contacts["unbekannt"]["name"] = lea_name
 			messages.contacts["unbekannt"]["known"] = true)
 	interactions.life.cash_changed.connect(func(c): messages.check_cash(c, clock.hhmm()))
-	messages.trigger("start", clock.hhmm())
+	# Start messages arrive once play begins (immediately when there is no start screen).
+	if not (get_tree().current_scene == self and not "--autoshots" in OS.get_cmdline_user_args()):
+		messages.trigger("start", clock.hhmm())
 	print("STRAY_DIAG phone clock=%s messages=%d contacts=%d account=%s" % [clock.hhmm(), messages.inbox.size(),
 		messages.known_contacts().size(), StrayLifeState.euro(interactions.life.account_cents)])
 
@@ -237,7 +351,7 @@ func _build_hud() -> void:
 	add_child(hud)
 	var info := Label.new()
 	info.text = "STRAY · Prototyp 001 · Hohenzollernring, Köln (LoD2/DGM1 Geobasis NRW, © OSM)\n" \
-		+ "WASD/Stick: gehen · Shift: rennen · Leertaste: springen · Maus: Kamera · E: interagieren · Tab: Handy · N: Tag/Nacht"
+		+ "WASD/Stick: gehen · Shift: rennen · Leertaste: springen · Maus: Kamera · E: interagieren · Tab: Handy · N: Tag/Nacht · Esc: Menü"
 	info.position = Vector2(12, 8)
 	info.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
 	info.add_theme_font_size_override("font_size", 14)
@@ -254,6 +368,11 @@ func _build_hud() -> void:
 		joy.anchor_bottom = 1.0
 		joy.anchor_right = 0.5
 		hud.add_child(joy)
+		var menu_b := Button.new()
+		menu_b.text = "Menü"
+		menu_b.position = Vector2(140, 60)
+		menu_b.pressed.connect(open_pause_menu)
+		hud.add_child(menu_b)
 		var day := Button.new()
 		day.text = "Tag/Nacht"
 		day.position = Vector2(12, 60)

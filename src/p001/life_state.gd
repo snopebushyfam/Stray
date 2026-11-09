@@ -68,6 +68,32 @@ func add_item(item_id: String, tags: Array = []) -> void:
 	inventory_changed.emit(item_id, inventory[item_id])
 
 
+## Serialises everything the save game needs.
+func to_dict() -> Dictionary:
+	return {"cash_cents": cash_cents, "account_cents": account_cents, "inventory": inventory.duplicate(),
+		"reputation": reputation.duplicate(), "drinks_alcohol": drinks_alcohol, "flags": flags.duplicate(),
+		"transactions": transactions.duplicate(true)}
+
+
+## Restores from to_dict(); missing keys keep their current values (older saves stay loadable).
+func from_dict(d: Dictionary) -> void:
+	cash_cents = int(d.get("cash_cents", cash_cents))
+	account_cents = int(d.get("account_cents", account_cents))
+	inventory = {}
+	for k in d.get("inventory", {}):
+		inventory[k] = int(d["inventory"][k])
+	for k in d.get("reputation", {}):
+		reputation[k] = int(d["reputation"][k])
+	drinks_alcohol = int(d.get("drinks_alcohol", drinks_alcohol))
+	flags = d.get("flags", flags).duplicate()
+	transactions.clear()
+	for t in d.get("transactions", []):
+		transactions.append({"label": String(t.get("label", "")), "cents": int(t.get("cents", 0)), "kind": String(t.get("kind", ""))})
+	cash_changed.emit(cash_cents)
+	account_changed.emit(account_cents)
+	reputation_changed.emit("nightlife", int(reputation.get("nightlife", 0)))
+
+
 func change_reputation(axis: String, delta: int) -> void:
 	reputation[axis] = int(reputation.get(axis, 0)) + delta
 	reputation_changed.emit(axis, reputation[axis])

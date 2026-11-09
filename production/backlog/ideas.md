@@ -8,7 +8,7 @@ angehängt, nicht sofort umgesetzt.
 
 | # | Baustein | Warum zuerst |
 |---|---|---|
-| R1 | Spielstand speichern/laden + Startmenü | Ohne Speichern ist nichts von Leben/Konsequenzen dauerhaft |
+| R1 ✅ | Spielstand speichern/laden + Startmenü (erledigt 2026-11-09) | Ohne Speichern ist nichts von Leben/Konsequenzen dauerhaft |
 | R2 | Wohnung + Schlafen + Tageswechsel + Miete fällig | Schließt den Tageskreislauf (Säule LIFE) |
 | R3 | Erster Job (Geld verdienen) | Einnahmen gegen Miete/Ausgaben: der Kern-Loop |
 | R4 | Konsequenzen-Grundgerüst: Polizei-Aufmerksamkeit, Ruf wirkt auf NPCs/Preise/Einlass | Säule CONSEQUENCES über den Türsteher hinaus |
@@ -50,6 +50,10 @@ angehängt, nicht sofort umgesetzt.
 - Phone-Karte: Spielerposition im Club-Innenraum sinnvoll anzeigen
 - Unreal-Fassung auf den Godot-Stand bringen (falls Engine-Wechsel zurück)
 - gdUnit4 statt eigener Test-Runner (Template-Standard)
+
+### Speichern
+- Mehrere Spielstand-Slots; Speichern im Browser über Neustart hinweg testen
+- „Neues Spiel“ fragt nach, bevor ein vorhandener Spielstand überschrieben wird
 
 ### Ton
 - Clubmusik/Atmo anhören und abmischen (bisher nur gemessen, nie gehört)

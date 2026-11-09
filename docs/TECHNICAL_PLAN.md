@@ -127,6 +127,22 @@ Kontakt, raus auf die Straße). Beim Sichttest gefunden und behoben: Raum zu dun
 der Theke, Barkeeper fehlte, Clubmusik zu hell (9,4 kHz → 1,7 kHz) mit Klick am Schleifenpunkt.
 Offen: Lea hat nur einen Dialogschritt; Tanzen für den Spieler; Getränke ohne Wirkung.
 
+**R1 Spielstand + Menüs (2026-11-09, gespielt + getestet):**
+
+| | Umsetzung |
+|---|---|
+| Speicherstand | `save_game.gd`: eine JSON-Datei `user://stray_save_1.json` (Version 1); enthält Geld, Konto, Buchungen, Inventar, Ruf, Alkoholzähler, Flags, Uhrzeit, Nachrichten (gelesen/ungelesen, bereits zugestellt), Kontakte (inkl. „Lea“), Lea-Gespräch, Akku, Position, Blickrichtung, im Club ja/nein. Fehlende Felder → Standardwerte, kaputte Datei → wird abgelehnt. |
+| Automatisch speichern | alle 90 s, beim Betreten/Verlassen des Clubs, beim Hauptmenü, beim Beenden/Fenster schließen |
+| Startmenü | Weiterspielen (nur mit Spielstand) · Neues Spiel · Beenden (nicht im Browser); Straße läuft im Hintergrund, Spiel pausiert |
+| Pausenmenü | Esc / P / Touch „Menü“: Fortsetzen · Speichern · Laden · Hauptmenü |
+| Daten | `data/p001/game_config.json` (Speicherpfad, Intervall, Menütexte) |
+
+Tests: `save_roundtrip_test` 12/12, `save_load_test` 20/20 (spielen → speichern → neue Spielinstanz →
+laden → alles gleich; auch im Club; kaputter Spielstand). Belege: `P001_40_start_menu.png`,
+`P001_41_pause_menu.png`. Behoben beim Sichttest: Startnachricht erschien schon hinter dem Startmenü;
+Menükasten zu hoch. **Nicht geprüft:** Speichern im Browser über einen Neustart hinweg (Godot legt
+`user://` im Web in IndexedDB ab; Persistenz dort nicht getestet).
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

@@ -195,6 +195,11 @@ func _update_footsteps(delta: float) -> void:
 		footstep_count += 1
 
 
+## Current facing yaw (camera pivot), for the save game.
+func get_yaw() -> float:
+	return _yaw_pivot.rotation.y
+
+
 ## Points character and camera along a yaw (radians, about +Y).
 func face_yaw(yaw: float) -> void:
 	_visual.rotation.y = yaw

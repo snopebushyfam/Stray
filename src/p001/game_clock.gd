@@ -57,6 +57,17 @@ func club_open() -> bool:
 	return in_window(String(cfg.get("club_open_from", "23:00")), String(cfg.get("club_open_until", "06:00")))
 
 
+func to_dict() -> Dictionary:
+	return {"minutes": minutes}
+
+
+func from_dict(d: Dictionary) -> void:
+	var before := hour()
+	minutes = float(d.get("minutes", minutes))
+	if hour() != before:
+		hour_changed.emit(hour())
+
+
 ## Jumps to a time of day (today, or tomorrow if earlier than now). Used by the day/night toggle.
 func set_time(hhmm_text: String) -> void:
 	var target := parse_hhmm(hhmm_text)

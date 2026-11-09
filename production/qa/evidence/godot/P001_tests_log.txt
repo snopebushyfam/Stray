@@ -85,5 +85,27 @@ PASS dialogue closed, movement back
 PASS back on the street (y=0.8)
 PASS street audio back, interior hidden
 RESULT club_test passed=16 failed=0
+RESULT save_roundtrip_test passed=12 failed=0
+PASS no start menu / pause inside tests
+PASS save written
+PASS save file exists
+PASS fresh game starts clean
+PASS load ok
+PASS money restored (53,20 € / 100,00 €)
+PASS inventory restored
+PASS bookings restored (2)
+PASS clock restored (00:50)
+PASS messages restored and still read
+PASS player position restored
+PASS player facing restored
+PASS HUD shows loaded cash
+PASS standing on the ground after loading
+PASS save inside the club
+PASS load club save
+PASS back inside the club
+PASS club audio restored
+PASS Lea conversation remembered
+PASS corrupt save is rejected, game keeps running
+RESULT save_load_test passed=20 failed=0
 python data tests: OK
 ALL_TESTS_EXIT=0
