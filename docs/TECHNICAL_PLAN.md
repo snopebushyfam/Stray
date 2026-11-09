@@ -234,6 +234,9 @@ falsch zu (Kamera-Finger meldet die Position des Joystick-Fingers, riesiges `rel
 `player.gd`: Kamera rechnet aus Positionen statt `event.relative`, ignoriert Positionen in der Joystick-Hälfte
 und begrenzt einen Schritt auf 60 px (`player_config.json`). Regressionstest `touch_look_test` erst rot
 (Sprünge bis 213°), dann grün. Auf dem echten Tablet noch **nicht** erneut geprüft.
+Zweite Rückmeldung „man kann nicht sprinten“: auf Touch rennt die Figur jetzt, wenn der Joystick ganz
+ausgelenkt ist (≥ 0,9, `touch_run_from_stick`), oder mit dem Umschalt-Knopf „Rennen“. Tastatur unverändert
+(Shift). Regressionstest `touch_run_test` erst rot, dann 4/4.
 
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).

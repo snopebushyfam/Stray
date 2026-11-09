@@ -18,6 +18,10 @@ var _visual: Node3D
 var _gravity: float = 9.81
 var _frames: int = 0
 var _look_touch_index: int = -1
+## Touch controls active (set by main.gd): pushing the joystick to its edge then runs.
+var touch_mode := false
+## "Rennen" toggle button on touch screens.
+var run_toggle := false
 ## Last accepted position of the look finger (the camera uses positions, not event.relative).
 var _look_touch_last := Vector2.ZERO
 var _anim: AnimationPlayer
@@ -161,7 +165,7 @@ func _update_animation() -> void:
 	elif h_speed < float(c.get("idle_below_mps", 0.15)):
 		_set_anim("idle", 1.0)
 	else:
-		var state := "run" if Input.is_action_pressed("run") else "walk"
+		var state := "run" if wants_run() else "walk"
 		var nat: float = natural.get(_anim_names.get(state, ""), 1.0)
 		# Scale the cycle to the real speed so the feet do not slide.
 		_set_anim(state, clampf(h_speed / maxf(nat, 0.01), 0.4, 2.0))
@@ -191,7 +195,7 @@ func _update_footsteps(delta: float) -> void:
 		_stride_acc = 0.0
 		return
 	_stride_acc += h_speed * delta
-	var stride: float = _step_cfg.get("run_stride_m", 1.25) if Input.is_action_pressed("run") else _step_cfg.get("walk_stride_m", 0.65)
+	var stride: float = _step_cfg.get("run_stride_m", 1.25) if wants_run() else _step_cfg.get("walk_stride_m", 0.65)
 	if _stride_acc >= stride:
 		_stride_acc -= stride
 		var jitter: float = _step_cfg.get("pitch_jitter", 0.06)
@@ -252,6 +256,17 @@ func touch_look_delta(pos: Vector2) -> Vector2:
 	return d.limit_length(cap)
 
 
+## True while the character should run: Shift/gamepad "run", the touch toggle, or (touch only)
+## the joystick pushed to its edge.
+func wants_run() -> bool:
+	if Input.is_action_pressed("run") or run_toggle:
+		return true
+	if touch_mode and input_enabled:
+		var v := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+		return v.length() >= float(cfg.get("touch_run_from_stick", 0.9))
+	return false
+
+
 func _look(delta_deg: Vector2) -> void:
 	_yaw_pivot.rotation.y -= deg_to_rad(delta_deg.x)
 	var p := _pitch_pivot.rotation_degrees.x - delta_deg.y
@@ -272,7 +287,7 @@ func _physics_process(delta: float) -> void:
 	var dir := (cam_basis * Vector3(input.x, 0.0, input.y))
 	dir.y = 0.0
 	dir = dir.normalized() * minf(input.length(), 1.0)
-	var speed: float = cfg.get("run_speed", 4.5) if Input.is_action_pressed("run") else cfg.get("walk_speed", 1.6)
+	var speed: float = cfg.get("run_speed", 4.5) if wants_run() else cfg.get("walk_speed", 1.6)
 	var accel: float = cfg.get("acceleration", 10.0)
 	var target := dir * speed
 	velocity.x = move_toward(velocity.x, target.x, accel * delta)

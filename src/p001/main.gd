@@ -648,6 +648,22 @@ func _build_hud() -> void:
 		jump.button_down.connect(func(): Input.action_press("jump"))
 		jump.button_up.connect(func(): Input.action_release("jump"))
 		hud.add_child(jump)
+		# Run: joystick to the edge, or this toggle (tablet feedback: no way to run without Shift).
+		player.touch_mode = true
+		var run_b := Button.new()
+		run_b.text = "Rennen"
+		run_b.toggle_mode = true
+		run_b.anchor_left = 1.0
+		run_b.anchor_right = 1.0
+		run_b.anchor_top = 1.0
+		run_b.anchor_bottom = 1.0
+		run_b.offset_left = -150
+		run_b.offset_top = -280
+		run_b.offset_right = -20
+		run_b.offset_bottom = -210
+		run_b.add_theme_font_size_override("font_size", 20)
+		run_b.toggled.connect(func(on): player.run_toggle = on)
+		hud.add_child(run_b)
 	print("STRAY_DIAG hud touch_controls=%s" % touch)
 
 
