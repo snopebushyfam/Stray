@@ -12,6 +12,8 @@ signal interact_pressed
 
 var status_label: Label
 var prompt_label: Label
+## Current goal (prologue / tutorial), top left under the controls line.
+var objective_label: Label
 var message_panel: PanelContainer
 var message_label: Label
 var shop_panel: PanelContainer
@@ -32,6 +34,16 @@ func _ready() -> void:
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	status_label.add_theme_font_size_override("font_size", 18)
 	add_child(status_label)
+
+	objective_label = Label.new()
+	objective_label.offset_left = 12
+	objective_label.offset_top = 52
+	objective_label.offset_right = 760
+	objective_label.add_theme_font_size_override("font_size", 20)
+	objective_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.35))
+	objective_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	objective_label.add_theme_constant_override("outline_size", 6)
+	add_child(objective_label)
 
 	prompt_label = Label.new()
 	prompt_label.anchor_left = 0.5
@@ -110,6 +122,11 @@ func set_status(state: StrayLifeState) -> void:
 		dots = "\nPolizei " + "●".repeat(n) + "○".repeat(5 - n)
 	status_label.text = "%sBargeld %s\nRuf Nachtleben %+d%s" % [("%s\n" % clock_text) if not clock_text.is_empty() else "",
 		StrayLifeState.euro(state.cash_cents), int(state.reputation.get("nightlife", 0)), dots]
+
+
+## Shows the current goal ("" hides it).
+func set_objective(text: String) -> void:
+	objective_label.text = text
 
 
 func show_prompt(text: String) -> void:

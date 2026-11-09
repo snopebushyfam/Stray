@@ -9,6 +9,8 @@ extends Node
 signal metro_entered(station: String)
 ## Came up to the surface at `station`; main.gd switches the visible area.
 signal metro_left(station: String)
+## A ticket was bought at the machine.
+signal ticket_bought
 ## A ride finished (result of StrayTransit.ride()).
 signal rode(result: Dictionary)
 
@@ -131,6 +133,8 @@ func buy_ticket() -> Dictionary:
 		_:
 			msg = String(texts.get("no_money", ""))
 	ix.ui.show_message(String(texts.get("machine_title", "")), msg, 3.0)
+	if r.ok:
+		ticket_bought.emit()
 	print("STRAY_DIAG metro ticket=%s cash=%s" % [r.reason, StrayLifeState.euro(ix.life.cash_cents)])
 	return r
 
@@ -167,7 +171,8 @@ func leave_station() -> void:
 		_place(p - Vector3(0, 0.95, 0), StrayAreaLayout.yaw_of(area.spawn_dir_en))
 	else:
 		var fp: Dictionary = transit.cfg.get("stations", {}).get("friesenplatz", {})
-		var p2 := _street_point(float(fp.get("s", 100.0)) - 2.0, float(fp.get("v", -10.4)) - 1.5)
+		# 6 m south of the stele: the camera (3.8 m behind the player) stays clear of the sign.
+		var p2 := _street_point(float(fp.get("s", 100.0)) - 6.0, float(fp.get("v", -10.4)) - 1.5)
 		var d := StrayStreetLayout.en_dir_to_godot(-ix.layout.axis_en())
 		_place(p2, atan2(-d.x, -d.z))
 	metro_left.emit(st)

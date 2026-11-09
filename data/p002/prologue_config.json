@@ -1,0 +1,17 @@
+{
+ "schema": "stray.p002.prologue/1",
+ "note": "R6 prologue: arrival at Koeln Hbf -> U-Bahn -> Friesenplatz -> Erol's KIOSK. Steps advance on game events; texts German.",
+ "enabled": true,
+ "start_time": "22:40",
+ "intro": "Köln Hauptbahnhof, Samstagnacht. Ein Rucksack, 35 € und eine Nachricht von Erol.",
+ "steps": [
+  {"id": "to_ubahn", "objective": "Geh zur U-Bahn Dom/Hbf (blaues U-Schild vor dem Bahnhof)", "hint": "WASD/Stick: gehen · Shift: rennen · Maus: umsehen · E: benutzen", "done_on": ["metro_entered"]},
+  {"id": "ticket", "objective": "Kauf eine Fahrkarte am Automaten", "hint": "Schwarzfahren geht auch – bei einer Kontrolle kostet es 60 €.", "done_on": ["ticket_bought", "rode_friesenplatz"]},
+  {"id": "ride", "objective": "Steig in die Linie 5 Richtung Friesenplatz", "hint": "", "done_on": ["rode_friesenplatz"]},
+  {"id": "surface", "objective": "Geh die Treppe hoch zum Ring", "hint": "", "done_on": ["surface_friesenplatz"]},
+  {"id": "kiosk", "objective": "Finde Erols KIOSK am Hohenzollernring", "hint": "Tab: Handy – Karte und Nachrichten", "done_on": ["near_kiosk"]}
+ ],
+ "kiosk_radius_m": 4.0,
+ "done_text": "Erol: „Da bist du ja! Komm rein, erst mal ein Kölsch. Wenn du Arbeit suchst – bewirb dich im Handy unter Jobs.“",
+ "objective_prefix": "Ziel: "
+}

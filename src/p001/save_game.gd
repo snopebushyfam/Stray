@@ -22,6 +22,7 @@ static func capture(main: Node) -> Dictionary:
 		"job": main.job.to_dict(),
 		"consequences": main.consequences.to_dict(),
 		"transit": main.transit.to_dict() if main.transit else {},
+		"prologue": main.prologue.to_dict() if main.prologue else {},
 		"world": {
 			"player_pos": [p.x, p.y, p.z],
 			"player_yaw": main.player.get_yaw(),
@@ -75,6 +76,9 @@ static func apply(main: Node, d: Dictionary) -> String:
 			main.metro.set_station(main.transit.station_name(main.transit.station))
 		main.player.set_indoor_camera(inside or at_home or in_metro)
 		main.set_region(String(w.get("region", "metro" if in_metro else "p001")))
+	if main.prologue:
+		main.prologue.from_dict(d.get("prologue", {}))
+		main.ui.set_objective(main.prologue.objective())
 	return ""
 
 

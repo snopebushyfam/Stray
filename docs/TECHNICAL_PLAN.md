@@ -210,6 +210,18 @@ Speichern/Laden am Hbf → schwarzfahren mit Kontrolle → zurück auf den Ring)
 Fensterraster statt Glasfront, keine Passant:innen/Verkehr am Hbf, Phone-Karte zeigt nur P001, Treppe
 ist Deko (Teleport).
 
+**R6 Prolog (2026-11-09, gespielt + getestet):**
+
+| | Umsetzung |
+|---|---|
+| Ablauf | „Neues Spiel“ → 22:40 vor dem Hbf-Ausgang „Bahnhofsvorplatz/Domseite“, Intro-Text, Nachricht von Erol (Kontakt wird bekannt). Ziele oben links: U-Bahn Dom/Hbf → Fahrkarte (oder schwarzfahren, überspringt den Schritt) → Linie 5 → Treppe hoch → Erols KIOSK (≤ 4 m). Zu jedem Schritt ein Tipp zur Steuerung. Am Ziel: Erols Begrüßung, Verweis auf die Jobs-App (R3), automatisches Speichern. |
+| Code | `src/p002/prologue.gd` (reine Logik, Schritte enden durch Spielereignisse), Anbindung in `main.gd` (`start_prologue`, Ereignisse aus `metro_interactions.gd`, Nähe zum KIOSK), `ui.set_objective()`. Spielstand speichert den Schritt; ältere Spielstände gelten als „Prolog erledigt“. Tests/Autoshots starten weiter auf dem Ring (Prolog nur über „Neues Spiel“). |
+| Daten | `data/p002/prologue_config.json` (Startzeit, Texte, Schritte), Nachrichten `erol_welcome`/`erol_arrived` in `phone_config.json` |
+
+Tests: `prologue_test` 11/11, `prologue_it_test` 17/17. Gefundener Fehler: das Autosave beim Hochkommen lief
+vor dem Prolog-Schritt (Laden → falscher Schritt). Regressionstest zuerst rot gesehen, dann behoben
+(Speichern verzögert). Beim Sichttest korrigiert: Kamera hinter der Friesenplatz-Stele (Ausstieg 6 m südlich).
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

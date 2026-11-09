@@ -133,6 +133,18 @@
    "from": "mama",
    "trigger": "police_record_1",
    "text": "Die Polizei hat hier angerufen?! Was ist denn los bei dir?"
+  },
+  {
+   "id": "erol_welcome",
+   "from": "erol",
+   "trigger": "prologue_start",
+   "text": "Ayşe hat gesagt, du kommst heute an. Komm zum KIOSK am Hohenzollernring, kurz vor dem Friesenplatz. Nimm die U5 ab Dom/Hbf bis Friesenplatz. – Erol"
+  },
+  {
+   "id": "erol_arrived",
+   "from": "erol",
+   "trigger": "prologue_done",
+   "text": "Schön, dass du da bist. Die Wohnung von Kaya ist gleich um die Ecke. Und wenn du Arbeit brauchst: Jobs-App, ich such jemanden für die Abende."
   }
  ],
  "jobs": [

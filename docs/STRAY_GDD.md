@@ -87,3 +87,8 @@ Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schi
   (Kontrolle 25 %, 60 € erhöhtes Beförderungsentgelt). Fahrt kostet 7 Minuten Spielzeit.
 - Grundlage für den Prolog (R6): Ankunft am Hbf → U-Bahn → Friesenplatz.
 
+## R6 — Prolog (2026-11-09)
+- Neues Spiel beginnt um 22:40 am Hauptbahnhof: Rucksack, 35 €, Nachricht von Erol.
+- Geführte Ziele mit Steuerungstipps: U-Bahn → Fahrkarte (oder schwarzfahren) → Linie 5 → Friesenplatz → Erols KIOSK.
+- Danach offenes Spiel; Erol verweist auf die Jobs-App.
+

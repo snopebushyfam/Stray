@@ -13,7 +13,7 @@ angehängt, nicht sofort umgesetzt.
 | R3 ✅ | Erster Job (Geld verdienen) (erledigt 2026-11-09) | Einnahmen gegen Miete/Ausgaben: der Kern-Loop |
 | R4 ✅ | Konsequenzen-Grundgerüst: Polizei-Aufmerksamkeit, Ruf wirkt auf NPCs/Preise/Einlass (erledigt 2026-11-09) | Säule CONSEQUENCES über den Türsteher hinaus |
 | R5 ✅ | Zweites Gebiet + Verbindung: Hbf + U-Bahn (Prolog-Ort) (erledigt 2026-11-09) | Open World statt eine Straße |
-| R6 | Prolog / Einstieg: Ankunft Hbf → Tutorial → U-Bahn → Friesenplatz | Spielbarer Anfang |
+| R6 ✅ | Prolog / Einstieg: Ankunft Hbf → Tutorial → U-Bahn → Friesenplatz (erledigt 2026-11-09) | Spielbarer Anfang |
 | R7 | Tablet/Web-Version veröffentlichen (itch.io oder GitHub Pages) | Testen auf echter Hardware |
 
 ## Detail-Ideen (nach dem Rohbau)
@@ -71,6 +71,12 @@ angehängt, nicht sofort umgesetzt.
 - Phone-Karte für mehrere Gebiete; Ticketpreis vor Release mit VRS-Tarif abgleichen
 - Offene Beförderungsentgelte: Mahnung per Post → Inkasso → Konsequenzen
 - Echten Friesenplatz-Eingang (s ≈ 108,5) nutzen, sobald der Straßenabschnitt nach Norden verlängert ist
+
+### Prolog (aus R6)
+- Ankunft im Zug/auf dem Gleis statt vor der Halle; Bahnhofshalle begehbar
+- Zwischensequenz/Kamerafahrt zum Dom beim Start; Prolog überspringen (Menüpunkt)
+- Erol als Figur im KIOSK, erstes Gespräch statt nur Nachricht; Schlüssel beim Nachbarn abholen
+- Wegweiser-Pfeil / Markierung auf der Handy-Karte für das aktuelle Ziel
 
 ### Speichern
 - Mehrere Spielstand-Slots; Speichern im Browser über Neustart hinweg testen

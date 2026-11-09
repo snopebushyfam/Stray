@@ -134,7 +134,7 @@ func _run() -> void:
 	ix2.interact()
 	await _frames(40)
 	var sv: Vector2 = m2.builder.layout.to_street(Vector2(m2.player.global_position.x, -m2.player.global_position.z))
-	check(m2.region == "p001" and m2.player.is_on_floor() and sv.y < -9.0 and sv.x > 90.0, "up on the Ring west sidewalk (s=%.1f v=%.1f)" % [sv.x, sv.y])
+	check(m2.region == "p001" and m2.player.is_on_floor() and sv.y < -9.0 and sv.x > 85.0, "up on the Ring west sidewalk (s=%.1f v=%.1f)" % [sv.x, sv.y])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
 	print("RESULT metro_test passed=%d failed=%d" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)

@@ -19,6 +19,7 @@ const JOBS_CONFIG := "res://data/p001/jobs_config.json"
 const CONSEQUENCES_CONFIG := "res://data/p001/consequences_config.json"
 const TRANSIT_CONFIG := "res://data/p002/transit_config.json"
 const AREA_P002 := "res://data/p002/P002_Area.json"
+const PROLOGUE_CONFIG := "res://data/p002/prologue_config.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
@@ -46,6 +47,8 @@ var metro_ix: StrayMetroInteractions
 ## Which part of the world is drawn: "p001" (Ringe), "p002" (Hbf) or "metro" (platform).
 var region: String = "p001"
 var hud_info: Label
+## R6: arrival at the Hbf -> U-Bahn -> KIOSK (runs on "Neues Spiel").
+var prologue: StrayPrologue
 var _jaywalk_time := 0.0
 var _last_clock_minutes := -1.0
 var game_cfg: Dictionary = {}
@@ -192,6 +195,7 @@ func _run_menushots() -> void:
 func _on_new_game() -> void:
 	_start_playing("")
 	messages.trigger("start", clock.hhmm())
+	start_prologue()
 
 
 func _start_playing(note: String) -> void:
@@ -362,9 +366,54 @@ func _build_transit() -> void:
 	metro_ix.metro_entered.connect(func(_st): set_region("metro"))
 	metro_ix.metro_left.connect(func(st):
 		set_region(String(transit.cfg.get("stations", {}).get(st, {}).get("area", "p001")))
-		save_game("metro_left"))
+		save_game.call_deferred("metro_left"))  # after the prologue has seen the event
 	metro_ix.rode.connect(func(_r): _sync_daylight())
 	set_region("p001")
+	_build_prologue()
+
+
+func _build_prologue() -> void:
+	prologue = StrayPrologue.new(_load_json(PROLOGUE_CONFIG))
+	prologue.skip()  # only "Neues Spiel" starts it; tests and old saves begin on the Ring
+	prologue.step_started.connect(func(id, obj, hint):
+		ui.set_objective(obj)
+		if not hint.is_empty():
+			ui.show_message("Tipp", hint, 6.0)
+		print("STRAY_DIAG prologue step=%s" % id))
+	prologue.finished.connect(_on_prologue_finished)
+	metro_ix.metro_entered.connect(func(_st): prologue.event("metro_entered"))
+	metro_ix.ticket_bought.connect(func(): prologue.event("ticket_bought"))
+	metro_ix.rode.connect(func(r): prologue.event("rode_" + String(r.to)))
+	metro_ix.metro_left.connect(func(st): prologue.event("surface_" + st))
+
+
+## New game: arrival at Köln Hbf at the configured time, first goal: the U-Bahn.
+func start_prologue() -> void:
+	if not bool(prologue.cfg.get("enabled", true)):
+		return
+	clock.minutes = StrayGameClock.parse_hhmm(String(prologue.cfg.get("start_time", "22:40")))
+	_last_clock_minutes = clock.minutes
+	transit.station = "dom_hbf"
+	set_region("p002")
+	var a := area.area
+	var door := StrayStreetLayout._v2(a.hbf_main_exit["en"])
+	var n := StrayStreetLayout._v2(a.hbf_main_exit.get("normal_en", [0, 1]))
+	player.global_position = a.stand_position(door + n * 3.0, 0.9)
+	player.velocity = Vector3.ZERO
+	player.face_yaw(StrayAreaLayout.yaw_of(n))
+	player.set_indoor_camera(false)
+	messages.trigger("prologue_start", clock.hhmm())
+	prologue.start()
+	ui.show_message("", String(prologue.cfg.get("intro", "")), 6.0)
+	print("STRAY_DIAG prologue start time=%s pos=%s" % [clock.hhmm(), player.global_position])
+
+
+func _on_prologue_finished() -> void:
+	ui.set_objective("")
+	ui.show_message("", String(prologue.cfg.get("done_text", "")), 7.0)
+	messages.trigger("prologue_done", clock.hhmm())
+	print("STRAY_DIAG prologue done time=%s" % clock.hhmm())
+	save_game("prologue_done")
 
 
 ## Shows only the given region: "p001" (street, NPCs, traffic), "p002" (Hbf area) or "metro".
@@ -469,6 +518,9 @@ func _on_club_left() -> void:
 
 func _physics_process(delta: float) -> void:
 	_update_consequences(delta)
+	if prologue and prologue.current_id() == "kiosk" and region == "p001" and player \
+			and interactions._flat_dist(player.global_position, interactions.points["kiosk"]) < float(prologue.cfg.get("kiosk_radius_m", 4.0)):
+		prologue.event("near_kiosk")
 	if phone and phone.map and player:
 		var p := player.global_position
 		phone.map.player_en = Vector2(p.x, -p.z)
@@ -781,5 +833,17 @@ func _run_autoshots() -> void:
 	interactions.interact()
 	await get_tree().create_timer(0.6).timeout
 	await _snap(dir, "P001_60_kiosk_shift.png")
+	# R6 prologue: arrival at the Hbf with the first goal, then the last goal on the Ring.
+	interactions._close_shop()
+	start_prologue()
+	await get_tree().create_timer(1.2).timeout
+	await _snap(dir, "P002_20_prologue_arrival.png")
+	metro_ix.enter_station("dom_hbf")
+	await get_tree().create_timer(0.6).timeout
+	await _snap(dir, "P002_21_prologue_platform_goal.png")
+	metro_ix.ride()
+	metro_ix.leave_station()
+	await get_tree().create_timer(1.0).timeout
+	await _snap(dir, "P002_22_prologue_ring_goal_kiosk.png")
 	print("STRAY_DIAG autoshots=done dir=%s" % dir)
 	get_tree().quit()
