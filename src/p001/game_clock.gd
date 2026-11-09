@@ -31,6 +31,11 @@ func advance(real_seconds: float) -> void:
 	_move_to(minutes + real_seconds * rate / 60.0)
 
 
+## Advances by game minutes (U-Bahn rides, waiting). Fires hour/day signals like advance().
+func advance_minutes(game_minutes: float) -> void:
+	_move_to(minutes + maxf(game_minutes, 0.0))
+
+
 func _move_to(new_minutes: float) -> void:
 	var h_before := hour()
 	var d_before := day_index()

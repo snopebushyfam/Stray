@@ -56,6 +56,11 @@ var police_check_open := false
 var _customer: Node3D
 var _char_cfg: Dictionary = {}
 ## Seconds the player has waited at the queue end (reset when they walk away).
+## Interaction extensions (e.g. StrayMetroInteractions, R5): objects with handles(id), prompt(id),
+## interact(id) and option(index). They add their own ids to `points`.
+var extensions: Array = []
+## Extension that opened the current options panel (receives option(index)).
+var options_owner: Object = null
 var queued_seconds: float = 0.0
 var points: Dictionary = {}  # id -> Vector3 (Godot)
 var current: String = ""
@@ -205,6 +210,8 @@ func _physics_process(delta: float) -> void:
 			prompt = String(home.cfg.get("texts", {}).get("bed", "[E] Schlafen"))
 		"home_exit":
 			prompt = String(home.cfg.get("texts", {}).get("exit", "[E] Rausgehen"))
+		_ when _extension_for(current) != null:
+			prompt = _extension_for(current).prompt(current)
 		_ when current.begins_with("atm_"):
 			prompt = "[E] Geldautomat (%s abheben)" % StrayLifeState.euro(int(phone_cfg.get("bank", {}).get("atm_withdraw_cents", 2000)))
 	if night and queued_seconds > 0.0 and current.is_empty() and _flat_dist(pp, points["queue_end"]) < 2.0:
@@ -220,6 +227,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Triggers the nearest interaction (also called by the touch button and by tests/autoshots).
 func interact() -> void:
+	var ext: Object = _extension_for(current)
+	if ext != null:
+		ext.interact(current)
+		return
 	if current.begins_with("atm_"):
 		withdraw_at_atm()
 		return
@@ -534,6 +545,11 @@ func _talk_to_lea() -> void:
 
 
 func _on_option(index: int) -> void:
+	if options_owner != null:
+		var owner_ext: Object = options_owner
+		options_owner = null
+		owner_ext.option(index)
+		return
 	if _options_context == "steal":
 		steal_option(index)
 		return
@@ -579,6 +595,29 @@ func _on_shop_choice(item_id: String) -> void:
 		_close_shop()
 	else:
 		buy(item_id)
+
+
+func _extension_for(id: String) -> Object:
+	if id.is_empty():
+		return null
+	for e in extensions:
+		if e.handles(id):
+			return e
+	return null
+
+
+## Opens an options panel owned by an extension (its option(index) gets the answer).
+func open_extension_options(owner: Object, title: String, text: String, labels: Array) -> void:
+	options_owner = owner
+	shop_open = true
+	active_shop = null
+	player.input_enabled = false
+	ui.open_options(title, text, labels)
+
+
+## Closes any open panel and gives control back to the player.
+func close_panel() -> void:
+	_close_shop()
 
 
 func _close_shop() -> void:

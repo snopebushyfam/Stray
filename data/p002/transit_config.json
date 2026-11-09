@@ -1,0 +1,63 @@
+{
+ "schema": "stray.p002.transit/1",
+ "note": "R5 U-Bahn (KVB Linie 5) between Friesenplatz (P001) and Dom/Hbf (P002). Money in cents. The ticket price is an ASSUMPTION (VRS EinzelTicket Preisstufe 1b, check before release); 60 EUR is the statutory 'erhoehtes Befoerderungsentgelt'.",
+ "line": "5",
+ "start_station": "friesenplatz",
+ "stations": {
+  "friesenplatz": {
+   "name": "Friesenplatz",
+   "area": "p001",
+   "s": 100.5,
+   "v": -10.4
+  },
+  "dom_hbf": {
+   "name": "Dom/Hbf",
+   "area": "p002"
+  }
+ },
+ "wait_minutes": 3,
+ "ride_minutes": 4,
+ "ticket": {
+  "label": "EinzelTicket Köln",
+  "price_cents": 380
+ },
+ "fare_dodging": {
+  "check_chance": 0.25,
+  "fine_cents": 6000,
+  "seed": 77
+ },
+ "station_origin": [
+  -70.0,
+  -100.0,
+  0.0
+ ],
+ "texts": {
+  "entrance": "[E] U-Bahn %s",
+  "machine": "[E] Fahrkartenautomat",
+  "board": "[E] Einsteigen (Linie %s → %s)",
+  "exit": "[E] Nach oben",
+  "machine_title": "Fahrkartenautomat",
+  "machine_question": "%s für %s?",
+  "buy": "Kaufen",
+  "cancel": "Abbrechen",
+  "bought": "Fahrkarte gekauft (%s).",
+  "already": "Du hast schon eine gültige Fahrkarte.",
+  "no_money": "Nicht genug Bargeld.",
+  "board_title": "Linie %s",
+  "board_question": "Nach %s fahren? (%d Min.)",
+  "board_no_ticket": "Nach %s fahren – ohne Fahrkarte? (%d Min.)",
+  "ride": "Fahren",
+  "wait": "Warten",
+  "arrived": "%s. Bitte alle aussteigen.",
+  "check_ok": "Fahrscheinkontrolle. „Danke, gute Fahrt.“",
+  "check_fined": "Fahrscheinkontrolle – ohne Ticket. Erhöhtes Beförderungsentgelt: %s.",
+  "check_billed": "Fahrscheinkontrolle – ohne Ticket. %s, kein Bargeld: Zahlungsaufforderung per Post.",
+  "hbf_door": "[E] Hauptbahnhof",
+  "hbf_closed": "Die Halle ist voll, Durchsagen, Rollkoffer. Züge kommen später (Prolog)."
+ },
+ "region_titles": {
+  "p001": "Hohenzollernring / Friesenplatz, Köln",
+  "p002": "Bahnhofsvorplatz / Dom, Köln",
+  "metro": "U-Bahn Linie 5, Köln"
+ }
+}

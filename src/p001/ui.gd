@@ -162,7 +162,12 @@ func _show_panel() -> void:
 
 
 ## Dialogue choices: a line from the NPC, then one button per answer.
+## Question text of the last options panel (tests, accessibility).
+var options_text: String = ""
+
+
 func open_options(speaker: String, text: String, labels: Array) -> void:
+	options_text = text
 	for c in shop_box.get_children():
 		c.queue_free()
 	var head := Label.new()

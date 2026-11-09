@@ -21,11 +21,14 @@ static func capture(main: Node) -> Dictionary:
 		"rent": main.rent.to_dict(),
 		"job": main.job.to_dict(),
 		"consequences": main.consequences.to_dict(),
+		"transit": main.transit.to_dict() if main.transit else {},
 		"world": {
 			"player_pos": [p.x, p.y, p.z],
 			"player_yaw": main.player.get_yaw(),
 			"inside_club": bool(main.interactions.life.flags.get("inside_club", false)),
 			"inside_home": bool(main.interactions.life.flags.get("inside_home", false)),
+			"inside_metro": bool(main.interactions.life.flags.get("inside_metro", false)),
+			"region": main.region,
 			"lea_talked": main.interactions.lea_talked,
 			"battery": main.phone.battery,
 		},
@@ -63,6 +66,15 @@ static func apply(main: Node, d: Dictionary) -> String:
 		main.player.velocity = Vector3.ZERO
 	main.player.face_yaw(float(w.get("player_yaw", 0.0)))
 	main.interactions.life.flags["inside_club"] = inside
+	# R5: U-Bahn state and the visible region (older saves: Ringe, street level).
+	if main.transit:
+		main.transit.from_dict(d.get("transit", {}))
+		var in_metro := bool(w.get("inside_metro", false))
+		main.interactions.life.flags["inside_metro"] = in_metro
+		if in_metro:
+			main.metro.set_station(main.transit.station_name(main.transit.station))
+		main.player.set_indoor_camera(inside or at_home or in_metro)
+		main.set_region(String(w.get("region", "metro" if in_metro else "p001")))
 	return ""
 
 

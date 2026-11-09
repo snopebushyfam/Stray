@@ -80,3 +80,10 @@ Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schi
 - Polizei-Aufmerksamkeit aus Verhalten (Fahrbahn, Alkohol, Diebstahl, Türsteher nerven, weglaufen).
 - Streifenwagen kontrolliert: Verwarnung → Bußgeld → Platzverweis → Festnahme; Polizeiakte.
 - Klauen im Kiosk mit dauerhaftem Hausverbot und Jobverlust; Türsteher reagiert auf Polizei-Ärger.
+
+## R5 — Hauptbahnhof + U-Bahn (2026-11-09)
+- Zweites Gebiet am echten Ort: Bahnhofsvorplatz und Domplatte mit Hauptbahnhof und Dom (Geobasis NRW, OSM).
+- U-Bahn Linie 5 Friesenplatz ↔ Dom/Hbf: Ticket am Automaten (3,80 €, angenommen) oder schwarzfahren
+  (Kontrolle 25 %, 60 € erhöhtes Beförderungsentgelt). Fahrt kostet 7 Minuten Spielzeit.
+- Grundlage für den Prolog (R6): Ankunft am Hbf → U-Bahn → Friesenplatz.
+

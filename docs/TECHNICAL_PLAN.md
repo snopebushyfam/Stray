@@ -193,6 +193,23 @@ Tests: `consequences_test` 24/24, `consequences_it_test` 16/16 (Fahrbahn, Streif
 Mama, Platzverweis an der Clubtür, Diebstahl → Hausverbot + Kündigung, Speichern). Zwei Testfehler meinerseits
 (Rundung bei laufendem Abbau, Bremsweg) korrigiert. Offen: Polizist:in als Figur, Kamera auf den Streifenwagen.
 
+**R5 Zweites Gebiet Hbf + U-Bahn (2026-11-09, gespielt + getestet):**
+
+| | Umsetzung |
+|---|---|
+| Gebiet P002 | Bahnhofsvorplatz/Domplatte am echten Ort (≈ 1,4 km ostnordöstlich von P001, **gleicher lokaler Ursprung**). `tools/geodata/build_p002.py` → `data/p002/`: 71 LoD2-Gebäude (Hbf-Halle, Dom, Umgebung; Kachel `LoD2_32_356_5645_1_NW`), DGM1-Höhenraster 1 m (181 × 176), 7 OSM-Laternen + 19 prozedurale (markiert), OSM-Mülleimer, U-Bahn- und Bahnhofseingänge. |
+| Godot | `src/p002/area_layout.gd` (Daten + Höhe bilinear), `area_builder.gd` (Boden in 20-m-Kacheln mit Plattenshader, Kollision als `HeightMapShape3D`, Gebäude je Mesh, Dom in dunklem Sandstein statt Fensterraster, Laternen, U-Schild, Schriftzug „Köln Hauptbahnhof“, unsichtbare Gebietsgrenzen). |
+| U-Bahn | `transit.gd` (reine Logik): Linie 5 Friesenplatz ↔ Dom/Hbf, 3 Min. warten + 4 Min. Fahrt, EinzelTicket 3,80 € (bar, **Preis angenommen**), Kontrolle 25 % (Seed, Zustand gespeichert), ohne Ticket 60 € erhöhtes Beförderungsentgelt (bar → Konto → offen). `metro_station.gd`: ein generischer Bahnsteig (kein Nachbau der echten Stationen) mit Automat, Zug, Treppe; Schilder wechseln den Namen. `metro_interactions.gd` hängt sich als Erweiterung an `interactions.gd`. |
+| Regionen | `main.set_region()`: nur das Gebiet, in dem man ist, wird gezeigt (P001 + NPCs/Verkehr, P002 oder Bahnsteig) – hält den Compatibility-Renderer unter dem Lichtlimit. HUD zeigt den Ort. Spielstand speichert Station, Ticket, Region. |
+| Eingänge | Friesenplatz: U-Stele am Westbürgersteig bei s = 100,5 (der echte Eingang „Friesenplatz Süd“ liegt bei s ≈ 108,5 knapp hinter dem gebauten Abschnitt, daher **8 m verschoben**). Dom/Hbf: OSM-Eingang „Dom/Hauptbahnhof“, 8 m Richtung Dom versetzt, weil der OSM-Punkt im LoD2-Grundriss der Halle liegt. |
+
+Tests: `transit_area_test` 26/26 (Mutationen „Ticket wird nicht verbraucht“ und „Strafe trotz Ticket“
+fallen durch), `metro_test` 30/30 (Ring → Bahnsteig → Ticket → Fahrt → Hbf auf echtem Boden → laufen →
+Speichern/Laden am Hbf → schwarzfahren mit Kontrolle → zurück auf den Ring). Web-Export lädt P002
+(Chromium/SwiftShader). Sichtprüfung: `production/qa/evidence/godot/P002_*.png`. Offen: Hbf-Halle hat
+Fensterraster statt Glasfront, keine Passant:innen/Verkehr am Hbf, Phone-Karte zeigt nur P001, Treppe
+ist Deko (Teleport).
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 
@@ -344,6 +361,7 @@ Danach **manuell** im PIE (Play in Editor) prüfen und die Screenshots nach
 ```bash
 pip install numpy pyproj mapbox-earcut matplotlib
 python3 tools/geodata/build_p001.py            # lädt Kachel + OSM nach tools/geodata/cache/ (gitignored)
+python3 tools/geodata/build_p002.py            # R5: Hbf/Domplatte (Kachel 356_5645, DGM1, OSM) -> data/p002/
 python3 -m unittest discover -s tools/geodata/tests -v   # 12 Tests: Konvertierung + P001-Datenkonsistenz
 ```
 

@@ -12,7 +12,7 @@ angehängt, nicht sofort umgesetzt.
 | R2 ✅ | Wohnung + Schlafen + Tageswechsel + Miete fällig (erledigt 2026-11-09) | Schließt den Tageskreislauf (Säule LIFE) |
 | R3 ✅ | Erster Job (Geld verdienen) (erledigt 2026-11-09) | Einnahmen gegen Miete/Ausgaben: der Kern-Loop |
 | R4 ✅ | Konsequenzen-Grundgerüst: Polizei-Aufmerksamkeit, Ruf wirkt auf NPCs/Preise/Einlass (erledigt 2026-11-09) | Säule CONSEQUENCES über den Türsteher hinaus |
-| R5 | Zweites Gebiet + Verbindung: Hbf + U-Bahn (Prolog-Ort) | Open World statt eine Straße |
+| R5 ✅ | Zweites Gebiet + Verbindung: Hbf + U-Bahn (Prolog-Ort) (erledigt 2026-11-09) | Open World statt eine Straße |
 | R6 | Prolog / Einstieg: Ankunft Hbf → Tutorial → U-Bahn → Friesenplatz | Spielbarer Anfang |
 | R7 | Tablet/Web-Version veröffentlichen (itch.io oder GitHub Pages) | Testen auf echter Hardware |
 
@@ -62,6 +62,15 @@ angehängt, nicht sofort umgesetzt.
 - Phone-Karte: Spielerposition im Club-Innenraum sinnvoll anzeigen
 - Unreal-Fassung auf den Godot-Stand bringen (falls Engine-Wechsel zurück)
 - gdUnit4 statt eigener Test-Runner (Template-Standard)
+
+### Hbf & U-Bahn (aus R5)
+- Hbf-Halle mit Glasfront/Dachbögen statt Fensterraster; Dom-Fassade detaillierter (Strebewerk, Portal)
+- Passant:innen, Taxis, Trankgasse-Verkehr, Reisende mit Koffern am Hbf
+- Treppen/Rolltreppen als echte Geometrie statt Teleport; Zug fährt ein/aus, Fahrt mit Innenansicht
+- Mehr Stationen/Linien (Appellhofplatz, Neumarkt …), Liniennetzplan im Handy, Monats-/Deutschlandticket
+- Phone-Karte für mehrere Gebiete; Ticketpreis vor Release mit VRS-Tarif abgleichen
+- Offene Beförderungsentgelte: Mahnung per Post → Inkasso → Konsequenzen
+- Echten Friesenplatz-Eingang (s ≈ 108,5) nutzen, sobald der Straßenabschnitt nach Norden verlängert ist
 
 ### Speichern
 - Mehrere Spielstand-Slots; Speichern im Browser über Neustart hinweg testen

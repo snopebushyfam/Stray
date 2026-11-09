@@ -17,6 +17,8 @@ const GAME_CONFIG := "res://data/p001/game_config.json"
 const HOME_CONFIG := "res://data/p001/home_config.json"
 const JOBS_CONFIG := "res://data/p001/jobs_config.json"
 const CONSEQUENCES_CONFIG := "res://data/p001/consequences_config.json"
+const TRANSIT_CONFIG := "res://data/p002/transit_config.json"
+const AREA_P002 := "res://data/p002/P002_Area.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
@@ -36,6 +38,14 @@ var home: StrayHome
 var rent: StrayRent
 var job: StrayKioskJob
 var consequences: StrayConsequences
+## R5: second area (Hbf), U-Bahn rules, platform interior and its interactions.
+var area: StrayAreaBuilder
+var transit: StrayTransit
+var metro: StrayMetroStation
+var metro_ix: StrayMetroInteractions
+## Which part of the world is drawn: "p001" (Ringe), "p002" (Hbf) or "metro" (platform).
+var region: String = "p001"
+var hud_info: Label
 var _jaywalk_time := 0.0
 var _last_clock_minutes := -1.0
 var game_cfg: Dictionary = {}
@@ -106,6 +116,7 @@ func _ready() -> void:
 	interactions.consequences = consequences
 	add_child(interactions)
 	interactions.setup(builder.layout, _load_json(ECONOMY_CONFIG), player, builder, ui, player_cfg.get("character", {}))
+	_build_transit()
 	_build_phone(phone_cfg)
 	_setup_menu_and_save()
 	interactions.club_entered.connect(func(): save_game("club_entered"))
@@ -286,7 +297,8 @@ func _update_consequences(delta: float) -> void:
 		consequences.decay(clock.minutes - _last_clock_minutes)
 	_last_clock_minutes = clock.minutes
 	var life := interactions.life
-	if life.flags.get("inside_club", false) or life.flags.get("inside_home", false) or interactions.police_check_open or interactions.shop_open:
+	if life.flags.get("inside_club", false) or life.flags.get("inside_home", false) or life.flags.get("inside_metro", false) \
+			or region != "p001" or interactions.police_check_open or interactions.shop_open:
 		_jaywalk_time = 0.0
 		return
 	var L := builder.layout
@@ -322,6 +334,63 @@ func _on_shift_finished(r: Dictionary) -> void:
 func _sync_daylight() -> void:
 	if builder and builder.day_mode != clock.is_daytime():
 		builder.set_day_mode(clock.is_daytime())
+	if area and area.area:
+		area.set_day_mode(builder.day_mode)
+
+
+## R5: Hbf area, U-Bahn platform and the entrances (Friesenplatz stele on the Ring).
+func _build_transit() -> void:
+	var tcfg := _load_json(TRANSIT_CONFIG)
+	transit = StrayTransit.new(tcfg)
+	area = StrayAreaBuilder.new()
+	area.name = "AreaP002"
+	add_child(area)
+	area.build(builder, AREA_P002)
+	metro = StrayMetroStation.new()
+	metro.name = "MetroStation"
+	add_child(metro)
+	metro.setup(tcfg)
+	metro.visible = false
+	metro_ix = StrayMetroInteractions.new()
+	metro_ix.name = "MetroInteractions"
+	add_child(metro_ix)
+	metro_ix.setup(interactions, transit, metro, area.area)
+	var fp: Dictionary = tcfg.get("stations", {}).get("friesenplatz", {})
+	var L := builder.layout
+	var en := L.to_en(float(fp.get("s", 100.0)), float(fp.get("v", -10.4)))
+	StrayAreaBuilder.build_ubahn_stele(builder, StrayStreetLayout.en_to_godot(en.x, en.y, L.ground_z_at(en)), L.right_en(), transit.station_name("friesenplatz"))
+	metro_ix.metro_entered.connect(func(_st): set_region("metro"))
+	metro_ix.metro_left.connect(func(st):
+		set_region(String(transit.cfg.get("stations", {}).get(st, {}).get("area", "p001")))
+		save_game("metro_left"))
+	metro_ix.rode.connect(func(_r): _sync_daylight())
+	set_region("p001")
+
+
+## Shows only the given region: "p001" (street, NPCs, traffic), "p002" (Hbf area) or "metro".
+func set_region(id: String) -> void:
+	region = id
+	builder.set_region_visible(id == "p001")
+	for n in [pedestrians, traffic]:
+		if n:
+			n.visible = id == "p001"
+			n.process_mode = Node.PROCESS_MODE_INHERIT if id == "p001" else Node.PROCESS_MODE_DISABLED
+	if area:
+		area.visible = id == "p002"
+	if metro:
+		metro.visible = id == "metro"
+	if hud_info:
+		var lines := hud_info.text.split("\n")
+		lines[0] = _hud_title(id)
+		hud_info.text = "\n".join(lines)
+	_sync_daylight()
+	print("STRAY_DIAG region=%s" % id)
+
+
+## First HUD line: where the player is (+ data credits for the real-data areas).
+func _hud_title(id: String) -> String:
+	var titles: Dictionary = transit.cfg.get("region_titles", {}) if transit else {}
+	return "STRAY · " + String(titles.get(id, "Hohenzollernring, Köln")) + " (LoD2/DGM1 Geobasis NRW, © OSM)"
 
 
 func _process(delta: float) -> void:
@@ -485,7 +554,8 @@ func _build_hud() -> void:
 	hud.name = "HUD"
 	add_child(hud)
 	var info := Label.new()
-	info.text = "STRAY · Prototyp 001 · Hohenzollernring, Köln (LoD2/DGM1 Geobasis NRW, © OSM)\n" \
+	hud_info = info
+	info.text = _hud_title("p001") + "\n" \
 		+ "WASD/Stick: gehen · Shift: rennen · Leertaste: springen · Maus: Kamera · E: interagieren · Tab: Handy · N: Tag/Nacht · Esc: Menü"
 	info.position = Vector2(12, 8)
 	info.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
@@ -547,6 +617,58 @@ func _snap(dir: String, file_name: String) -> void:
 	var path := dir.path_join(file_name)
 	var err := img.save_png(path)
 	print("STRAY_DIAG autoshot=%s err=%d size=%s" % [path, err, img.get_size()])
+
+
+## R5 evidence: U-Bahn entrance on the Ring, platform + ticket machine, Hbf area night/day.
+func _autoshots_transit(dir: String, cam: Camera3D) -> void:
+	var L := builder.layout
+	var e := metro_ix.ix.points["ubahn_friesenplatz"] as Vector3
+	var eye_en := L.to_en(92.0, -4.0)
+	cam.global_position = StrayStreetLayout.en_to_godot(eye_en.x, eye_en.y, L.ground_z_at(eye_en) + 1.7)
+	cam.look_at(e + Vector3(0, 2.2, 0), Vector3.UP)
+	cam.make_current()
+	await _snap(dir, "P002_00_ubahn_friesenplatz_night.png")
+	player.camera.make_current()
+	metro_ix.enter_station("friesenplatz")
+	player.global_position = metro.points["ticket"] + Vector3(4.0, 0.95, -2.5)
+	player.face_yaw(deg_to_rad(80.0))
+	await get_tree().create_timer(0.8).timeout
+	await _snap(dir, "P002_01_metro_platform.png")
+	interactions.life.cash_cents += 1000  # evidence run: enough cash for the ticket
+	player.global_position = metro.points["ticket"] + Vector3(0, 0.95, 0)
+	player.face_yaw(PI)
+	await get_tree().create_timer(0.4).timeout
+	interactions.current = "metro_ticket"
+	interactions.interact()
+	await _snap(dir, "P002_02_metro_ticket_machine.png")
+	interactions._on_option(0)
+	metro_ix.ride()
+	await get_tree().create_timer(0.6).timeout
+	await _snap(dir, "P002_03_metro_arrived_dom_hbf.png")
+	metro_ix.leave_station()
+	await get_tree().create_timer(1.0).timeout
+	await _snap(dir, "P002_04_hbf_player_exit_night.png")
+	for day in [false, true]:
+		builder.set_day_mode(day)
+		area.set_day_mode(day)
+		var idx := 10
+		for vp in area.area.viewpoints:
+			var a: StrayAreaLayout = area.area
+			var eye := StrayStreetLayout._v2(vp["en"])
+			var look := StrayStreetLayout._v2(vp["look_en"])
+			cam.global_position = StrayStreetLayout.en_to_godot(eye.x, eye.y, a.ground_z_at(eye) + float(vp["h"]))
+			cam.look_at(StrayStreetLayout.en_to_godot(look.x, look.y, a.ground_z_at(look) + float(vp["look_h"])), Vector3.UP)
+			cam.make_current()
+			await _snap(dir, "P002_%02d_%s_%s.png" % [idx, vp["name"], "day" if day else "night"])
+			idx += 1
+	builder.set_day_mode(false)
+	_sync_daylight()
+	player.camera.make_current()
+	# Back to the Ring for the remaining captures.
+	metro_ix.enter_station("dom_hbf")
+	metro_ix.ride()
+	metro_ix.leave_station()
+	await get_tree().create_timer(0.5).timeout
 
 
 func _run_autoshots() -> void:
@@ -620,6 +742,7 @@ func _run_autoshots() -> void:
 	if interactions.police_check_open:
 		interactions._on_option(0)
 	consequences._set_heat(0.0)
+	await _autoshots_transit(dir, cam)
 	# Club interior: entrance view over the dance floor, the bar, then Lea's dialogue.
 	interactions.enter_club()
 	await get_tree().create_timer(1.0).timeout

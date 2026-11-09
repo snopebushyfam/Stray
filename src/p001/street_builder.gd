@@ -243,6 +243,24 @@ func _build_buildings() -> void:
 	stats.lod2_triangles = m.triangle_count
 
 
+## Shared facade material (created once; other areas reuse it so day/night switches them too).
+func facade_material() -> Material:
+	if _facade_mat == null:
+		return _facade_material()
+	return _facade_mat
+
+
+## Shows/hides the whole street (P001) except the environment and the moon/sun light: only the
+## area the player is in is drawn (keeps the Compatibility renderer under its light limits).
+func set_region_visible(on: bool) -> void:
+	for c in get_children():
+		if c == _env or c == _key or not (c is Node3D):
+			continue
+		(c as Node3D).visible = on
+	if on:
+		set_day_mode(day_mode)
+
+
 ## Facade ShaderMaterial (world-space window grid) or a flat fallback when the shader is missing.
 func _facade_material() -> Material:
 	var cfg: Dictionary = render.get("facade", {})
