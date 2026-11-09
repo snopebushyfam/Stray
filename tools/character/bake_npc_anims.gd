@@ -18,6 +18,11 @@ func _initialize() -> void:
 func _run() -> void:
 	for id in NPCS:
 		var rig := StrayHumanRig.new()
+		# Per-type retarget tuning (R12.1): tools/character/npc_specs.json -> npcs.<id>.retarget
+		var specs: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tools/character/npc_specs.json"))
+		var rt: Dictionary = specs.get("npcs", {}).get(String(id), {}).get("retarget", {})
+		for k in rt:
+			rig.set(k, rt[k])
 		root.add_child(rig)
 		if not rig.setup(load(DIR + String(id) + ".glb"), load(UAL)):
 			push_error("bake: setup failed for " + id)

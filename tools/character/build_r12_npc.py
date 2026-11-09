@@ -15,7 +15,15 @@ import numpy as np
 from mathutils import Vector, Matrix
 
 args = sys.argv[sys.argv.index("--") + 1:]
-DECIMATE_RATIO = 0.42
+DECIMATE = "--no-decimate" not in sys.argv
+# R12.1: decimate per part BEFORE joining, without vertex groups. One collapse pass on the joined
+# mesh with a weighted protect group collapsed the clothing into a few large triangles (verified
+# in renders); per-part ratios are predictable. Hands/face belong to "body" (mild 0.75).
+PART_RATIO = {"clothes0": 0.5, "clothes1": 0.45, "hair": 0.6, "body": 0.75}
+# R12.1: keep MakeHuman's A-pose as bind pose (its weights are painted for it). Baking a T-pose
+# into the mesh made linear-blend skinning rotate the shoulders ~80 deg back for every idle/walk
+# frame (collapsed, pointy shoulders). Retargeting builds the T-pose virtually (human_rig.gd).
+BIND_TPOSE = "--tpose" in sys.argv
 NPC_ID, OUT = args[0], args[1]
 SPECS = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "npc_specs.json")))["npcs"]
 spec = SPECS[NPC_ID]
@@ -64,39 +72,41 @@ for o in meshes:
             bpy.ops.object.modifier_apply(modifier=m.name)
 
 # --- T-pose (lateral axis measured on the character), bake, apply as rest -----------------------
-activate(arm)
-bpy.ops.object.mode_set(mode="POSE")
-bpy.context.view_layer.update()
-lateral = (arm.matrix_world @ arm.pose.bones["upperarm_l"].head) - (arm.matrix_world @ arm.pose.bones["upperarm_r"].head)
-lateral.z = 0.0
-lateral.normalize()
-for side, sx in (("l", 1.0), ("r", -1.0)):
-    for bname in ("upperarm_", "lowerarm_", "hand_"):
-        pb = arm.pose.bones[bname + side]
-        bpy.context.view_layer.update()
-        mw = arm.matrix_world @ pb.matrix
-        head = mw.translation
-        tail = arm.matrix_world @ (pb.matrix @ Vector((0, pb.bone.length, 0)))
-        cur = (tail - head).normalized()
-        want = lateral * sx
-        if cur.dot(want) < 0.999:
-            rot = cur.rotation_difference(want)
-            pb.matrix = arm.matrix_world.inverted() @ (Matrix.Translation(head) @ rot.to_matrix().to_4x4() @ Matrix.Translation(-head)) @ mw
-        bpy.context.view_layer.update()
-bpy.ops.object.mode_set(mode="OBJECT")
-for o in meshes:
-    if not any(m.type == "ARMATURE" for m in o.modifiers):
-        continue
-    activate(o)
-    copy = o.modifiers.new("ArmatureRest", "ARMATURE")
-    copy.object = arm
-    while o.modifiers.find(copy.name) > 0:
-        bpy.ops.object.modifier_move_up(modifier=copy.name)
-    bpy.ops.object.modifier_apply(modifier=copy.name)
-activate(arm)
-bpy.ops.object.mode_set(mode="POSE")
-bpy.ops.pose.armature_apply(selected=False)
-bpy.ops.object.mode_set(mode="OBJECT")
+# (only with --tpose; default since R12.1: A-pose bind)
+if BIND_TPOSE:
+    activate(arm)
+    bpy.ops.object.mode_set(mode="POSE")
+    bpy.context.view_layer.update()
+    lateral = (arm.matrix_world @ arm.pose.bones["upperarm_l"].head) - (arm.matrix_world @ arm.pose.bones["upperarm_r"].head)
+    lateral.z = 0.0
+    lateral.normalize()
+    for side, sx in (("l", 1.0), ("r", -1.0)):
+        for bname in ("upperarm_", "lowerarm_", "hand_"):
+            pb = arm.pose.bones[bname + side]
+            bpy.context.view_layer.update()
+            mw = arm.matrix_world @ pb.matrix
+            head = mw.translation
+            tail = arm.matrix_world @ (pb.matrix @ Vector((0, pb.bone.length, 0)))
+            cur = (tail - head).normalized()
+            want = lateral * sx
+            if cur.dot(want) < 0.999:
+                rot = cur.rotation_difference(want)
+                pb.matrix = arm.matrix_world.inverted() @ (Matrix.Translation(head) @ rot.to_matrix().to_4x4() @ Matrix.Translation(-head)) @ mw
+            bpy.context.view_layer.update()
+    bpy.ops.object.mode_set(mode="OBJECT")
+    for o in meshes:
+        if not any(m.type == "ARMATURE" for m in o.modifiers):
+            continue
+        activate(o)
+        copy = o.modifiers.new("ArmatureRest", "ARMATURE")
+        copy.object = arm
+        while o.modifiers.find(copy.name) > 0:
+            bpy.ops.object.modifier_move_up(modifier=copy.name)
+        bpy.ops.object.modifier_apply(modifier=copy.name)
+    activate(arm)
+    bpy.ops.object.mode_set(mode="POSE")
+    bpy.ops.pose.armature_apply(selected=False)
+    bpy.ops.object.mode_set(mode="OBJECT")
 
 
 # --- texture atlas: every material's base colour (+alpha) packed into one image ----------------
@@ -178,6 +188,22 @@ bsdf.inputs["Roughness"].default_value = 0.75
 mat.blend_method = "CLIP"
 mat.alpha_threshold = 0.5
 
+# --- per-part polygon budget ------------------------------------------------------------------------
+for o in meshes:
+    r = PART_RATIO.get(assign.get(o.name, ""), 1.0)
+    if not DECIMATE or r >= 1.0:
+        continue
+    before = len(o.data.polygons)
+    activate(o)
+    dec = o.modifiers.new("Budget", "DECIMATE")
+    dec.decimate_type = "COLLAPSE"
+    dec.ratio = r
+    dec.use_collapse_triangulate = True
+    while o.modifiers.find(dec.name) > 0:
+        bpy.ops.object.modifier_move_up(modifier=dec.name)
+    bpy.ops.object.modifier_apply(modifier=dec.name)
+    print("R12 decimate %s %s %.2f: %d -> %d faces" % (o.name, assign.get(o.name), r, before, len(o.data.polygons)))
+
 # --- join everything into one skinned mesh with the one material ------------------------------
 for o in meshes:
     o.data.materials.clear()
@@ -194,23 +220,6 @@ bpy.context.view_layer.objects.active = basemesh
 bpy.ops.object.join()
 body = bpy.context.view_layer.objects.active
 body.name = "stray_%s_mesh" % NPC_ID
-
-# --- polygon budget: collapse-decimate, but keep the head (face) at full detail -------------------
-# The R12 perf probe showed 3 NPCs at ~2x the triangles of 3 R11 figures (37k tris each). Target
-# ~16k tris per NPC; the "head" bone weight group limits decimation on the face.
-dec = body.modifiers.new("Budget", "DECIMATE")
-dec.decimate_type = "COLLAPSE"
-dec.ratio = DECIMATE_RATIO
-if "head" in body.vertex_groups:
-    dec.vertex_group = "head"
-    dec.invert_vertex_group = True
-    dec.vertex_group_factor = 1.0
-dec.use_collapse_triangulate = True
-# The armature modifier must stay last: move the decimation to the top, then apply it.
-activate(body)
-while body.modifiers.find(dec.name) > 0:
-    bpy.ops.object.modifier_move_up(modifier=dec.name)
-bpy.ops.object.modifier_apply(modifier=dec.name)
 
 # --- lift so the soles touch y = 0 ---------------------------------------------------------------
 lowest = min((body.matrix_world @ v.co).z for v in body.data.vertices)

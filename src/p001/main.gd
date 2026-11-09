@@ -132,6 +132,8 @@ func _ready() -> void:
 	clock.day_changed.connect(_on_day_changed)
 	clock.hour_changed.connect(_on_hour_changed)
 	interactions.club_left.connect(func(): save_game("club_left"))
+	if "--qa-npc" in OS.get_cmdline_user_args():
+		_qa_npc_view.call_deferred()  # QA only (R12.1): look at the bouncer + queue head, no menu
 	if "--r11" in OS.get_cmdline_user_args():
 		player.set_character_variant("r11")  # evidence / testing: start with the R11 figure
 	if "--autoshots" in OS.get_cmdline_user_args():
@@ -186,7 +188,7 @@ func _setup_menu_and_save() -> void:
 		save_game("quit")
 		get_tree().quit())
 	# The start screen only appears when this scene is the game itself (not inside tests/tools).
-	if get_tree().current_scene == self and not "--autoshots" in OS.get_cmdline_user_args() and not "--r9shots" in OS.get_cmdline_user_args():
+	if get_tree().current_scene == self and not "--autoshots" in OS.get_cmdline_user_args() and not "--r9shots" in OS.get_cmdline_user_args() and not "--qa-npc" in OS.get_cmdline_user_args():
 		get_tree().paused = true
 		menu.show_start(StraySaveGame.exists(save_path))
 		if "--menushots" in OS.get_cmdline_user_args():
@@ -194,6 +196,23 @@ func _setup_menu_and_save() -> void:
 
 
 ## Evidence capture of the start and pause menus (cmdline: -- --menushots [--shots-dir=...]).
+## QA view for the R12 NPC pilot (also in the web build via the test page's args): player stands
+## in front of NACHTFLUG facing the bouncer and the queue head.
+func _qa_npc_view() -> void:
+	await get_tree().create_timer(1.0).timeout
+	if menu:
+		menu.hide_menu()
+	get_tree().paused = false
+	var b: Node3D = interactions.get_node_or_null("Bouncer")
+	if b == null:
+		return
+	var c := StrayStreetLayout._v2(builder.layout.club["normal_en"]).normalized()
+	var out_dir := StrayStreetLayout.en_dir_to_godot(c)
+	player.global_position = b.global_position + out_dir * 3.2 + Vector3(0, 0.95, 0)
+	player.face_yaw(atan2(out_dir.x, out_dir.z))
+	print("STRAY_DIAG qa_npc_view at=%s" % player.global_position)
+
+
 func _character_label() -> String:
 	return "Figur: Mensch (R11, Test)" if player.character_variant == "r11" else "Figur: Standard (R10)"
 

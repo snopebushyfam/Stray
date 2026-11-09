@@ -9,3 +9,4 @@ asset file headers ("explicitly released as CC0 in september 2020"):
   (makehuman_system_assets, CC0); toigo_ankle_boots_female (shoes01 pack, CC0)
 - *_anims.res: Quaternius Universal Animation Library (CC0) retargeted onto these rigs
   (tools/character/bake_npc_anims.gd)
+R12.1: rebuilt with A-pose bind, per-part decimation; same CC0 assets.
