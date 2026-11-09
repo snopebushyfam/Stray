@@ -18,6 +18,8 @@ var _visual: Node3D
 var _gravity: float = 9.81
 var _frames: int = 0
 var _look_touch_index: int = -1
+## Last accepted position of the look finger (the camera uses positions, not event.relative).
+var _look_touch_last := Vector2.ZERO
 var _anim: AnimationPlayer
 var _anim_names: Dictionary = {}
 ## Name of the locomotion state currently shown ("idle", "walk", "run", "air"), "" without a rig.
@@ -230,10 +232,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Right half of the screen = camera look (left half is the VirtualJoystick).
 		if event.pressed and event.position.x > get_viewport().get_visible_rect().size.x * 0.5:
 			_look_touch_index = event.index
+			_look_touch_last = event.position
 		elif not event.pressed and event.index == _look_touch_index:
 			_look_touch_index = -1
 	elif event is InputEventScreenDrag and event.index == _look_touch_index:
-		_look(event.relative * touch_sens)
+		_look(touch_look_delta(event.position) * touch_sens)
+
+
+## Camera delta (px) for a drag of the look finger. Mobile browsers sometimes report the
+## joystick finger under the look finger's index (huge jumps, the camera "jittered" on tablets):
+## positions in the joystick half are ignored, and one event never moves more than a cap.
+func touch_look_delta(pos: Vector2) -> Vector2:
+	var half := get_viewport().get_visible_rect().size.x * float(cfg.get("touch_look_min_x_ratio", 0.45))
+	if pos.x < half:
+		return Vector2.ZERO
+	var d := pos - _look_touch_last
+	_look_touch_last = pos
+	var cap: float = cfg.get("touch_look_max_step_px", 60.0)
+	return d.limit_length(cap)
 
 
 func _look(delta_deg: Vector2) -> void:

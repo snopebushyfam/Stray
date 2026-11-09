@@ -228,6 +228,13 @@ den Export als Projekt-Assets importiert. Das ZIP lief entpackt im iframe mit To
 Fingertipp gestartet). Beim Sichttest behoben: die Zielzeile lag auf Tablets unter den Touch-Knöpfen.
 Anleitung: `docs/RELEASE_ITCH.md`.
 
+**Tablet-Rückmeldung 2026-11-09 (itch.io, echtes Gerät):** Mit einem Finger am Joystick und einem zum
+Umsehen zappelte die Kamera wild. Vermutete Ursache: der mobile Browser ordnet die zwei Finger zeitweise
+falsch zu (Kamera-Finger meldet die Position des Joystick-Fingers, riesiges `relative`). Behebung in
+`player.gd`: Kamera rechnet aus Positionen statt `event.relative`, ignoriert Positionen in der Joystick-Hälfte
+und begrenzt einen Schritt auf 60 px (`player_config.json`). Regressionstest `touch_look_test` erst rot
+(Sprünge bis 213°), dann grün. Auf dem echten Tablet noch **nicht** erneut geprüft.
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 
