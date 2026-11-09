@@ -47,6 +47,11 @@ var metro_ix: StrayMetroInteractions
 ## Which part of the world is drawn: "p001" (Ringe), "p002" (Hbf) or "metro" (platform).
 var region: String = "p001"
 var hud_info: Label
+## R9.1 optional FPS display (off by default): F3 or the touch button "FPS".
+var fps_label: Label
+var fps_meter := StrayFpsMeter.new()
+var _fps_refresh := 0.0
+var _fps_last_us := 0
 ## R6: arrival at the Hbf -> U-Bahn -> KIOSK (runs on "Neues Spiel").
 var prologue: StrayPrologue
 var _jaywalk_time := 0.0
@@ -134,7 +139,9 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("toggle_day_night"):
+	if event.is_action_pressed("toggle_fps"):
+		toggle_fps()
+	elif event.is_action_pressed("toggle_day_night"):
 		toggle_day_night()
 	elif event.is_action_pressed("pause") and menu and menu.mode.is_empty():
 		open_pause_menu()
@@ -447,7 +454,33 @@ func _hud_title(id: String) -> String:
 var _fps_log_left := 5.0
 
 
+## Shows/hides the FPS display (measures this device; restarts the 10 s average when shown).
+func toggle_fps() -> void:
+	fps_label.visible = not fps_label.visible
+	fps_meter.reset()
+	_fps_refresh = 0.0
+	_fps_last_us = Time.get_ticks_usec()
+	print("STRAY_DIAG fps_display=%s" % fps_label.visible)
+
+
+func _update_fps_label(_delta: float) -> void:
+	# Wall-clock time between frames, not `delta`: Godot clamps `delta` on very slow frames,
+	# which made a ~1 fps software renderer show ~8 fps (seen in Chromium/SwiftShader).
+	var now := Time.get_ticks_usec()
+	var real := float(now - _fps_last_us) / 1000000.0
+	_fps_last_us = now
+	fps_meter.add_frame(real)
+	_fps_refresh -= real
+	if _fps_refresh <= 0.0:
+		_fps_refresh = 0.25
+		fps_label.text = "FPS %d  ·  Ø 10 s: %.1f" % [roundi(fps_meter.current_fps()), fps_meter.average_fps()]
+		if fps_meter.covered_seconds() < 9.5:
+			fps_label.text += " (%d s)" % int(fps_meter.covered_seconds())
+
+
 func _process(delta: float) -> void:
+	if fps_label and fps_label.visible:
+		_update_fps_label(delta)
 	_fps_log_left -= delta
 	if _fps_log_left <= 0.0:
 		_fps_log_left = 5.0
@@ -617,13 +650,35 @@ func _build_hud() -> void:
 	var info := Label.new()
 	hud_info = info
 	info.text = _hud_title("p001") + "\n" \
-		+ "WASD/Stick: gehen · Shift: rennen · Leertaste: springen · Maus: Kamera · E: interagieren · Tab: Handy · N: Tag/Nacht · Esc: Menü"
+		+ "WASD/Stick: gehen · Shift: rennen · Leertaste: springen · Maus: Kamera · E: interagieren · Tab: Handy · N: Tag/Nacht · F3: FPS · Esc: Menü"
 	info.position = Vector2(12, 8)
 	info.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
 	info.add_theme_font_size_override("font_size", 14)
 	hud.add_child(info)
+	fps_label = Label.new()
+	fps_label.name = "FpsLabel"
+	fps_label.anchor_left = 1.0
+	fps_label.anchor_right = 1.0
+	fps_label.offset_left = -340
+	fps_label.offset_right = -14
+	fps_label.offset_top = 112
+	fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	fps_label.mouse_filter = Control.MOUSE_FILTER_IGNORE  # never blocks touches (camera look side)
+	fps_label.add_theme_font_size_override("font_size", 18)
+	fps_label.add_theme_color_override("font_color", Color(0.6, 1.0, 0.6))
+	fps_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	fps_label.add_theme_constant_override("outline_size", 5)
+	fps_label.visible = false
+	hud.add_child(fps_label)
 	var touch := DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
 	if touch:
+		var fps_b := Button.new()
+		fps_b.name = "FpsButton"
+		fps_b.text = "FPS"
+		fps_b.position = Vector2(232, 56)
+		fps_b.custom_minimum_size = Vector2(64, 40)  # finger-sized target
+		fps_b.pressed.connect(toggle_fps)
+		hud.add_child(fps_b)
 		var joy := VirtualJoystick.new()
 		joy.joystick_mode = VirtualJoystick.JOYSTICK_DYNAMIC
 		joy.action_left = &"move_left"

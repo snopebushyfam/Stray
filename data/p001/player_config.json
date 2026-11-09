@@ -45,6 +45,9 @@
   "toggle_day_night": [
    "N"
   ],
+  "toggle_fps": [
+   "F3"
+  ],
   "release_mouse": [
    "Escape"
   ],
