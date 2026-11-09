@@ -1,0 +1,14 @@
+{
+ "note": "R12 NPC pilot: MakeHuman/MPFB specs (all assets CC0, see docs/R12_NPC_PILOT.md). MakeHuman macro scale 0..1 (age 0.5 = 25 years, 1.0 = 90).",
+ "npcs": {
+  "passerby_m": {"phenotype": {"gender": 1.0, "age": 0.56, "muscle": 0.45, "weight": 0.58, "height": 0.6, "proportions": 0.5, "race": {"african": 0.85, "asian": 0.05, "caucasian": 0.1}},
+                 "skin": "young_african_male/young_african_male.mhmat", "hair": "short04/short04.mhclo", "eyebrows": "eyebrow002/eyebrow002.mhclo", "eyelashes": "eyelashes02/eyelashes02.mhclo",
+                 "clothes": ["male_casualsuit01/male_casualsuit01.mhclo", "shoes02/shoes02.mhclo"]},
+  "passerby_f": {"phenotype": {"gender": 0.0, "age": 0.48, "muscle": 0.45, "weight": 0.45, "height": 0.5, "proportions": 0.6, "race": {"african": 0.05, "asian": 0.1, "caucasian": 0.85}},
+                 "skin": "young_caucasian_female/young_caucasian_female.mhmat", "hair": "ponytail01/ponytail01.mhclo", "eyebrows": "eyebrow010/eyebrow010.mhclo", "eyelashes": "eyelashes03/eyelashes03.mhclo",
+                 "clothes": ["female_casualsuit01/female_casualsuit01.mhclo", "toigo_ankle_boots_female/toigo_ankle_boots_female.mhclo"]},
+  "bouncer":    {"phenotype": {"gender": 1.0, "age": 0.62, "muscle": 0.8, "weight": 0.72, "height": 0.72, "proportions": 0.55, "race": {"african": 0.1, "asian": 0.05, "caucasian": 0.85}},
+                 "skin": "middleage_caucasian_male/middleage_caucasian_male.mhmat", "hair": "", "eyebrows": "eyebrow005/eyebrow005.mhclo", "eyelashes": "eyelashes01/eyelashes01.mhclo",
+                 "clothes": ["male_elegantsuit01/male_elegantsuit01.mhclo", "shoes04/shoes04.mhclo"]}
+ }
+}

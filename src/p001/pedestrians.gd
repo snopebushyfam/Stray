@@ -61,7 +61,12 @@ func setup(p_layout: StrayStreetLayout, p_cfg: Dictionary, character_cfg: Dictio
 	print("STRAY_DIAG pedestrians walkers=%d queue=%d" % [walkers.size(), queue.size()])
 
 
-func _make_character(ped: Dictionary, color_index: int) -> Array:
+## `human_type`: R12 pilot NPC id (StrayNpcHuman); "" or unavailable -> R10 mannequin with a look.
+func _make_character(ped: Dictionary, color_index: int, human_type: String = "") -> Array:
+	if not human_type.is_empty() and StrayNpcHuman.available(human_type):
+		var h := StrayNpcHuman.create(human_type)
+		h.rotation.y = deg_to_rad(_char_cfg.get("yaw_offset_deg", 180.0))
+		return [h, h.get_node("AnimationPlayer")]
 	var scene: PackedScene = load(_char_cfg.get("scene", ""))
 	var model: Node3D = scene.instantiate()
 	model.rotation.y = deg_to_rad(_char_cfg.get("yaw_offset_deg", 180.0))
@@ -75,7 +80,9 @@ func _make_character(ped: Dictionary, color_index: int) -> Array:
 func _make_body(w: Walker, ped: Dictionary) -> void:
 	w.root = Node3D.new()
 	add_child(w.root)
-	var made := _make_character(ped, _rng.randi())
+	var pilot: Dictionary = cfg.get("r12_pilot", {}) if bool(cfg.get("r12_pilot", {}).get("enabled", false)) else {}
+	var human := String(pilot.get("walker_type", "")) if walkers.size() == int(pilot.get("walker_index", -1)) else ""
+	var made := _make_character(ped, _rng.randi(), human)
 	var model: Node3D = made[0]
 	var hs := _rng.randf_range(ped.get("height_scale_min", 0.95), ped.get("height_scale_max", 1.05))
 	model.scale = Vector3.ONE * hs
@@ -108,7 +115,9 @@ func _build_queue(q: Dictionary, ped: Dictionary) -> void:
 	var t := Vector2(n.y, -n.x)
 	for i in int(q.get("count", 5)):
 		var p: Vector2 = pos + n * float(q.get("out", 2.7)) + t * (float(q.get("start_along", -1.8)) - i * float(q.get("spacing", 0.9)))
-		var made := _make_character(ped.merged({"look_group": "queue"}), i + 3)
+		var qp: Dictionary = cfg.get("r12_pilot", {}) if bool(cfg.get("r12_pilot", {}).get("enabled", false)) else {}
+		var made := _make_character(ped.merged({"look_group": "queue"}), i + 3,
+			String(qp.get("queue_type", "")) if i == int(qp.get("queue_index", -1)) else "")
 		var model: Node3D = made[0]
 		var root := Node3D.new()
 		root.position = StrayStreetLayout.en_to_godot(p.x, p.y, layout.ground_z_at(p))

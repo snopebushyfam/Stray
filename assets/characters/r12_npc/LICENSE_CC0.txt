@@ -1,0 +1,11 @@
+R12 pilot NPCs (passerby_m, passerby_f, bouncer) - built with tools/character/build_r12_npc.py
+(MPFB 2.0.18 in Blender 4.5 LTS) from tools/character/npc_specs.json. All source assets are CC0 1.0,
+verified on static.makehumancommunity.org/assets/assetpacks/*.html ("License" column) and in the
+asset file headers ("explicitly released as CC0 in september 2020"):
+- MakeHuman basemesh + macro targets; skins young_african_male, young_caucasian_female,
+  middleage_caucasian_male; eyes low-poly + brown; eyebrow002/005/010; eyelashes01/02/03;
+  hair short04, ponytail01 (makehuman_system_assets, CC0)
+- clothes male_casualsuit01, female_casualsuit01, male_elegantsuit01, shoes02, shoes04
+  (makehuman_system_assets, CC0); toigo_ankle_boots_female (shoes01 pack, CC0)
+- *_anims.res: Quaternius Universal Animation Library (CC0) retargeted onto these rigs
+  (tools/character/bake_npc_anims.gd)

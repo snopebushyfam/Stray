@@ -164,5 +164,14 @@
   "headlight_emission": 4.0,
   "taillight_emission": 3.0,
   "police_cars": 1
+ },
+ "r12_pilot": {
+  "enabled": true,
+  "walker_index": 0,
+  "walker_type": "passerby_m",
+  "queue_index": 0,
+  "queue_type": "passerby_f",
+  "bouncer_type": "bouncer",
+  "note": "R12 NPC pilot: only these three NPCs use the MakeHuman models (assets/characters/r12_npc); all others stay R10. docs/R12_NPC_PILOT.md"
  }
 }

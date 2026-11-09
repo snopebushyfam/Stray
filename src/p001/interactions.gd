@@ -131,7 +131,11 @@ func _gp(en: Vector2) -> Vector3:
 func _spawn_bouncer(c: Dictionary, character_cfg: Dictionary) -> void:
 	if not ResourceLoader.exists(character_cfg.get("scene", "")):
 		return
-	var model: Node3D = load(character_cfg["scene"]).instantiate()
+	# R12 pilot: real-human bouncer (MakeHuman, CC0) when available; R10 mannequin otherwise.
+	var npc_cfg: Dictionary = _load_json("res://data/p001/npc_config.json").get("r12_pilot", {})
+	var human_type := String(npc_cfg.get("bouncer_type", "")) if bool(npc_cfg.get("enabled", false)) else ""
+	var human := StrayNpcHuman.create(human_type) if not human_type.is_empty() else null
+	var model: Node3D = human if human else load(character_cfg["scene"]).instantiate()
 	var root := Node3D.new()
 	root.name = "Bouncer"
 	var p: Vector2 = c.pos + c.n * 0.9 + c.t * 1.55
@@ -139,8 +143,9 @@ func _spawn_bouncer(c: Dictionary, character_cfg: Dictionary) -> void:
 	var face := StrayStreetLayout.en_dir_to_godot(c.n)
 	root.rotation.y = atan2(-face.x, -face.z)
 	model.rotation.y = deg_to_rad(character_cfg.get("yaw_offset_deg", 180.0))
-	model.scale = Vector3.ONE * 1.1
-	StrayCharacterLook.apply(model, "bouncer")  # R10: black bomber, bald
+	if human == null:
+		model.scale = Vector3.ONE * 1.1
+		StrayCharacterLook.apply(model, "bouncer")  # R10: black bomber, bald
 	root.add_child(model)
 	add_child(root)
 	var ap: Array = model.find_children("*", "AnimationPlayer", true, false)
