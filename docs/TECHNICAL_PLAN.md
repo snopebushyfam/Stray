@@ -178,6 +178,21 @@ max. 17 Schichten × (54 € + 4 €) ≈ 986 € gegen 450 € Miete — ohne J
 Beim Sichttest behoben: alte Meldung lag hinter dem Bestellfenster. Offen: Spieler steht vor statt hinter
 der Theke; Schichten dauern keine Spielzeit-Echtzeit (Sprung auf 22:00).
 
+**R4 Konsequenzen-Grundgerüst (2026-11-09, gespielt + getestet):**
+
+| | Umsetzung |
+|---|---|
+| Polizei-Aufmerksamkeit | `consequences.gd`: 0–100, sinkt 6/Spielstunde; Quellen mit Abklingzeit: auf der Fahrbahn stehen (+6), betrunken ab 3 Drinks (+12), Ladendiebstahl erwischt (+45), Türsteher bedrängen (+5), weglaufen (+35). Vorfälle werden protokolliert. HUD: „Polizei ●●●○○“. |
+| Streifenwagen | ein Polizeiauto (silber, blauer Streifen, Blaulicht blinkt beim Halt) im Verkehr; ab Aufmerksamkeit 30 und ≤ 22 m Abstand hält er an → Kontrolle |
+| Kontrolle | Ausweis zeigen oder weglaufen. Ergebnis nach Lage: < 50 Verwarnung; 50–79 Bußgeld 60 € (erst bar, dann Konto); ≥ 80 oder ≥ 5 Drinks Platzverweis bis 06:00; Weglaufen +35, ab 100 Festnahme (200 €, Entlassung 08:00). Polizeiakte; Mama meldet sich. |
+| Klauen | Kiosk-Menü „Klauen (riskant)“: 55 % erwischt (80 % nach einem Erfolg). Erwischt = dauerhaftes Hausverbot, +45 Aufmerksamkeit, Erol kündigt. |
+| Ruf wirkt | Türsteher: Platzverweis oder Aufmerksamkeit ≥ 50 → kein Einlass |
+| Daten | `data/p001/consequences_config.json` |
+
+Tests: `consequences_test` 24/24, `consequences_it_test` 16/16 (Fahrbahn, Streifenwagen hält, Bußgeld,
+Mama, Platzverweis an der Clubtür, Diebstahl → Hausverbot + Kündigung, Speichern). Zwei Testfehler meinerseits
+(Rundung bei laufendem Abbau, Bremsweg) korrigiert. Offen: Polizist:in als Figur, Kamera auf den Streifenwagen.
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

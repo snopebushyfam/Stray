@@ -25,6 +25,8 @@ class Car:
 	var active := true
 	var respawn_in := 0.0
 	var y := 0.0
+	var is_police := false
+	var light_bar: Array[StandardMaterial3D] = []
 
 var layout: StrayStreetLayout
 var cfg: Dictionary = {}
@@ -32,6 +34,9 @@ var cars: Array[Car] = []
 var player: Node3D
 var _rng := RandomNumberGenerator.new()
 var _mats: Dictionary = {}
+## While true the police car brakes to a stop and flashes its lights (police check in progress).
+var police_hold := false
+var _blink := 0.0
 
 
 ## Spawns the cars spread over each lane.
@@ -56,7 +61,41 @@ func setup(p_layout: StrayStreetLayout, p_cfg: Dictionary, p_player: Node3D) -> 
 			c.s = s_min + (s_max - s_min) * (k + _rng.randf_range(0.15, 0.85)) / per_lane
 			_build_car(c)
 			cars.append(c)
-	print("STRAY_DIAG traffic cars=%d lanes=%d" % [cars.size(), lanes.size()])
+	for k in int(cfg.get("police_cars", 0)):
+		if k < cars.size():
+			_make_police(cars[k * per_lane])
+	print("STRAY_DIAG traffic cars=%d lanes=%d police=%d" % [cars.size(), lanes.size(), int(cfg.get("police_cars", 0))])
+
+
+## Turns a car into a police car: silver-white body, blue side stripe, roof light bar.
+func _make_police(c: Car) -> void:
+	c.is_police = true
+	c.cruise = minf(c.cruise, 9.0)
+	var white := _mat("police_body", Color(0.85, 0.87, 0.9))
+	var stripe := _mat("police_stripe", Color(0.1, 0.25, 0.6))
+	for child in c.root.get_children():
+		if child is MeshInstance3D and (child as MeshInstance3D).mesh is BoxMesh:
+			var mi := child as MeshInstance3D
+			if mi.position.y > 0.5 and mi.position.y < 0.7 or mi.position.y > 1.4:
+				mi.material_override = white
+	_box(c.root, Vector3(0, 0.75, 0), Vector3(1.82, 0.12, c.length * 0.9), stripe)
+	for x in [-0.35, 0.35]:
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = Color(0.1, 0.3, 1.0)
+		m.emission_enabled = true
+		m.emission = Color(0.1, 0.3, 1.0)
+		m.emission_energy_multiplier = 0.3
+		_box(c.root, Vector3(x, 1.53, c.length * 0.05), Vector3(0.5, 0.12, 0.25), m)
+		c.light_bar.append(m)
+
+
+## The police car (first one), or null.
+func police_car() -> Car:
+	for c in cars:
+		if c.is_police:
+			return c
+	return null
 
 
 func _mat(key: String, c: Color, emissive: float = 0.0) -> StandardMaterial3D:
@@ -164,6 +203,8 @@ func _physics_process(delta: float) -> void:
 				c.root.visible = true
 			continue
 		var target := c.cruise
+		if c.is_police and police_hold:
+			target = 0.0
 		# Leader in the same lane.
 		for o in cars:
 			if o != c and o.active and o.lane == c.lane:
@@ -191,6 +232,11 @@ func _physics_process(delta: float) -> void:
 		c.body.global_transform = xf
 		for wh in c.wheels:
 			wh.rotate_object_local(Vector3.UP, -c.speed * delta / 0.32)
+		if c.is_police:
+			_blink += delta
+			for i in c.light_bar.size():
+				var on := police_hold and int(_blink * 4.0 + i) % 2 == 0
+				c.light_bar[i].emission_energy_multiplier = 6.0 if on else 0.3
 
 
 func _entry_clear(c: Car) -> bool:

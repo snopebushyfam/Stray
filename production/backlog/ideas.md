@@ -11,7 +11,7 @@ angehängt, nicht sofort umgesetzt.
 | R1 ✅ | Spielstand speichern/laden + Startmenü (erledigt 2026-11-09) | Ohne Speichern ist nichts von Leben/Konsequenzen dauerhaft |
 | R2 ✅ | Wohnung + Schlafen + Tageswechsel + Miete fällig (erledigt 2026-11-09) | Schließt den Tageskreislauf (Säule LIFE) |
 | R3 ✅ | Erster Job (Geld verdienen) (erledigt 2026-11-09) | Einnahmen gegen Miete/Ausgaben: der Kern-Loop |
-| R4 | Konsequenzen-Grundgerüst: Polizei-Aufmerksamkeit, Ruf wirkt auf NPCs/Preise/Einlass | Säule CONSEQUENCES über den Türsteher hinaus |
+| R4 ✅ | Konsequenzen-Grundgerüst: Polizei-Aufmerksamkeit, Ruf wirkt auf NPCs/Preise/Einlass (erledigt 2026-11-09) | Säule CONSEQUENCES über den Türsteher hinaus |
 | R5 | Zweites Gebiet + Verbindung: Hbf + U-Bahn (Prolog-Ort) | Open World statt eine Straße |
 | R6 | Prolog / Einstieg: Ankunft Hbf → Tutorial → U-Bahn → Friesenplatz | Spielbarer Anfang |
 | R7 | Tablet/Web-Version veröffentlichen (itch.io oder GitHub Pages) | Testen auf echter Hardware |
@@ -42,6 +42,12 @@ angehängt, nicht sofort umgesetzt.
 - Miete: Fälligkeit, Mahnung, Folgen
 - Akku leer → Handy aus (Wirkung des Akkus), Laden in der Wohnung
 - Weitere Läden: Restaurant, Fitnessstudio, Fahrschule, Gebrauchtwagenhändler (GDD)
+
+### Konsequenzen & Polizei
+- Polizist:innen als Figuren (aussteigen, Fußstreife), Kamera auf den Streifenwagen bei der Kontrolle
+- Ruf wirkt auf Preise (Stammkunden-Rabatt) und Reaktionen der Passant:innen
+- Polizeiakte im Handy einsehbar; Bußgeldbescheid per Post/Nachricht
+- Weitere Delikte/Situationen (Schlägerei vermeiden, Zeug:in sein)
 
 ### Verkehr & Straße
 - Motorgeräusche der Autos

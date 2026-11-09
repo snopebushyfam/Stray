@@ -16,6 +16,7 @@ const CLUB_CONFIG := "res://data/p001/club_interior.json"
 const GAME_CONFIG := "res://data/p001/game_config.json"
 const HOME_CONFIG := "res://data/p001/home_config.json"
 const JOBS_CONFIG := "res://data/p001/jobs_config.json"
+const CONSEQUENCES_CONFIG := "res://data/p001/consequences_config.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
@@ -34,6 +35,9 @@ var menu: StrayMenu
 var home: StrayHome
 var rent: StrayRent
 var job: StrayKioskJob
+var consequences: StrayConsequences
+var _jaywalk_time := 0.0
+var _last_clock_minutes := -1.0
 var game_cfg: Dictionary = {}
 ## Save file path (tests override it before the node enters the tree).
 var save_path: String = ""
@@ -98,6 +102,8 @@ func _ready() -> void:
 	interactions.rent = rent
 	job = StrayKioskJob.new(_load_json(JOBS_CONFIG).get("kiosk_job", {}))
 	interactions.job = job
+	consequences = StrayConsequences.new(_load_json(CONSEQUENCES_CONFIG))
+	interactions.consequences = consequences
 	add_child(interactions)
 	interactions.setup(builder.layout, _load_json(ECONOMY_CONFIG), player, builder, ui, player_cfg.get("character", {}))
 	_build_phone(phone_cfg)
@@ -256,6 +262,54 @@ func _on_hour_changed(hour: int) -> void:
 			print("STRAY_DIAG job %s warnings=%d" % [missed, job.warnings])
 
 
+func _on_theft_caught() -> void:
+	if job.employed:
+		job.employed = false
+		job.fired = true
+		messages.trigger("theft_caught_job", clock.hhmm())
+	save_game("theft_caught")
+
+
+func _on_police_check_done(r: Dictionary) -> void:
+	traffic.police_hold = false
+	if consequences.police_record >= 1:
+		messages.trigger("police_record_1", clock.hhmm())
+	_sync_daylight()
+	save_game("police_check")
+
+
+## Per-frame consequence checks on the street: jaywalking, public drunkenness, police patrol.
+func _update_consequences(delta: float) -> void:
+	if consequences == null or interactions == null or player == null:
+		return
+	if _last_clock_minutes >= 0.0:
+		consequences.decay(clock.minutes - _last_clock_minutes)
+	_last_clock_minutes = clock.minutes
+	var life := interactions.life
+	if life.flags.get("inside_club", false) or life.flags.get("inside_home", false) or interactions.police_check_open or interactions.shop_open:
+		_jaywalk_time = 0.0
+		return
+	var L := builder.layout
+	var p := player.global_position
+	var sv := L.to_street(Vector2(p.x, -p.z))
+	if sv.x > L.s_start and sv.x < L.s_end and absf(sv.y) < L.kerb_half_width - 0.3:
+		_jaywalk_time += delta
+		if _jaywalk_time >= float(consequences.cfg.get("jaywalk_seconds", 2.5)):
+			_jaywalk_time = 0.0
+			consequences.report("jaywalk", clock)
+	else:
+		_jaywalk_time = 0.0
+	if life.drinks_alcohol >= int(consequences.cfg.get("public_drunk_from_drinks", 3)):
+		consequences.report("public_drunk", clock)
+	var pc := traffic.police_car()
+	if pc and pc.active:
+		var pen := L.to_en(pc.s, pc.v)
+		var d := Vector2(p.x, -p.z).distance_to(pen)
+		if consequences.police_wants_check(clock, d):
+			traffic.police_hold = true
+			interactions.start_police_check()
+
+
 func _on_shift_finished(r: Dictionary) -> void:
 	messages.trigger("job_paid_%d" % job.shifts_done, clock.hhmm())
 	if r.fired:
@@ -304,6 +358,11 @@ func _build_phone(phone_cfg: Dictionary) -> void:
 			messages.trigger("job_accepted", clock.hhmm())
 			print("STRAY_DIAG job applied"))
 	interactions.shift_finished.connect(_on_shift_finished)
+	interactions.theft_caught.connect(_on_theft_caught)
+	interactions.police_check_done.connect(_on_police_check_done)
+	consequences.heat_changed.connect(func(h):
+		ui.police_heat = h
+		ui.set_status(interactions.life))
 	if interactions.points.has("home_door"):
 		var hp: Vector3 = interactions.points["home_door"]
 		map.markers.append({"en": Vector2(hp.x, -hp.z), "color": Color(1.0, 0.85, 0.3), "label": "Zuhause"})
@@ -339,7 +398,8 @@ func _on_club_left() -> void:
 	club.visible = false
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	_update_consequences(delta)
 	if phone and phone.map and player:
 		var p := player.global_position
 		phone.map.player_en = Vector2(p.x, -p.z)
@@ -542,6 +602,24 @@ func _run_autoshots() -> void:
 		phone.open_app(app)
 		await _snap(dir, "P001_2%d_phone_%s.png" % [["home", "map", "messages", "bank"].find(app), app])
 	phone.toggle()
+	# Police check: high attention, stand next to the patrol car.
+	consequences._set_heat(60.0)
+	var pc := traffic.police_car()
+	var L := builder.layout
+	for i in 600:
+		if pc.active and pc.s > L.s_start + 15.0 and pc.s < L.s_end - 15.0:
+			break
+		await get_tree().physics_frame
+	var side := 1.0 if pc.v > 0.0 else -1.0
+	var pen := L.to_en(pc.s + 5.0 * pc.dir, side * (L.kerb_half_width + 1.4))
+	player.global_position = StrayStreetLayout.en_to_godot(pen.x, pen.y, L.ground_z_at(pen) + 0.95)
+	var back := StrayStreetLayout.en_dir_to_godot(-L.axis_en() * pc.dir)
+	player.face_yaw(atan2(-back.x, -back.z))
+	await get_tree().create_timer(2.5).timeout
+	await _snap(dir, "P001_70_police_check.png")
+	if interactions.police_check_open:
+		interactions._on_option(0)
+	consequences._set_heat(0.0)
 	# Club interior: entrance view over the dance floor, the bar, then Lea's dialogue.
 	interactions.enter_club()
 	await get_tree().create_timer(1.0).timeout

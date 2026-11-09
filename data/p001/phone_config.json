@@ -121,6 +121,18 @@
    "from": "erol",
    "trigger": "job_fired",
    "text": "Tut mir leid, aber ich brauche jemanden, auf den ich mich verlassen kann. Du musst nicht mehr kommen."
+  },
+  {
+   "id": "erol_theft",
+   "from": "erol",
+   "trigger": "theft_caught_job",
+   "text": "Du klaust bei MIR?! Du bist raus. Lass dich hier nie wieder blicken."
+  },
+  {
+   "id": "mama_police",
+   "from": "mama",
+   "trigger": "police_record_1",
+   "text": "Die Polizei hat hier angerufen?! Was ist denn los bei dir?"
   }
  ],
  "jobs": [

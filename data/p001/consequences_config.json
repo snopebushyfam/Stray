@@ -1,0 +1,51 @@
+{
+ "schema": "stray.p001.consequences/1",
+ "note": "R4 consequences: police attention ('heat' 0..100), sources, police checks and outcomes, shoplifting. Money in cents, texts German. Police behaviour is deliberately simple and non-violent.",
+ "heat_max": 100,
+ "decay_per_game_hour": 6.0,
+ "sources": {
+  "jaywalk":        {"heat": 6,  "cooldown_minutes": 5,  "label": "Auf der Fahrbahn rumgelaufen"},
+  "public_drunk":   {"heat": 12, "cooldown_minutes": 60, "label": "Betrunken in der Öffentlichkeit"},
+  "theft_caught":   {"heat": 45, "cooldown_minutes": 0,  "label": "Ladendiebstahl"},
+  "pester_bouncer": {"heat": 5,  "cooldown_minutes": 10, "label": "Türsteher bedrängt"},
+  "ran_from_police":{"heat": 35, "cooldown_minutes": 0,  "label": "Vor der Polizei weggelaufen"}
+ },
+ "public_drunk_from_drinks": 3,
+ "jaywalk_seconds": 2.5,
+ "police": {
+  "check_from_heat": 30,
+  "check_radius_m": 22.0,
+  "check_cooldown_minutes": 45,
+  "warning_below": 50,
+  "fine_below": 80,
+  "fine_cents": 6000,
+  "arrest_fine_cents": 20000,
+  "arrest_from_heat": 100,
+  "drunk_platzverweis_from_drinks": 5,
+  "heat_after_warning": -20,
+  "heat_after_fine": -35,
+  "heat_after_platzverweis": -25,
+  "platzverweis_until": "06:00",
+  "arrest_release": "08:00",
+  "car_colors": {"body": [0.85, 0.87, 0.9], "stripe": [0.1, 0.25, 0.6]}
+ },
+ "shoplifting": {"catch_chance": 0.55, "catch_chance_after_success": 0.8, "seed": 99},
+ "texts": {
+  "officer": "Polizei",
+  "stop": "Guten Abend. Allgemeine Verkehrs- und Personenkontrolle. Ausweis bitte.",
+  "cooperate": "Ausweis zeigen",
+  "run": "Weglaufen",
+  "warning": "Für heute belassen wir es bei einer Verwarnung. Benehmen Sie sich.",
+  "fine": "Das gibt ein Bußgeld von %s. Schönen Abend noch.",
+  "platzverweis": "Sie erhalten einen Platzverweis für die Ringe bis %s Uhr. Gehen Sie nach Hause.",
+  "arrest": "Sie sind vorläufig festgenommen. Die Nacht verbringen Sie bei uns.",
+  "ran_away": "Die Polizei hat dich gesehen. Das wird Folgen haben.",
+  "released": "Entlassen um %s. Bußgeld %s. Das steht jetzt in deiner Akte.",
+  "steal_option": "Klauen (riskant)",
+  "steal_ok": "Unbemerkt eingesteckt: %s.",
+  "steal_caught": "„Hey! Leg das zurück!“ – Erwischt. Hausverbot, die Polizei wird verständigt.",
+  "kiosk_banned": "„Du? Raus hier. Hausverbot.“",
+  "bouncer_police": "Mit der Polizei an den Hacken kommst du hier nicht rein.",
+  "bouncer_platzverweis": "Du hast Platzverweis. Verschwinde, bevor ich die Kollegen rufe."
+ }
+}

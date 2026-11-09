@@ -99,11 +99,17 @@ func _panel(top_left: Vector2, bottom_right: Vector2) -> PanelContainer:
 
 
 var clock_text: String = ""
+## Police attention 0..100 (shown as 5 dots when > 0).
+var police_heat: float = 0.0
 
 
 func set_status(state: StrayLifeState) -> void:
-	status_label.text = "%sBargeld %s\nRuf Nachtleben %+d" % [("%s\n" % clock_text) if not clock_text.is_empty() else "",
-		StrayLifeState.euro(state.cash_cents), int(state.reputation.get("nightlife", 0))]
+	var dots := ""
+	if police_heat > 0.5:
+		var n := clampi(int(ceil(police_heat / 20.0)), 1, 5)
+		dots = "\nPolizei " + "●".repeat(n) + "○".repeat(5 - n)
+	status_label.text = "%sBargeld %s\nRuf Nachtleben %+d%s" % [("%s\n" % clock_text) if not clock_text.is_empty() else "",
+		StrayLifeState.euro(state.cash_cents), int(state.reputation.get("nightlife", 0)), dots]
 
 
 func show_prompt(text: String) -> void:
@@ -118,7 +124,7 @@ func show_message(speaker: String, text: String, seconds: float = 5.0) -> void:
 	_message_left = seconds
 
 
-func open_shop(title: String, greeting: String, items: Array) -> void:
+func open_shop(title: String, greeting: String, items: Array, extra_label: String = "") -> void:
 	for c in shop_box.get_children():
 		c.queue_free()
 	var head := Label.new()
@@ -132,6 +138,13 @@ func open_shop(title: String, greeting: String, items: Array) -> void:
 		var id: String = it.get("id", "")
 		b.pressed.connect(func(): shop_choice.emit(id))
 		shop_box.add_child(b)
+	if not extra_label.is_empty():
+		var ex := Button.new()
+		ex.text = extra_label
+		ex.custom_minimum_size = Vector2(0, 40)
+		ex.add_theme_color_override("font_color", Color(1.0, 0.55, 0.45))
+		ex.pressed.connect(func(): shop_choice.emit("__extra"))
+		shop_box.add_child(ex)
 	var bye := Button.new()
 	bye.text = "Tschüss"
 	bye.custom_minimum_size = Vector2(0, 40)

@@ -21,6 +21,10 @@ signal home_entered
 signal home_left
 ## Emitted when a kiosk shift ends: result from StrayKioskJob.finish_shift().
 signal shift_finished(result: Dictionary)
+## Emitted after a police check (result from StrayConsequences.resolve_check()).
+signal police_check_done(result: Dictionary)
+## Emitted when the player is caught shoplifting.
+signal theft_caught
 
 const RADIUS := 1.9
 
@@ -46,6 +50,9 @@ var rent: StrayRent
 var _options_context := ""
 ## Kiosk job (set by main.gd before setup).
 var job: StrayKioskJob
+## Consequences / police (set by main.gd before setup).
+var consequences: StrayConsequences
+var police_check_open := false
 var _customer: Node3D
 var _char_cfg: Dictionary = {}
 ## Seconds the player has waited at the queue end (reset when they walk away).
@@ -218,7 +225,9 @@ func interact() -> void:
 		return
 	match current:
 		"kiosk":
-			if job and job.employed and not job.in_shift and clock and job.start_status(clock) in ["on_time", "late"]:
+			if consequences and consequences.kiosk_banned:
+				ui.show_message("Kiosk", String(consequences.cfg.get("texts", {}).get("kiosk_banned", "")), 3.0)
+			elif job and job.employed and not job.in_shift and clock and job.start_status(clock) in ["on_time", "late"]:
 				start_shift()
 			else:
 				_open_menu(shop, econ["kiosk"])
@@ -235,7 +244,15 @@ func interact() -> void:
 		"home_exit":
 			leave_home()
 		"club_door":
-			last_door_result = door.decide(life, club_is_open(), queued_seconds)
+			var ct: Dictionary = consequences.cfg.get("texts", {}) if consequences else {}
+			if consequences and consequences.has_platzverweis(clock):
+				last_door_result = {"admitted": false, "reason": "platzverweis", "text": String(ct.get("bouncer_platzverweis", ""))}
+			elif consequences and consequences.heat >= float(consequences.cfg.get("police", {}).get("warning_below", 50)):
+				last_door_result = {"admitted": false, "reason": "police", "text": String(ct.get("bouncer_police", ""))}
+			else:
+				last_door_result = door.decide(life, club_is_open(), queued_seconds)
+			if consequences and last_door_result.reason == "annoyed":
+				consequences.report("pester_bouncer", clock)
 			ui.show_message("Türsteher", last_door_result.text)
 			print("STRAY_DIAG door reason=%s cash=%s nightlife=%d queued=%.1f" % [
 				last_door_result.reason, StrayLifeState.euro(life.cash_cents), int(life.reputation["nightlife"]), queued_seconds])
@@ -271,7 +288,10 @@ func _open_menu(which: StrayKioskShop, menu_cfg: Dictionary) -> void:
 	active_shop = which
 	shop_open = true
 	player.input_enabled = false
-	ui.open_shop(menu_cfg.get("title", ""), menu_cfg.get("greeting", ""), which.items())
+	var steal := ""
+	if consequences and which == shop:
+		steal = String(consequences.cfg.get("texts", {}).get("steal_option", ""))
+	ui.open_shop(menu_cfg.get("title", ""), menu_cfg.get("greeting", ""), which.items(), steal)
 
 
 ## Moves the player into the club interior, just inside the exit door, facing the room.
@@ -434,6 +454,59 @@ func _finish_shift() -> void:
 	shift_finished.emit(r)
 
 
+# --- Shoplifting + police (R4) ---------------------------------------------------------------
+
+func _ask_steal() -> void:
+	var labels: Array = []
+	for it in shop.items():
+		labels.append(it.get("name", "?"))
+	_options_context = "steal"
+	ui.open_options("", String(consequences.cfg.get("texts", {}).get("steal_option", "")), labels)
+
+
+## Tries to pocket kiosk item `index` without paying.
+func steal_option(index: int) -> Dictionary:
+	var items := shop.items()
+	var t: Dictionary = consequences.cfg.get("texts", {})
+	_options_context = ""
+	_close_shop()
+	var r := consequences.try_shoplift(clock)
+	if r.caught:
+		ui.show_message("Kiosk", String(t.get("steal_caught", "")), 5.0)
+		theft_caught.emit()
+	else:
+		var it: Dictionary = items[clampi(index, 0, items.size() - 1)]
+		life.add_item(String(it.get("id", "")), it.get("tags", []))
+		ui.show_message("", String(t.get("steal_ok", "")) % it.get("name", ""), 3.0)
+	print("STRAY_DIAG shoplift caught=%s heat=%.0f banned=%s" % [r.caught, consequences.heat, consequences.kiosk_banned])
+	return r
+
+
+## A police patrol stops the player: ID check with two choices.
+func start_police_check() -> void:
+	var t: Dictionary = consequences.cfg.get("texts", {})
+	police_check_open = true
+	shop_open = true
+	player.input_enabled = false
+	_options_context = "police"
+	ui.open_options(String(t.get("officer", "Polizei")), String(t.get("stop", "")), [t.get("cooperate", "Ausweis zeigen"), t.get("run", "Weglaufen")])
+	print("STRAY_DIAG police check start heat=%.0f" % consequences.heat)
+
+
+func _resolve_police(index: int) -> void:
+	var t: Dictionary = consequences.cfg.get("texts", {})
+	_options_context = ""
+	police_check_open = false
+	_close_shop()
+	var r := consequences.resolve_check(index == 0, life, clock)
+	if r.outcome == "arrest":
+		player.global_position = layout.spawn_position(0.9) + Vector3(0, 0.05, 0)
+		r.text = String(t.get("released", "")) % [clock.hhmm(), StrayLifeState.euro(r.fine_cents)]
+	ui.show_message(String(t.get("officer", "Polizei")), String(r.text), 5.0)
+	print("STRAY_DIAG police check outcome=%s fine=%s heat=%.0f record=%d" % [r.outcome, StrayLifeState.euro(r.fine_cents), consequences.heat, consequences.police_record])
+	police_check_done.emit(r)
+
+
 func _ask_sleep() -> void:
 	var t: Dictionary = home.cfg.get("texts", {})
 	_options_context = "sleep"
@@ -461,6 +534,12 @@ func _talk_to_lea() -> void:
 
 
 func _on_option(index: int) -> void:
+	if _options_context == "steal":
+		steal_option(index)
+		return
+	if _options_context == "police":
+		_resolve_police(index)
+		return
 	if _options_context == "shift":
 		serve_option(index)
 		return
@@ -493,6 +572,9 @@ func buy(item_id: String) -> Dictionary:
 
 
 func _on_shop_choice(item_id: String) -> void:
+	if item_id == "__extra":
+		_ask_steal()
+		return
 	if item_id.is_empty():
 		_close_shop()
 	else:

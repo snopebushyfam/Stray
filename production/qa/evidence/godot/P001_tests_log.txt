@@ -149,5 +149,23 @@ PASS missed shift -> warning from Erol
 PASS save
 PASS job state restored
 RESULT job_test passed=14 failed=0
+RESULT consequences_test passed=24 failed=0
+PASS a police car patrols the Ring
+PASS standing on the road raises police attention (5.99, decays slowly)
+PASS HUD shows the police indicator
+PASS police car stops, check starts
+PASS police car is standing (0.0 m/s)
+PASS 60 € fine, police record 1
+PASS patrol drives on, control back
+PASS Mama heard about it
+PASS drunk -> platzverweis
+PASS bouncer turns you away (platzverweis)
+PASS caught shoplifting after 2 tries
+PASS Erol fires you for stealing
+PASS kiosk refuses to serve you
+PASS save
+PASS load
+PASS ban, record and heat restored
+RESULT consequences_it_test passed=16 failed=0
 python data tests: OK
 ALL_TESTS_EXIT=0

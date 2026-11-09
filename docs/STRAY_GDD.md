@@ -75,3 +75,8 @@ Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schi
 ## R3 — Erster Job (2026-11-09)
 - Aushilfe im KIOSK: Bewerbung per Handy, Schicht 18–22 Uhr, 8 Kund:innen bedienen, 54 € Lohn + Trinkgeld.
 - Unpünktlich/Fehler/Schwänzen → Abmahnung, zweite → Kündigung. Daten: `data/p001/jobs_config.json`.
+
+## R4 — Konsequenzen (2026-11-09)
+- Polizei-Aufmerksamkeit aus Verhalten (Fahrbahn, Alkohol, Diebstahl, Türsteher nerven, weglaufen).
+- Streifenwagen kontrolliert: Verwarnung → Bußgeld → Platzverweis → Festnahme; Polizeiakte.
+- Klauen im Kiosk mit dauerhaftem Hausverbot und Jobverlust; Türsteher reagiert auf Polizei-Ärger.

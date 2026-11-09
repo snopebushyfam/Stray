@@ -162,6 +162,7 @@
    ]
   ],
   "headlight_emission": 4.0,
-  "taillight_emission": 3.0
+  "taillight_emission": 3.0,
+  "police_cars": 1
  }
 }

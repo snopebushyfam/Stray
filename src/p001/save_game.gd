@@ -20,6 +20,7 @@ static func capture(main: Node) -> Dictionary:
 		"messages": main.messages.to_dict(),
 		"rent": main.rent.to_dict(),
 		"job": main.job.to_dict(),
+		"consequences": main.consequences.to_dict(),
 		"world": {
 			"player_pos": [p.x, p.y, p.z],
 			"player_yaw": main.player.get_yaw(),
@@ -40,6 +41,7 @@ static func apply(main: Node, d: Dictionary) -> String:
 	# the rent already processed up to the saved day (no double debit, no duplicate messages).
 	main.messages.from_dict(d.get("messages", {}))
 	main.job.from_dict(d.get("job", {}))
+	main.consequences.from_dict(d.get("consequences", {}))
 	var clock_min: float = float(d.get("clock", {}).get("minutes", main.clock.minutes))
 	main.rent.from_dict(d.get("rent", {"last_processed_day": int(floor(clock_min / 1440.0))}))
 	main.clock.from_dict(d.get("clock", {}))
