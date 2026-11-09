@@ -162,6 +162,22 @@ Straße + Kugel-Kollision der Kamera + kürzerer Abstand innen; Test prüft die 
 Testfehler meinerseits (Räumungstag falsch gezählt, Endlosschleife beim Vorspulen).
 Offen: In der kleinen Wohnung steht die Figur am Bildrand.
 
+**R3 Erster Job: Aushilfe KIOSK (2026-11-09, gespielt + getestet):**
+
+| | Umsetzung |
+|---|---|
+| Bewerbung | Handy → Jobs → „Bewerben“; Kiosk-Chef Erol (fiktiv) schreibt und wird Kontakt |
+| Schicht | täglich 18–22 Uhr; am Kiosk „[E] Schicht beginnen“: bis 18:15 pünktlich, bis 19:00 mit 25 % Lohnabzug, danach zu spät = verpasst |
+| Arbeit | 8 Kund:innen pro Schicht (Figur am Kiosk, Bestellsatz), richtiges Produkt wählen; richtig = 0,50 € Trinkgeld bar; Bestellungen pro Tag reproduzierbar |
+| Lohn | 4 h × 13,50 € = 54 € aufs Konto („Lohn Kiosk“), Uhr springt auf Schichtende, Autosave |
+| Konsequenzen | > 2 Fehler oder verpasste Schicht = Abmahnung (Nachricht); 2 Abmahnungen = Kündigung, keine Neubewerbung |
+| Daten | `data/p001/jobs_config.json`; Logik `src/p001/kiosk_job.gd` |
+
+Tests: `kiosk_job_test` 21/21, `job_test` 14/14. Rechnung für den Kern-Loop: 17 Tage bis zur Miete,
+max. 17 Schichten × (54 € + 4 €) ≈ 986 € gegen 450 € Miete — ohne Job nicht zu schaffen, mit Job gut.
+Beim Sichttest behoben: alte Meldung lag hinter dem Bestellfenster. Offen: Spieler steht vor statt hinter
+der Theke; Schichten dauern keine Spielzeit-Echtzeit (Sprung auf 22:00).
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

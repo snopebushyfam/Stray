@@ -5,6 +5,8 @@ class_name StrayPhone
 extends CanvasLayer
 
 signal opened_changed(open: bool)
+## Emitted when the player taps "Bewerben" on a job (job id from phone_config.json).
+signal apply_job(job_id: String)
 
 var life: StrayLifeState
 var messages: StrayMessages
@@ -16,6 +18,8 @@ var current_app := "home"
 var map: StrayPhoneMap
 ## Rent state for the bank app (optional).
 var rent: StrayRent
+## Kiosk job state for the jobs app (optional).
+var job: StrayKioskJob
 
 var _frame: PanelContainer
 var _status: Label
@@ -199,5 +203,18 @@ func open_app(app: String) -> void:
 			_title("Jobs in der Nähe")
 			for j in cfg.get("jobs", []):
 				_line("%s" % j.get("title", ""), 17)
-				_line("%s · %s · %s" % [j.get("where", ""), j.get("pay", ""), j.get("status", "")], 14, Color(1, 1, 1, 0.6))
+				var jid: String = j.get("job_id", "")
+				if jid == "kiosk_aushilfe" and job:
+					if job.fired:
+						_line("Gekündigt.", 14, Color(1.0, 0.4, 0.4))
+					elif job.employed:
+						_line("Dein Job · Schicht täglich %s–%s · Abmahnungen: %d · Schichten: %d" % [job.cfg.get("shift_start", ""),
+							job.cfg.get("shift_end", ""), job.warnings, job.shifts_done], 14, Color(0.5, 1.0, 0.6))
+					else:
+						_line("%s · %s" % [j.get("where", ""), j.get("pay", "")], 14, Color(1, 1, 1, 0.6))
+						_button("Bewerben", func():
+							apply_job.emit(jid)
+							open_app("jobs"))
+				else:
+					_line("%s · %s · %s" % [j.get("where", ""), j.get("pay", ""), j.get("status", "")], 14, Color(1, 1, 1, 0.6))
 			_back()

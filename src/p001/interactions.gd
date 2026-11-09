@@ -19,6 +19,8 @@ signal lea_met(reveal: bool, name: String)
 signal sleep_requested
 signal home_entered
 signal home_left
+## Emitted when a kiosk shift ends: result from StrayKioskJob.finish_shift().
+signal shift_finished(result: Dictionary)
 
 const RADIUS := 1.9
 
@@ -42,6 +44,10 @@ var lea_talked := false
 var home: StrayHome
 var rent: StrayRent
 var _options_context := ""
+## Kiosk job (set by main.gd before setup).
+var job: StrayKioskJob
+var _customer: Node3D
+var _char_cfg: Dictionary = {}
 ## Seconds the player has waited at the queue end (reset when they walk away).
 var queued_seconds: float = 0.0
 var points: Dictionary = {}  # id -> Vector3 (Godot)
@@ -67,6 +73,7 @@ func setup(p_layout: StrayStreetLayout, p_econ: Dictionary, p_player: StrayPlaye
 	var npc_q: Dictionary = _load_json("res://data/p001/npc_config.json").get("club_queue", {})
 	var tail_along: float = float(npc_q.get("start_along", -1.8)) - float(npc_q.get("count", 5)) * float(npc_q.get("spacing", 0.9))
 	points["queue_end"] = _gp(c.pos + c.n * float(npc_q.get("out", 2.7)) + c.t * tail_along)
+	_char_cfg = character_cfg
 	_spawn_bouncer(c, character_cfg)
 	var atms: Array = layout.furniture.get("atms", [])
 	for i in atms.size():
@@ -175,6 +182,8 @@ func _physics_process(delta: float) -> void:
 	match current:
 		"kiosk":
 			prompt = "[E] Kiosk"
+			if job and job.employed and not job.in_shift and clock and job.start_status(clock) in ["on_time", "late"]:
+				prompt = String(job.cfg.get("texts", {}).get("start", "[E] Schicht beginnen"))
 		"club_door":
 			prompt = "[E] Mit dem Türsteher reden"
 		"club_bar":
@@ -209,7 +218,10 @@ func interact() -> void:
 		return
 	match current:
 		"kiosk":
-			_open_menu(shop, econ["kiosk"])
+			if job and job.employed and not job.in_shift and clock and job.start_status(clock) in ["on_time", "late"]:
+				start_shift()
+			else:
+				_open_menu(shop, econ["kiosk"])
 		"club_bar":
 			_open_menu(bar_shop, club.cfg.get("bar_menu", {}))
 		"club_lea":
@@ -345,6 +357,83 @@ func _face_along_street() -> void:
 	player.face_yaw(atan2(-d.x, -d.z))
 
 
+# --- Kiosk shift (R3) --------------------------------------------------------------------------
+
+## Starts today's shift at the kiosk; customers then order one after another.
+func start_shift() -> void:
+	var t: Dictionary = job.cfg.get("texts", {})
+	var st := job.start_shift(clock)
+	match st:
+		"too_early":
+			ui.show_message("Erol", String(t.get("too_early", "")) % job.cfg.get("shift_start", ""), 3.0)
+			return
+		"too_late":
+			ui.show_message("Erol", String(t.get("too_late", "")), 3.0)
+			return
+		"late":
+			ui.show_message("Erol", String(t.get("late", "")) % job.shift_late_minutes, 3.0)
+	print("STRAY_DIAG shift start=%s status=%s customers=%d" % [clock.hhmm(), st, job.orders.size()])
+	shop_open = true
+	player.input_enabled = false
+	_show_customer()
+
+
+func _show_customer() -> void:
+	var o := job.current_order()
+	if o.is_empty():
+		_finish_shift()
+		return
+	# One customer figure stands at the kiosk window for each order.
+	if _customer == null and ResourceLoader.exists(_char_cfg.get("scene", "")):
+		var k := _frame(layout.kiosk)
+		_customer = Node3D.new()
+		_customer.position = _gp(k.pos + k.n * 2.2 - k.t * 0.7)
+		var face := StrayStreetLayout.en_dir_to_godot(-k.n)
+		_customer.rotation.y = atan2(-face.x, -face.z)
+		var model: Node3D = load(_char_cfg["scene"]).instantiate()
+		model.rotation.y = deg_to_rad(_char_cfg.get("yaw_offset_deg", 180.0))
+		_customer.add_child(model)
+		add_child(_customer)
+		var aps := model.find_children("*", "AnimationPlayer", true, false)
+		if not aps.is_empty():
+			(aps[0] as AnimationPlayer).play("Idle_Talking")
+	if _customer:
+		var m := StandardMaterial3D.new()
+		m.albedo_color = Color.from_hsv(fmod(job.served * 0.137 + 0.05, 1.0), 0.5, 0.6)
+		for mi in _customer.find_children("*", "MeshInstance3D", true, false):
+			for i in (mi as MeshInstance3D).mesh.get_surface_count():
+				(mi as MeshInstance3D).set_surface_override_material(i, m)
+	var labels: Array = []
+	for it in shop.items():
+		labels.append(it.get("name", "?"))
+	_options_context = "shift"
+	ui.open_options("%s %d/%d" % [job.cfg.get("texts", {}).get("customer", "Kunde"), job.served + 1, job.orders.size()],
+		String(o.get("line", "")), labels)
+
+
+## Hands over the item at `index` (kiosk item order) to the current customer.
+func serve_option(index: int) -> void:
+	var items := shop.items()
+	var t: Dictionary = job.cfg.get("texts", {})
+	var ok := job.serve(String(items[index].get("id", "")) if index >= 0 and index < items.size() else "", life)
+	ui.show_message("Kunde", String(t.get("served_ok" if ok else "served_wrong", "")), 1.5)
+	_show_customer()
+
+
+func _finish_shift() -> void:
+	_options_context = ""
+	clock.set_time(String(job.cfg.get("shift_end", "22:00")))
+	var r := job.finish_shift(clock, life)
+	if _customer:
+		_customer.queue_free()
+		_customer = null
+	_close_shop()
+	var t: Dictionary = job.cfg.get("texts", {})
+	ui.show_message("Erol", String(t.get("shift_done", "")) % [job.correct, job.served, StrayLifeState.euro(r.wage), StrayLifeState.euro(r.tips)], 5.0)
+	print("STRAY_DIAG shift done correct=%d/%d wage=%s warning=%s fired=%s" % [job.correct, job.served, StrayLifeState.euro(r.wage), r.warning, r.fired])
+	shift_finished.emit(r)
+
+
 func _ask_sleep() -> void:
 	var t: Dictionary = home.cfg.get("texts", {})
 	_options_context = "sleep"
@@ -372,6 +461,9 @@ func _talk_to_lea() -> void:
 
 
 func _on_option(index: int) -> void:
+	if _options_context == "shift":
+		serve_option(index)
+		return
 	if _options_context == "sleep":
 		_options_context = ""
 		_close_shop()

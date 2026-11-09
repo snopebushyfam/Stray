@@ -137,7 +137,14 @@ func open_shop(title: String, greeting: String, items: Array) -> void:
 	bye.custom_minimum_size = Vector2(0, 40)
 	bye.pressed.connect(func(): shop_choice.emit(""))
 	shop_box.add_child(bye)
+	_show_panel()
+
+
+## Opens the menu/options panel and hides an older speech message (both sit at the bottom).
+func _show_panel() -> void:
 	shop_panel.visible = true
+	message_panel.visible = false
+	_message_left = 0.0
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
@@ -158,8 +165,7 @@ func open_options(speaker: String, text: String, labels: Array) -> void:
 		var idx := i
 		b.pressed.connect(func(): option_chosen.emit(idx))
 		shop_box.add_child(b)
-	shop_panel.visible = true
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_show_panel()
 
 
 func close_shop() -> void:

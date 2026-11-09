@@ -71,3 +71,7 @@ Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schi
 ## R2 — Wohnung, Schlafen, Miete (2026-11-09)
 - Eigene Wohnung hinter einer echten Haustür (OSM) am Ring; Schlafen bis 10 Uhr = neuer Tag.
 - Kalender ab Sa 14.11.; Miete 450 € am 1. per Dauerauftrag; Mahnung, nach 3 Tagen Frist Räumung.
+
+## R3 — Erster Job (2026-11-09)
+- Aushilfe im KIOSK: Bewerbung per Handy, Schicht 18–22 Uhr, 8 Kund:innen bedienen, 54 € Lohn + Trinkgeld.
+- Unpünktlich/Fehler/Schwänzen → Abmahnung, zweite → Kündigung. Daten: `data/p001/jobs_config.json`.

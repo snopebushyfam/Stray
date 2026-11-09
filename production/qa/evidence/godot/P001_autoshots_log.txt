@@ -12,45 +12,47 @@ STRAY_DIAG home origin=(40.0, -100.0, 0.0)
 STRAY_DIAG interactions kiosk=(12.33402, -0.059635, -45.33917) club_door=(-17.64324, -0.138483, -65.74069) queue_end=(-15.38415, -0.187471, -71.72371) cash=35,00 €
 STRAY_DIAG phone clock=23:10 messages=2 contacts=2 account=120,00 €
 STRAY_DIAG ground_check on_floor=true gap_m=0.000 pos=(-23.221, 0.847268, -24.027)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_00_player_spawn_night.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_00b_player_walking_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_00_player_spawn_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_00b_player_walking_night.png err=0 size=(1280, 720)
 STRAY_DIAG anim_state_while_walking=walk
 STRAY_DIAG lighting=night
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_01_street_south_overview_night.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_02_nachtflug_entrance_night.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_03_kiosk_front_night.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_04_street_north_to_south_night.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_05_high_overview_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_01_street_south_overview_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_02_nachtflug_entrance_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_03_kiosk_front_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_04_street_north_to_south_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_05_high_overview_night.png err=0 size=(1280, 720)
 STRAY_DIAG lighting=day
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_01_street_south_overview_day.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_02_nachtflug_entrance_day.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_03_kiosk_front_day.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_04_street_north_to_south_day.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_05_high_overview_day.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_01_street_south_overview_day.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_02_nachtflug_entrance_day.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_03_kiosk_front_day.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_04_street_north_to_south_day.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_05_high_overview_day.png err=0 size=(1280, 720)
 STRAY_DIAG lighting=night
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_10_kiosk_menu_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_10_kiosk_menu_night.png err=0 size=(1280, 720)
 STRAY_DIAG kiosk item=koelsch ok=true cash=33,20 €
 STRAY_DIAG door reason=queue cash=33,20 € nightlife=0 queued=0.0
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_11_bouncer_queue_night.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_11_bouncer_queue_night.png err=0 size=(1280, 720)
 STRAY_DIAG atm ok=true cash=53,20 € account=100,00 €
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_20_phone_home.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_21_phone_map.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_22_phone_messages.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_23_phone_bank.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_20_phone_home.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_21_phone_map.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_22_phone_messages.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_23_phone_bank.png err=0 size=(1280, 720)
 STRAY_DIAG save reason=club_entered path=user://stray_save_1.json ok=true 
 STRAY_DIAG club entered pos=(0.0, -59.05, 5.2)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_30_club_dancefloor.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_31_club_bar.png err=0 size=(1280, 720)
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_32_club_lea_dialogue.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_30_club_dancefloor.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_31_club_bar.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_32_club_lea_dialogue.png err=0 size=(1280, 720)
 STRAY_DIAG lea option=0 social=1 reveal=true
 STRAY_DIAG save reason=club_left path=user://stray_save_1.json ok=true 
 STRAY_DIAG club left pos=(-17.83031, 0.813221, -64.75835)
 STRAY_DIAG home entered
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_50_home.png err=0 size=(1280, 720)
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_50_home.png err=0 size=(1280, 720)
 STRAY_DIAG lighting=day
 STRAY_DIAG day=1 date=So 15.11. rent_events=[] account=100,00 €
 STRAY_DIAG slept until So 15.11. 10:00
 STRAY_DIAG save reason=slept path=user://stray_save_1.json ok=true 
 STRAY_DIAG home left
-STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16/P001_51_sunday_morning_street.png err=0 size=(1280, 720)
-STRAY_DIAG autoshots=done dir=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots16
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_51_sunday_morning_street.png err=0 size=(1280, 720)
+STRAY_DIAG shift start=18:05 status=on_time customers=8
+STRAY_DIAG autoshot=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18/P001_60_kiosk_shift.png err=0 size=(1280, 720)
+STRAY_DIAG autoshots=done dir=/tmp/claude-0/-home-user/f0162237-3658-5c42-a9da-6148b6d700d2/scratchpad/shots18

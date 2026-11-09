@@ -10,7 +10,7 @@ angehängt, nicht sofort umgesetzt.
 |---|---|---|
 | R1 ✅ | Spielstand speichern/laden + Startmenü (erledigt 2026-11-09) | Ohne Speichern ist nichts von Leben/Konsequenzen dauerhaft |
 | R2 ✅ | Wohnung + Schlafen + Tageswechsel + Miete fällig (erledigt 2026-11-09) | Schließt den Tageskreislauf (Säule LIFE) |
-| R3 | Erster Job (Geld verdienen) | Einnahmen gegen Miete/Ausgaben: der Kern-Loop |
+| R3 ✅ | Erster Job (Geld verdienen) (erledigt 2026-11-09) | Einnahmen gegen Miete/Ausgaben: der Kern-Loop |
 | R4 | Konsequenzen-Grundgerüst: Polizei-Aufmerksamkeit, Ruf wirkt auf NPCs/Preise/Einlass | Säule CONSEQUENCES über den Türsteher hinaus |
 | R5 | Zweites Gebiet + Verbindung: Hbf + U-Bahn (Prolog-Ort) | Open World statt eine Straße |
 | R6 | Prolog / Einstieg: Ankunft Hbf → Tutorial → U-Bahn → Friesenplatz | Spielbarer Anfang |
@@ -32,6 +32,9 @@ angehängt, nicht sofort umgesetzt.
 - Weitere Bars/Clubs an den Ringen
 
 ### Leben & Geld
+- Kiosk-Job: Spieler hinter der Theke, Kasse/Wechselgeld als Minispiel, Stammkunden, Diebstahl-Situationen
+- Weitere Jobs (Barback NACHTFLUG, Lieferfahrer) mit eigenen Minispielen
+- Trinkgeld als Buchung sichtbar machen
 - Wohnung einrichten/kaufen, Ersatzwohnung bzw. Obdachlosigkeit nach Räumung, Kaution
 - Kamera in kleinen Räumen (Figur steht am Bildrand) – evtl. Ich-Perspektive innen
 - Schlafen zu anderen Zeiten (Nickerchen), Müdigkeit als Bedürfnis

@@ -133,5 +133,21 @@ PASS put out on the street
 PASS camera stays on the street side of the facade (v=17.90, facade 19.17)
 PASS locked out: key no longer fits
 RESULT home_test passed=24 failed=0
+RESULT kiosk_job_test passed=21 failed=0
+PASS jobs app offers 'Bewerben'
+PASS hired; Erol writes and is a contact
+PASS kiosk offers 'Schicht beginnen' ([E] Schicht beginnen)
+PASS shift started, first customer orders
+PASS customer figure at the kiosk
+PASS 8/8 served, shift over
+PASS 54 € wage to the account
+PASS 4 € tips in cash
+PASS clock at shift end (22:00)
+PASS Erol confirms, customer gone, control back
+PASS autosaved after the shift
+PASS missed shift -> warning from Erol
+PASS save
+PASS job state restored
+RESULT job_test passed=14 failed=0
 python data tests: OK
 ALL_TESTS_EXIT=0

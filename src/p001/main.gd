@@ -15,6 +15,7 @@ const PHONE_CONFIG := "res://data/p001/phone_config.json"
 const CLUB_CONFIG := "res://data/p001/club_interior.json"
 const GAME_CONFIG := "res://data/p001/game_config.json"
 const HOME_CONFIG := "res://data/p001/home_config.json"
+const JOBS_CONFIG := "res://data/p001/jobs_config.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
@@ -32,6 +33,7 @@ var club: StrayClubInterior
 var menu: StrayMenu
 var home: StrayHome
 var rent: StrayRent
+var job: StrayKioskJob
 var game_cfg: Dictionary = {}
 ## Save file path (tests override it before the node enters the tree).
 var save_path: String = ""
@@ -94,6 +96,8 @@ func _ready() -> void:
 	rent = StrayRent.new(home_cfg.get("rent", {}))
 	interactions.home = home
 	interactions.rent = rent
+	job = StrayKioskJob.new(_load_json(JOBS_CONFIG).get("kiosk_job", {}))
+	interactions.job = job
 	add_child(interactions)
 	interactions.setup(builder.layout, _load_json(ECONOMY_CONFIG), player, builder, ui, player_cfg.get("character", {}))
 	_build_phone(phone_cfg)
@@ -242,6 +246,23 @@ func _on_day_changed(day: int) -> void:
 func _on_hour_changed(hour: int) -> void:
 	if hour >= int(game_cfg.get("morning_from_hour", 8)) and clock.day_index() > 0:
 		messages.trigger("new_day_%d" % clock.day_index(), clock.hhmm())
+	if job:
+		var missed := job.check_missed(clock)
+		if missed == "missed":
+			messages.trigger("job_warning_%d" % job.warnings, clock.hhmm())
+		elif missed == "fired":
+			messages.trigger("job_fired", clock.hhmm())
+		if not missed.is_empty():
+			print("STRAY_DIAG job %s warnings=%d" % [missed, job.warnings])
+
+
+func _on_shift_finished(r: Dictionary) -> void:
+	messages.trigger("job_paid_%d" % job.shifts_done, clock.hhmm())
+	if r.fired:
+		messages.trigger("job_fired", clock.hhmm())
+	elif r.warning:
+		messages.trigger("job_warning_%d" % job.warnings, clock.hhmm())
+	save_game("shift_done")
 
 
 func _sync_daylight() -> void:
@@ -277,6 +298,12 @@ func _build_phone(phone_cfg: Dictionary) -> void:
 	add_child(phone)
 	phone.setup(interactions.life, messages, clock, phone_cfg, map)
 	phone.rent = rent
+	phone.job = job
+	phone.apply_job.connect(func(_id):
+		if job.apply():
+			messages.trigger("job_accepted", clock.hhmm())
+			print("STRAY_DIAG job applied"))
+	interactions.shift_finished.connect(_on_shift_finished)
 	if interactions.points.has("home_door"):
 		var hp: Vector3 = interactions.points["home_door"]
 		map.markers.append({"en": Vector2(hp.x, -hp.z), "color": Color(1.0, 0.85, 0.3), "label": "Zuhause"})
@@ -541,5 +568,17 @@ func _run_autoshots() -> void:
 	interactions.leave_home()
 	await get_tree().create_timer(1.0).timeout
 	await _snap(dir, "P001_51_sunday_morning_street.png")
+	# Job: hired, Sunday 18:05 at the kiosk, first customer orders.
+	job.apply()
+	clock.set_time("18:05")
+	_sync_daylight()
+	var kin := StrayStreetLayout.en_dir_to_godot(-StrayStreetLayout._v2(builder.layout.kiosk["normal_en"]))
+	player.global_position = interactions.points["kiosk"] + Vector3(0, 0.95, 0) - kin * 0.8
+	player.face_yaw(atan2(-kin.x, -kin.z))
+	await get_tree().create_timer(0.8).timeout
+	interactions.current = "kiosk"
+	interactions.interact()
+	await get_tree().create_timer(0.6).timeout
+	await _snap(dir, "P001_60_kiosk_shift.png")
 	print("STRAY_DIAG autoshots=done dir=%s" % dir)
 	get_tree().quit()

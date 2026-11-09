@@ -1,0 +1,41 @@
+{
+ "schema": "stray.p001.jobs/1",
+ "note": "First job for Prototype 001 (R3): kiosk night help. Money in cents, times HH:MM, texts German. The boss 'Erol' is fictional.",
+ "kiosk_job": {
+  "id": "kiosk_aushilfe",
+  "title": "Aushilfe Kiosk (Nachtschicht)",
+  "boss_contact": "erol",
+  "shift_start": "18:00",
+  "shift_end": "22:00",
+  "on_time_minutes": 15,
+  "latest_start_minutes": 60,
+  "hourly_cents": 1350,
+  "late_cut_percent": 25,
+  "customers_per_shift": 8,
+  "tip_cents": 50,
+  "max_mistakes_ok": 2,
+  "warnings_to_fire": 2,
+  "seed": 4711,
+  "orders": [
+   {"item": "water",   "line": "Ein Wasser, bitte."},
+   {"item": "koelsch", "line": "Ein Kölsch to go."},
+   {"item": "mate",    "line": "Haste Mate da?"},
+   {"item": "snack",   "line": "Einmal Chips, die roten."},
+   {"item": "gum",     "line": "Nur Kaugummi, danke."},
+   {"item": "koelsch", "line": "Zwei Kölsch? Ach nee, eins reicht."},
+   {"item": "water",   "line": "Stilles Wasser, wenn's geht."},
+   {"item": "mate",    "line": "Mate. Muss noch lernen heute Nacht."}
+  ],
+  "texts": {
+   "apply": "Bewerben",
+   "start": "[E] Schicht beginnen",
+   "too_early": "Deine Schicht fängt erst um %s an.",
+   "too_late": "Zu spät – die Schicht hat ohne dich angefangen.",
+   "late": "Du bist %d Minuten zu spät. Erol notiert das.",
+   "served_ok": "Passt, danke!",
+   "served_wrong": "Hä? Das wollte ich nicht ...",
+   "shift_done": "Schicht vorbei: %d/%d richtig. Lohn %s aufs Konto, Trinkgeld %s bar.",
+   "customer": "Kunde"
+  }
+ }
+}

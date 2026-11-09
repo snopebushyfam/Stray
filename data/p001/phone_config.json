@@ -36,6 +36,11 @@
    "id": "unbekannt",
    "name": "Unbekannt",
    "known_at_start": false
+  },
+  {
+   "id": "erol",
+   "name": "Erol (Kiosk)",
+   "known_at_start": false
   }
  ],
  "messages": [
@@ -92,6 +97,30 @@
    "from": "mama",
    "trigger": "new_day_1",
    "text": "Guten Morgen! Hast du gut geschlafen in der neuen Wohnung?"
+  },
+  {
+   "id": "job_accepted",
+   "from": "erol",
+   "trigger": "job_accepted",
+   "text": "Hallo! Du kannst bei mir anfangen. Schicht ist jeden Tag 18–22 Uhr am Kiosk am Ring. 13,50 € die Stunde. Sei pünktlich!"
+  },
+  {
+   "id": "job_paid",
+   "from": "erol",
+   "trigger": "job_paid_1",
+   "text": "Gute erste Schicht. Lohn ist überwiesen. Bis morgen!"
+  },
+  {
+   "id": "job_warning",
+   "from": "erol",
+   "trigger": "job_warning_1",
+   "text": "So geht das nicht. Das ist eine Abmahnung. Beim nächsten Mal war's das."
+  },
+  {
+   "id": "job_fired",
+   "from": "erol",
+   "trigger": "job_fired",
+   "text": "Tut mir leid, aber ich brauche jemanden, auf den ich mich verlassen kann. Du musst nicht mehr kommen."
   }
  ],
  "jobs": [
@@ -99,7 +128,8 @@
    "title": "Aushilfe Kiosk (Nachtschicht)",
    "where": "Hohenzollernring",
    "pay": "13,50 €/h",
-   "status": "bald verfügbar"
+   "status": "jetzt bewerben",
+   "job_id": "kiosk_aushilfe"
   },
   {
    "title": "Barback NACHTFLUG",
