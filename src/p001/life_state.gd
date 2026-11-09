@@ -55,6 +55,25 @@ func withdraw(cents: int) -> bool:
 	return true
 
 
+## Debits the bank account (standing orders, transfers). False when the balance is too low.
+func debit_account(cents: int, label: String) -> bool:
+	if cents < 0 or cents > account_cents:
+		return false
+	account_cents -= cents
+	account_changed.emit(account_cents)
+	_book(label, -cents, "account")
+	return true
+
+
+## Credits the bank account (wages). Ignores non-positive amounts.
+func credit_account(cents: int, label: String) -> void:
+	if cents <= 0:
+		return
+	account_cents += cents
+	account_changed.emit(account_cents)
+	_book(label, cents, "account")
+
+
 func _book(label: String, cents: int, kind: String) -> void:
 	var e := {"label": label, "cents": cents, "kind": kind}
 	transactions.append(e)

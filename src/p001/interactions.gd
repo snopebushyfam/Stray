@@ -15,6 +15,10 @@ signal club_entered
 signal club_left
 ## Emitted after the conversation with Lea; `reveal` = she told her name.
 signal lea_met(reveal: bool, name: String)
+## Emitted when the player confirms sleeping in their bed (main.gd advances the day).
+signal sleep_requested
+signal home_entered
+signal home_left
 
 const RADIUS := 1.9
 
@@ -34,6 +38,10 @@ var club: StrayClubInterior
 var bar_shop: StrayKioskShop
 var active_shop: StrayKioskShop
 var lea_talked := false
+## The player's flat (set by main.gd before setup); `rent` decides whether the key still works.
+var home: StrayHome
+var rent: StrayRent
+var _options_context := ""
 ## Seconds the player has waited at the queue end (reset when they walk away).
 var queued_seconds: float = 0.0
 var points: Dictionary = {}  # id -> Vector3 (Godot)
@@ -69,6 +77,14 @@ func setup(p_layout: StrayStreetLayout, p_econ: Dictionary, p_player: StrayPlaye
 	ui.set_status(life)
 	ui.shop_choice.connect(_on_shop_choice)
 	ui.option_chosen.connect(_on_option)
+	if home:
+		var door := _home_door_entrance()
+		if not door.is_empty():
+			var hf := _frame(door)
+			points["home_door"] = _gp(hf.pos + hf.n * 0.9)
+			home.set_meta("street_door", door)
+		points["home_bed"] = home.points["bed"]
+		points["home_exit"] = home.points["exit"]
 	if club:
 		bar_shop = StrayKioskShop.new(club.cfg.get("bar_menu", {}))
 		for id in ["bar", "lea", "exit"]:
@@ -167,6 +183,12 @@ func _physics_process(delta: float) -> void:
 			prompt = "[E] Ansprechen"
 		"club_exit":
 			prompt = "[E] Rausgehen"
+		"home_door":
+			prompt = String(home.cfg.get("texts", {}).get("door", "[E] Nach Hause"))
+		"home_bed":
+			prompt = String(home.cfg.get("texts", {}).get("bed", "[E] Schlafen"))
+		"home_exit":
+			prompt = String(home.cfg.get("texts", {}).get("exit", "[E] Rausgehen"))
 		_ when current.begins_with("atm_"):
 			prompt = "[E] Geldautomat (%s abheben)" % StrayLifeState.euro(int(phone_cfg.get("bank", {}).get("atm_withdraw_cents", 2000)))
 	if night and queued_seconds > 0.0 and current.is_empty() and _flat_dist(pp, points["queue_end"]) < 2.0:
@@ -194,6 +216,12 @@ func interact() -> void:
 			_talk_to_lea()
 		"club_exit":
 			leave_club()
+		"home_door":
+			enter_home()
+		"home_bed":
+			_ask_sleep()
+		"home_exit":
+			leave_home()
 		"club_door":
 			last_door_result = door.decide(life, club_is_open(), queued_seconds)
 			ui.show_message("Türsteher", last_door_result.text)
@@ -239,6 +267,7 @@ func enter_club() -> void:
 	player.global_position = club.points["exit"] + Vector3(0, 0.95, -0.6)
 	player.velocity = Vector3.ZERO
 	player.face_yaw(0.0)
+	player.set_indoor_camera(true)
 	life.flags["inside_club"] = true
 	club.visible = true
 	club_entered.emit()
@@ -251,14 +280,83 @@ func leave_club() -> void:
 	var c := _frame(layout.club)
 	player.global_position = _gp(c.pos + c.n * 1.6 + c.t * 1.0) + Vector3(0, 0.95, 0)
 	player.velocity = Vector3.ZERO
-	var out := StrayStreetLayout.en_dir_to_godot(c.n)
-	player.face_yaw(atan2(-out.x, -out.z))
+	_face_along_street()
+	player.set_indoor_camera(false)
 	life.flags["inside_club"] = false
 	club_left.emit()
 	print("STRAY_DIAG club left pos=%s" % player.global_position)
 
 
+## Picks the OSM entrance configured as the player's street door (nearest to `near_s`, preferring
+## the configured entrance kind, on the configured side).
+func _home_door_entrance() -> Dictionary:
+	var dc: Dictionary = home.cfg.get("door_entrance", {})
+	var best := {}
+	var best_score := 1e9
+	for e in layout.furniture.get("entrances", []):
+		var sv := layout.to_street(StrayStreetLayout._v2(e["en"]))
+		if signf(sv.y) != float(dc.get("side", 1)):
+			continue
+		var score := absf(float(e.get("s", sv.x)) - float(dc.get("near_s", 0.0)))
+		if String(e.get("kind", "")) != String(dc.get("kind", "")):
+			score += 5.0
+		if score < best_score:
+			best = e
+			best_score = score
+	return best
+
+
+func enter_home() -> void:
+	var t: Dictionary = home.cfg.get("texts", {})
+	if rent and rent.evicted:
+		ui.show_message("", String(t.get("locked_out", "")), 4.0)
+		print("STRAY_DIAG home locked_out")
+		return
+	player.global_position = home.points["exit"] + Vector3(0, 0.95, 0)
+	player.velocity = Vector3.ZERO
+	player.face_yaw(0.0)
+	player.set_indoor_camera(true)
+	life.flags["inside_home"] = true
+	home.visible = true
+	home_entered.emit()
+	ui.show_message("", String(t.get("home", "")), 3.0)
+	print("STRAY_DIAG home entered")
+
+
+func leave_home() -> void:
+	var door: Dictionary = home.get_meta("street_door", {})
+	if not door.is_empty():
+		var hf := _frame(door)
+		player.global_position = _gp(hf.pos + hf.n * 1.8) + Vector3(0, 0.95, 0)
+	# Look along the street, not away from the building: the camera behind the player would
+	# otherwise end up inside the facade.
+	_face_along_street()
+	player.set_indoor_camera(false)
+	player.velocity = Vector3.ZERO
+	life.flags["inside_home"] = false
+	home.visible = false
+	home_left.emit()
+	print("STRAY_DIAG home left")
+
+
+## Turns the player to look along the street axis (towards Friesenplatz).
+func _face_along_street() -> void:
+	var d := StrayStreetLayout.en_dir_to_godot(layout.axis_en())
+	player.face_yaw(atan2(-d.x, -d.z))
+
+
+func _ask_sleep() -> void:
+	var t: Dictionary = home.cfg.get("texts", {})
+	_options_context = "sleep"
+	shop_open = true
+	active_shop = null
+	player.input_enabled = false
+	ui.open_options("", String(t.get("sleep_question", "Schlafen bis %s?")) % home.cfg.get("sleep_until", "10:00"),
+		[t.get("sleep_yes", "Ja"), t.get("sleep_no", "Nein")])
+
+
 func _talk_to_lea() -> void:
+	_options_context = "lea"
 	var lea: Dictionary = club.cfg.get("lea", {})
 	if lea_talked:
 		ui.show_message("", String(lea.get("after", "")), 4.0)
@@ -274,6 +372,12 @@ func _talk_to_lea() -> void:
 
 
 func _on_option(index: int) -> void:
+	if _options_context == "sleep":
+		_options_context = ""
+		_close_shop()
+		if index == 0:
+			sleep_requested.emit()
+		return
 	var lea: Dictionary = club.cfg.get("lea", {})
 	var opts: Array = lea.get("dialogue", [{}])[0].get("options", [])
 	if index < 0 or index >= opts.size():

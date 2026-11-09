@@ -4,6 +4,10 @@ class_name StrayGameClock
 extends RefCounted
 
 signal hour_changed(hour: int)
+## Fired when the calendar day changes (day 0 = start date). Carries the new day index.
+signal day_changed(day: int)
+
+const WEEKDAYS := ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
 
 var minutes: float = 0.0
 var rate: float = 10.0  # game seconds per real second
@@ -24,10 +28,37 @@ static func parse_hhmm(t: String) -> float:
 
 ## Advances by real seconds.
 func advance(real_seconds: float) -> void:
-	var before := hour()
-	minutes += real_seconds * rate / 60.0
-	if hour() != before:
+	_move_to(minutes + real_seconds * rate / 60.0)
+
+
+func _move_to(new_minutes: float) -> void:
+	var h_before := hour()
+	var d_before := day_index()
+	minutes = new_minutes
+	if hour() != h_before:
 		hour_changed.emit(hour())
+	if day_index() != d_before:
+		day_changed.emit(day_index())
+
+
+## Days since the start date (day 0).
+func day_index() -> int:
+	return int(floor(minutes / 1440.0))
+
+
+## Calendar date of a day index: {weekday, day, month, year, text "So 15.11."}.
+func date_of(day: int) -> Dictionary:
+	var start := String(cfg.get("start_date", "2026-11-14"))
+	var unix := Time.get_unix_time_from_datetime_string(start + "T12:00:00") + day * 86400
+	var dt := Time.get_datetime_dict_from_unix_time(unix)
+	var wd: String = WEEKDAYS[int(dt.weekday)]
+	return {"weekday": wd, "day": int(dt.day), "month": int(dt.month), "year": int(dt.year),
+		"text": "%s %02d.%02d." % [wd, int(dt.day), int(dt.month)]}
+
+
+## Today's date text, e.g. "Sa 14.11.".
+func date_text() -> String:
+	return String(date_of(day_index()).text)
 
 
 ## Hour of day 0..23 (wraps past midnight).
@@ -62,10 +93,7 @@ func to_dict() -> Dictionary:
 
 
 func from_dict(d: Dictionary) -> void:
-	var before := hour()
-	minutes = float(d.get("minutes", minutes))
-	if hour() != before:
-		hour_changed.emit(hour())
+	_move_to(float(d.get("minutes", minutes)))
 
 
 ## Jumps to a time of day (today, or tomorrow if earlier than now). Used by the day/night toggle.
@@ -75,7 +103,4 @@ func set_time(hhmm_text: String) -> void:
 	var t: float = day_start + target
 	if t < minutes:
 		t += 1440.0
-	var before := hour()
-	minutes = t
-	if hour() != before:
-		hour_changed.emit(hour())
+	_move_to(t)

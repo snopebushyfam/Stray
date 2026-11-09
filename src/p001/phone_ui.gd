@@ -14,6 +14,8 @@ var battery: float = 64.0
 var is_open := false
 var current_app := "home"
 var map: StrayPhoneMap
+## Rent state for the bank app (optional).
+var rent: StrayRent
 
 var _frame: PanelContainer
 var _status: Label
@@ -85,7 +87,7 @@ func _process(delta: float) -> void:
 		var per_hour: float = float(cfg.get("battery", {}).get("drain_percent_per_game_hour", 6.0))
 		battery = maxf(1.0, battery - per_hour * delta * clock.rate / 3600.0)
 	if is_open:
-		_status.text = "%s %s  %s      🔋 %d%%%s" % [clock.cfg.get("weekday", ""), clock.cfg.get("date", ""), clock.hhmm(), int(battery),
+		_status.text = "%s  %s      🔋 %d%%%s" % [clock.date_text(), clock.hhmm(), int(battery),
 			("   ✉ %d" % messages.unread) if messages.unread > 0 else ""]
 		if current_app == "map":
 			map.queue_redraw()
@@ -153,6 +155,14 @@ func open_app(app: String) -> void:
 			_title("Bank")
 			_line("Konto:   %s" % StrayLifeState.euro(life.account_cents), 20)
 			_line("Bargeld: %s" % StrayLifeState.euro(life.cash_cents), 20)
+			if rent:
+				if rent.evicted:
+					_line("Miete: Wohnung gekündigt", 16, Color(1.0, 0.4, 0.4))
+				else:
+					var n := rent.days_until_due(clock, clock.day_index())
+					_line("Miete %s: %s" % [StrayLifeState.euro(rent.amount()),
+						"überfällig!" if rent.overdue_days > 0 else ("heute fällig" if n == 0 else "fällig %s (in %d Tagen)" % [clock.date_of(clock.day_index() + n).text, n])],
+						16, Color(1.0, 0.55, 0.4) if rent.overdue_days > 0 or n <= 3 else Color(1, 1, 1, 0.85))
 			_line("Letzte Buchungen", 15, Color(1, 1, 1, 0.6))
 			var shown := 0
 			for i in range(life.transactions.size() - 1, -1, -1):

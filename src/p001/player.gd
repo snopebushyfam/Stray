@@ -92,6 +92,10 @@ func _build_camera(h: float) -> void:
 	_arm.margin = 0.2
 	_arm.position.x = cfg.get("camera_shoulder_offset", 0.45)
 	_arm.add_excluded_object(get_rid())
+	# A sphere probe (not a thin ray) keeps the camera out of walls next to doors.
+	var probe := SphereShape3D.new()
+	probe.radius = float(cfg.get("camera_probe_radius", 0.25))
+	_arm.shape = probe
 	_pitch_pivot.add_child(_arm)
 	camera = Camera3D.new()
 	camera.fov = 70.0
@@ -193,6 +197,12 @@ func _update_footsteps(delta: float) -> void:
 		_step_player.pitch_scale = 1.0 + _rng.randf_range(-jitter, jitter)
 		_step_player.play()
 		footstep_count += 1
+
+
+## Indoors the camera sits closer (small rooms); outdoors it uses camera_distance.
+func set_indoor_camera(indoor: bool) -> void:
+	if _arm:
+		_arm.spring_length = float(cfg.get("camera_distance_indoor", 2.2)) if indoor else float(cfg.get("camera_distance", 3.8))
 
 
 ## Current facing yaw (camera pivot), for the save game.

@@ -83,5 +83,7 @@
   "natural_speed_note": "measured from the root motion of UAL1_Standard_RM.glb (displacement per loop / loop length)",
   "blend_time": 0.2,
   "idle_below_mps": 0.15
- }
+ },
+ "camera_distance_indoor": 2.2,
+ "camera_probe_radius": 0.25
 }

@@ -107,5 +107,31 @@ PASS club audio restored
 PASS Lea conversation remembered
 PASS corrupt save is rejected, game keeps running
 RESULT save_load_test passed=20 failed=0
+RESULT day_rent_test passed=15 failed=0
+PASS street door from a real OSM entrance
+PASS starts Saturday 14.11.
+PASS home door prompt
+PASS inside the flat
+PASS standing on the flat's floor
+PASS no morning message at 00:10
+PASS bed prompt
+PASS sleep question shown
+PASS woke up Sunday 10:00 (So 15.11. 10:00)
+PASS daylight in the morning
+PASS sober and phone charged
+PASS autosaved after sleeping
+PASS morning message from Mama
+PASS HUD shows the new date
+PASS save in the flat
+PASS load
+PASS still in the flat after loading
+PASS date + rent state restored (no double processing)
+PASS rent 450 € debited on Di 01.12.
+PASS landlord confirms the payment
+PASS evicted after the grace period (overdue 4 days)
+PASS put out on the street
+PASS camera stays on the street side of the facade (v=17.90, facade 19.17)
+PASS locked out: key no longer fits
+RESULT home_test passed=24 failed=0
 python data tests: OK
 ALL_TESTS_EXIT=0

@@ -2,31 +2,116 @@
  "schema": "stray.p001.phone/1",
  "note": "Smartphone + game clock for Prototype 001 (GDD: Smartphone with messenger, map, bank, jobs, contacts). Money in cents. Player-facing texts are German.",
  "clock": {
-  "start": "23:10", "weekday": "Sa", "date": "14.11.",
+  "start": "23:10",
+  "weekday": "Sa",
+  "date": "14.11.",
   "game_seconds_per_real_second": 10.0,
-  "day_from_hour": 7, "night_from_hour": 20,
-  "club_open_from": "23:00", "club_open_until": "06:00"
+  "day_from_hour": 7,
+  "night_from_hour": 20,
+  "club_open_from": "23:00",
+  "club_open_until": "06:00",
+  "start_date": "2026-11-14"
  },
- "bank": {"start_account_cents": 12000, "atm_withdraw_cents": 2000, "atm_name": "Geldautomat"},
- "battery": {"start_percent": 64, "drain_percent_per_game_hour": 6.0},
+ "bank": {
+  "start_account_cents": 12000,
+  "atm_withdraw_cents": 2000,
+  "atm_name": "Geldautomat"
+ },
+ "battery": {
+  "start_percent": 64,
+  "drain_percent_per_game_hour": 6.0
+ },
  "contacts": [
-  {"id": "vermieter", "name": "Herr Kaya (Vermieter)", "known_at_start": true},
-  {"id": "mama", "name": "Mama", "known_at_start": true},
-  {"id": "unbekannt", "name": "Unbekannt", "known_at_start": false}
+  {
+   "id": "vermieter",
+   "name": "Herr Kaya (Vermieter)",
+   "known_at_start": true
+  },
+  {
+   "id": "mama",
+   "name": "Mama",
+   "known_at_start": true
+  },
+  {
+   "id": "unbekannt",
+   "name": "Unbekannt",
+   "known_at_start": false
+  }
  ],
  "messages": [
-  {"id": "rent", "from": "vermieter", "trigger": "start",
-   "text": "Guten Abend. Erinnerung: Die Miete (450 €) ist am 1. fällig. Schlüssel liegt beim Nachbarn. Gruß, Kaya"},
-  {"id": "mama1", "from": "mama", "trigger": "start",
-   "text": "Bist du gut angekommen? Meld dich mal. Und pass auf dich auf in Köln!"},
-  {"id": "club_seen", "from": "unbekannt", "trigger": "club_admitted",
-   "text": "Hey, du warst doch eben vorm NACHTFLUG? Ich steh an der Bar. 🙂"},
-  {"id": "broke", "from": "mama", "trigger": "cash_below_500",
-   "text": "Brauchst du Geld? Aber bitte nicht alles für Kölsch ausgeben ..."}
+  {
+   "id": "rent",
+   "from": "vermieter",
+   "trigger": "start",
+   "text": "Guten Abend. Erinnerung: Die Miete (450 €) ist am 1. fällig. Schlüssel liegt beim Nachbarn. Gruß, Kaya"
+  },
+  {
+   "id": "mama1",
+   "from": "mama",
+   "trigger": "start",
+   "text": "Bist du gut angekommen? Meld dich mal. Und pass auf dich auf in Köln!"
+  },
+  {
+   "id": "club_seen",
+   "from": "unbekannt",
+   "trigger": "club_admitted",
+   "text": "Hey, du warst doch eben vorm NACHTFLUG? Ich steh an der Bar. 🙂"
+  },
+  {
+   "id": "broke",
+   "from": "mama",
+   "trigger": "cash_below_500",
+   "text": "Brauchst du Geld? Aber bitte nicht alles für Kölsch ausgeben ..."
+  },
+  {
+   "id": "rent_soon",
+   "from": "vermieter",
+   "trigger": "rent_due_in_3",
+   "text": "Kurze Erinnerung: In 3 Tagen wird die Miete (450 €) abgebucht. Bitte für Deckung sorgen."
+  },
+  {
+   "id": "rent_paid",
+   "from": "vermieter",
+   "trigger": "rent_paid",
+   "text": "Miete ist eingegangen. Danke!"
+  },
+  {
+   "id": "rent_failed",
+   "from": "vermieter",
+   "trigger": "rent_failed",
+   "text": "Die Abbuchung der Miete ist geplatzt. Bitte umgehend zahlen, sonst muss ich Konsequenzen ziehen."
+  },
+  {
+   "id": "evicted",
+   "from": "vermieter",
+   "trigger": "evicted",
+   "text": "Ich habe Ihnen mehrfach geschrieben. Das Schloss ist ausgetauscht. Ihre Sachen können Sie beim Nachbarn abholen."
+  },
+  {
+   "id": "mama_morning",
+   "from": "mama",
+   "trigger": "new_day_1",
+   "text": "Guten Morgen! Hast du gut geschlafen in der neuen Wohnung?"
+  }
  ],
  "jobs": [
-  {"title": "Aushilfe Kiosk (Nachtschicht)", "where": "Hohenzollernring", "pay": "13,50 €/h", "status": "bald verfügbar"},
-  {"title": "Barback NACHTFLUG", "where": "Hohenzollernring", "pay": "14 €/h + Trinkgeld", "status": "bald verfügbar"},
-  {"title": "Lieferfahrer:in (Fahrrad)", "where": "Innenstadt", "pay": "12,82 €/h", "status": "bald verfügbar"}
+  {
+   "title": "Aushilfe Kiosk (Nachtschicht)",
+   "where": "Hohenzollernring",
+   "pay": "13,50 €/h",
+   "status": "bald verfügbar"
+  },
+  {
+   "title": "Barback NACHTFLUG",
+   "where": "Hohenzollernring",
+   "pay": "14 €/h + Trinkgeld",
+   "status": "bald verfügbar"
+  },
+  {
+   "title": "Lieferfahrer:in (Fahrrad)",
+   "where": "Innenstadt",
+   "pay": "12,82 €/h",
+   "status": "bald verfügbar"
+  }
  ]
 }

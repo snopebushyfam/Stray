@@ -14,6 +14,7 @@ const ECONOMY_CONFIG := "res://data/p001/economy_config.json"
 const PHONE_CONFIG := "res://data/p001/phone_config.json"
 const CLUB_CONFIG := "res://data/p001/club_interior.json"
 const GAME_CONFIG := "res://data/p001/game_config.json"
+const HOME_CONFIG := "res://data/p001/home_config.json"
 
 var builder: StrayStreetBuilder
 var player: StrayPlayer
@@ -29,6 +30,8 @@ var messages: StrayMessages
 var phone: StrayPhone
 var club: StrayClubInterior
 var menu: StrayMenu
+var home: StrayHome
+var rent: StrayRent
 var game_cfg: Dictionary = {}
 ## Save file path (tests override it before the node enters the tree).
 var save_path: String = ""
@@ -82,11 +85,23 @@ func _ready() -> void:
 	club.setup(_load_json(CLUB_CONFIG), player_cfg.get("character", {}))
 	club.visible = false
 	interactions.club = club
+	var home_cfg := _load_json(HOME_CONFIG)
+	home = StrayHome.new()
+	home.name = "Home"
+	add_child(home)
+	home.setup(home_cfg)
+	home.visible = false
+	rent = StrayRent.new(home_cfg.get("rent", {}))
+	interactions.home = home
+	interactions.rent = rent
 	add_child(interactions)
 	interactions.setup(builder.layout, _load_json(ECONOMY_CONFIG), player, builder, ui, player_cfg.get("character", {}))
 	_build_phone(phone_cfg)
 	_setup_menu_and_save()
 	interactions.club_entered.connect(func(): save_game("club_entered"))
+	interactions.sleep_requested.connect(sleep_until_morning)
+	clock.day_changed.connect(_on_day_changed)
+	clock.hour_changed.connect(_on_hour_changed)
 	interactions.club_left.connect(func(): save_game("club_left"))
 	if "--autoshots" in OS.get_cmdline_user_args():
 		_run_autoshots.call_deferred()
@@ -201,6 +216,34 @@ func toggle_day_night() -> void:
 	_sync_daylight()
 
 
+## Sleeps in the flat until the configured morning time: next day, sober, phone charged, saved.
+func sleep_until_morning() -> void:
+	var t: Dictionary = home.cfg.get("texts", {})
+	clock.set_time(String(home.cfg.get("sleep_until", "10:00")))
+	interactions.life.drinks_alcohol = 0
+	phone.battery = 100.0
+	_sync_daylight()
+	ui.show_message("", String(t.get("woke_up", "Guten Morgen. %s, %s.")) % [clock.date_text(), clock.hhmm()], 4.0)
+	print("STRAY_DIAG slept until %s %s" % [clock.date_text(), clock.hhmm()])
+	save_game("slept")
+
+
+## Day change: rent standing order, rent/landlord messages, morning messages.
+func _on_day_changed(day: int) -> void:
+	var events := rent.process_until(clock, day, interactions.life)
+	for e in events:
+		messages.trigger(e, clock.hhmm())
+	print("STRAY_DIAG day=%d date=%s rent_events=%s account=%s" % [day, clock.date_text(), events, StrayLifeState.euro(interactions.life.account_cents)])
+	if rent.evicted and interactions.life.flags.get("inside_home", false):
+		interactions.leave_home()
+
+
+## Morning messages ("new_day_N") arrive from 08:00, not at midnight (or on waking up later).
+func _on_hour_changed(hour: int) -> void:
+	if hour >= int(game_cfg.get("morning_from_hour", 8)) and clock.day_index() > 0:
+		messages.trigger("new_day_%d" % clock.day_index(), clock.hhmm())
+
+
 func _sync_daylight() -> void:
 	if builder and builder.day_mode != clock.is_daytime():
 		builder.set_day_mode(clock.is_daytime())
@@ -214,8 +257,9 @@ func _process(delta: float) -> void:
 			save_game("autosave")
 	if clock:
 		clock.advance(delta)
-		if ui and interactions and ui.clock_text != clock.hhmm():
-			ui.clock_text = clock.hhmm()
+		var stamp := "%s  %s" % [clock.date_text(), clock.hhmm()]
+		if ui and interactions and ui.clock_text != stamp:
+			ui.clock_text = stamp
 			ui.set_status(interactions.life)
 
 
@@ -232,6 +276,10 @@ func _build_phone(phone_cfg: Dictionary) -> void:
 	phone.name = "Phone"
 	add_child(phone)
 	phone.setup(interactions.life, messages, clock, phone_cfg, map)
+	phone.rent = rent
+	if interactions.points.has("home_door"):
+		var hp: Vector3 = interactions.points["home_door"]
+		map.markers.append({"en": Vector2(hp.x, -hp.z), "color": Color(1.0, 0.85, 0.3), "label": "Zuhause"})
 	phone.opened_changed.connect(func(open):
 		player.input_enabled = not open and not interactions.shop_open
 		ui.status_label.visible = not open)  # the phone covers the top-right HUD; it shows time + money itself
@@ -483,5 +531,15 @@ func _run_autoshots() -> void:
 	await _snap(dir, "P001_32_club_lea_dialogue.png")
 	interactions._on_option(0)
 	interactions.leave_club()
+	# Flat: inside view, then sleep and step out into Sunday morning.
+	interactions.enter_home()
+	player.global_position = home.points["exit"] + Vector3(0, 0.95, 0.3)
+	player.face_yaw(0.0)
+	await get_tree().create_timer(0.8).timeout
+	await _snap(dir, "P001_50_home.png")
+	sleep_until_morning()
+	interactions.leave_home()
+	await get_tree().create_timer(1.0).timeout
+	await _snap(dir, "P001_51_sunday_morning_street.png")
 	print("STRAY_DIAG autoshots=done dir=%s" % dir)
 	get_tree().quit()

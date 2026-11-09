@@ -143,6 +143,25 @@ laden → alles gleich; auch im Club; kaputter Spielstand). Belege: `P001_40_sta
 Menükasten zu hoch. **Nicht geprüft:** Speichern im Browser über einen Neustart hinweg (Godot legt
 `user://` im Web in IndexedDB ab; Persistenz dort nicht getestet).
 
+**R2 Wohnung, Schlafen, Tageswechsel, Miete (2026-11-09, gespielt + getestet):**
+
+| | Umsetzung |
+|---|---|
+| Wohnung | `home.gd`: kleines Zimmer (Bett, Schreibtisch + Lampe, Schrank, Fenster mit Nachtblick, Teppich), unsichtbar bis betreten. Haustür = echter OSM-Eingang (`entrance=staircase`, Ostseite, s ≈ 23 m), „Zuhause“-Markierung auf der Handy-Karte. |
+| Schlafen | „[E] Schlafen“ → bis 10:00 des nächsten Tages: Tageslicht, Alkohol abgebaut, Akku 100 %, Autosave, „Guten Morgen“ |
+| Kalender | `game_clock.gd`: echter Kalender ab Sa 14.11.2026 (Monats-/Jahreswechsel über Godot `Time`), Datum in HUD und Handy |
+| Miete | `rent.gd`: 450 € Dauerauftrag am 1. vom Konto; Erinnerung 3 Tage vorher; geplatzt → Mahnung, tägliche Wiederholung; am 4. Verzugstag Räumung (Schloss getauscht). Bank-App zeigt Fälligkeit. |
+| Nachrichten | Vermieter (Erinnerung, Eingang, Mahnung, Räumung); Morgennachrichten ab 08:00 bzw. beim Aufwachen |
+| Speichern | Mietstand + „in der Wohnung“; Laden verarbeitet Tage nicht doppelt (Reihenfolge Nachrichten → Miete → Uhr) |
+| Daten | `data/p001/home_config.json`, Nachrichten in `phone_config.json` |
+
+Tests: `day_rent_test` 15/15, `home_test` 24/24. **Beim Lauf gefundene Fehler:** (1) Nach dem
+Verlassen von Wohnung/Club stand die Kamera in der Hauswand → schwarzes Bild; jetzt Blick entlang der
+Straße + Kugel-Kollision der Kamera + kürzerer Abstand innen; Test prüft die Kameraposition. (2) Mamas
+„Guten Morgen“ kam um Mitternacht (vom älteren Speichertest aufgedeckt) → jetzt ab 08:00. (3) Zwei
+Testfehler meinerseits (Räumungstag falsch gezählt, Endlosschleife beim Vorspulen).
+Offen: In der kleinen Wohnung steht die Figur am Bildrand.
+
 **Abweichung vom Template:** gdUnit4 ist (noch) nicht installiert; die Tests sind schlichte
 `SceneTree`-Skripte mit PASS/FAIL-Ausgabe und Exit-Code (`tests/run_tests.sh`).
 

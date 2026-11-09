@@ -18,10 +18,12 @@ static func capture(main: Node) -> Dictionary:
 		"life": main.interactions.life.to_dict(),
 		"clock": main.clock.to_dict(),
 		"messages": main.messages.to_dict(),
+		"rent": main.rent.to_dict(),
 		"world": {
 			"player_pos": [p.x, p.y, p.z],
 			"player_yaw": main.player.get_yaw(),
 			"inside_club": bool(main.interactions.life.flags.get("inside_club", false)),
+			"inside_home": bool(main.interactions.life.flags.get("inside_home", false)),
 			"lea_talked": main.interactions.lea_talked,
 			"battery": main.phone.battery,
 		},
@@ -33,16 +35,24 @@ static func apply(main: Node, d: Dictionary) -> String:
 	if int(d.get("version", -1)) < 1 or int(d.get("version", -1)) > VERSION:
 		return "unsupported save version %s" % d.get("version", "?")
 	main.interactions.life.from_dict(d.get("life", {}))
-	main.clock.from_dict(d.get("clock", {}))
+	# Order matters: messages + rent first, so the day_changed fired by restoring the clock finds
+	# the rent already processed up to the saved day (no double debit, no duplicate messages).
 	main.messages.from_dict(d.get("messages", {}))
+	var clock_min: float = float(d.get("clock", {}).get("minutes", main.clock.minutes))
+	main.rent.from_dict(d.get("rent", {"last_processed_day": int(floor(clock_min / 1440.0))}))
+	main.clock.from_dict(d.get("clock", {}))
 	var w: Dictionary = d.get("world", {})
 	main.interactions.lea_talked = bool(w.get("lea_talked", false))
 	main.phone.battery = float(w.get("battery", main.phone.battery))
 	var inside := bool(w.get("inside_club", false))
+	var at_home := bool(w.get("inside_home", false))
 	if inside:
 		main.interactions.enter_club()
 	elif main.interactions.life.flags.get("inside_club", false) or main.club.visible:
 		main.interactions.leave_club()
+	main.home.visible = at_home
+	main.interactions.life.flags["inside_home"] = at_home
+	main.player.set_indoor_camera(inside or at_home)
 	var pp: Array = w.get("player_pos", [])
 	if pp.size() == 3:
 		main.player.global_position = Vector3(pp[0], pp[1], pp[2])

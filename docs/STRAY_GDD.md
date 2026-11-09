@@ -67,3 +67,7 @@ Realistische Gegenwartsstadt Köln bei Nacht. Keine Cartoon-Optik. Stimmige Schi
 - Tanzfläche, Bar mit Clubpreisen, DJ, 12 Tanzende; Lea als erste Person mit Gedächtnis-Anlage
   (Dialog wirkt auf sozialen Ruf, Name landet in den Kontakten).
 - Daten: `data/p001/club_interior.json`.
+
+## R2 — Wohnung, Schlafen, Miete (2026-11-09)
+- Eigene Wohnung hinter einer echten Haustür (OSM) am Ring; Schlafen bis 10 Uhr = neuer Tag.
+- Kalender ab Sa 14.11.; Miete 450 € am 1. per Dauerauftrag; Mahnung, nach 3 Tagen Frist Räumung.

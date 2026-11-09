@@ -1,7 +1,11 @@
 {
  "schema": "stray.p001.game/1",
  "note": "Game-level settings for Prototype 001: save slot and autosave. Texts German.",
- "save": {"path": "user://stray_save_1.json", "autosave_seconds": 90.0, "version": 1},
+ "save": {
+  "path": "user://stray_save_1.json",
+  "autosave_seconds": 90.0,
+  "version": 1
+ },
  "menu": {
   "title": "STRAY",
   "subtitle": "Köln · Hohenzollernring · Samstagnacht",
@@ -15,5 +19,6 @@
   "saved": "Spielstand gespeichert.",
   "loaded": "Spielstand geladen.",
   "load_failed": "Spielstand konnte nicht geladen werden – neues Spiel."
- }
+ },
+ "morning_from_hour": 8
 }

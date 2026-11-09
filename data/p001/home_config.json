@@ -1,0 +1,20 @@
+{
+ "schema": "stray.p001.home/1",
+ "note": "Player's flat for Prototype 001: interior room (Godot coordinates, enclosed, below the street), street door = a real OSM entrance, sleep and rent rules. Money in cents, texts German.",
+ "door_entrance": {"near_s": 22.9, "side": 1, "kind": "staircase"},
+ "origin": [40.0, -100.0, 0.0],
+ "room": {"width": 5.0, "depth": 6.0, "height": 2.8},
+ "sleep_until": "10:00",
+ "rent": {"cents": 45000, "due_day_of_month": 1, "grace_days": 3, "remind_days_before": 3},
+ "texts": {
+  "door": "[E] Nach Hause",
+  "bed": "[E] Schlafen",
+  "exit": "[E] Rausgehen",
+  "sleep_question": "Schlafen bis %s?",
+  "sleep_yes": "Ja, schlafen",
+  "sleep_no": "Noch nicht",
+  "woke_up": "Guten Morgen. %s, %s.",
+  "locked_out": "Der Schlüssel passt nicht mehr. Das Schloss wurde ausgetauscht.",
+  "home": "Deine Wohnung. Bett hinten, Ausgang vorne."
+ }
+}
