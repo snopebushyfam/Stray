@@ -29,6 +29,10 @@ const ARM := ["clavicle_l", "upperarm_l", "lowerarm_l", "hand_l", "clavicle_r", 
 var rig: StrayHumanRig
 var sk: Skeleton3D
 var src_cache := {}
+## R12.4: mean local rotation of thighs/calves over the clip being baked (leg_swing_scale).
+var leg_mean := {}
+## R12.4: lowest ankle height of the clip being baked (ground contact level, flight_cm).
+var leg_ground := 0.0
 
 
 func _initialize() -> void:
@@ -115,6 +119,27 @@ func _polish(m: Dictionary, t: float, T: float, raise: float, idle_arms: Diction
 			var b := sk.find_bone(bn)
 			sk.set_bone_pose_rotation(b, (idle_arms[b] as Quaternion).slerp(sk.get_bone_pose_rotation(b), g))
 		sk.force_update_all_bone_transforms()
+	# 1b) jog (R12.4): upper arms towards hanging (idle) while the elbows stay bent; shorter strides
+	#     (thighs/calves towards their clip mean) with the lowest foot kept at the source height.
+	if m.has("upperarm_to_idle") and not idle_arms.is_empty():
+		for bn in ["clavicle_l", "upperarm_l", "clavicle_r", "upperarm_r"]:
+			var b := sk.find_bone(bn)
+			sk.set_bone_pose_rotation(b, sk.get_bone_pose_rotation(b).slerp(idle_arms[b], float(m.upperarm_to_idle)))
+		sk.force_update_all_bone_transforms()
+	if m.has("leg_swing_scale") and not leg_mean.is_empty():
+		var low0 := minf(_gp(sk.find_bone("foot_l")).y, _gp(sk.find_bone("foot_r")).y)
+		for b in leg_mean:
+			sk.set_bone_pose_rotation(b, (leg_mean[b] as Quaternion).slerp(sk.get_bone_pose_rotation(b), float(m.leg_swing_scale)))
+		sk.force_update_all_bone_transforms()
+		var low1 := minf(_gp(sk.find_bone("foot_l")).y, _gp(sk.find_bone("foot_r")).y)
+		# The source "jog" floats up to ~25 cm in its flight phase; real jogging ~5 cm.
+		if m.has("flight_cm"):
+			low0 = minf(low0, leg_ground + float(m.flight_cm) * 0.01)
+		var pel0 := sk.find_bone("pelvis")
+		var pp0 := sk.get_bone_parent(pel0)
+		var pq0 := _gq(pp0) if pp0 >= 0 else Quaternion.IDENTITY
+		sk.set_bone_pose_position(pel0, sk.get_bone_pose_position(pel0) + pq0.inverse() * Vector3(0, low0 - low1, 0))
+		sk.force_update_all_bone_transforms()
 	# 2) remember planted feet (after retarget, before body changes)
 	var feet := {}
 	for s in ["l", "r"]:
@@ -144,6 +169,38 @@ func _polish(m: Dictionary, t: float, T: float, raise: float, idle_arms: Diction
 		var tgt := Vector3(p0.x * narrow, p0.y, p0.z)
 		if narrow != 1.0 or raise != 0.0 or m.get("sway_cm", 0.0) > 0.0:
 			_leg_ik(s, tgt, feet[s][1])
+
+
+## Lowest ankle height over clip `a` (source pose, 24 samples).
+func _lowest_ankle(a: String) -> float:
+	var L := rig.anim.get_animation(a).length
+	var low := INF
+	for k in 24:
+		_sample(a, L * k / 24.0)
+		low = minf(low, minf(_gp(sk.find_bone("foot_l")).y, _gp(sk.find_bone("foot_r")).y))
+	return low
+
+
+## Mean local rotation of `bones` over clip `a` (sign-aligned quaternion average).
+func _bone_mean(a: String, bones: Array) -> Dictionary:
+	var L := rig.anim.get_animation(a).length
+	var out := {}
+	var acc := {}
+	for k in 12:
+		_sample(a, L * k / 12.0)
+		for bn in bones:
+			var b := sk.find_bone(bn)
+			var q := sk.get_bone_pose_rotation(b)
+			if acc.has(b):
+				var s: Quaternion = acc[b]
+				if s.dot(q) < 0.0:
+					q = -q
+				acc[b] = Quaternion(s.x + q.x, s.y + q.y, s.z + q.z, s.w + q.w)
+			else:
+				acc[b] = q
+	for b in acc:
+		out[b] = (acc[b] as Quaternion).normalized()
+	return out
 
 
 ## Pelvis raise (m) that brings the mean knee angle of clip `a` to `knee_deg` (narrowed feet).
@@ -196,6 +253,8 @@ func _run() -> void:
 			var L := rig.anim.get_animation(a).length
 			var T := L * float(m.get("cycles", 1))
 			var raise := _raise_for(a, m)
+			leg_mean = _bone_mean(a, ["thigh_l", "thigh_r", "calf_l", "calf_r"]) if m.has("leg_swing_scale") else {}
+			leg_ground = _lowest_ankle(a)
 			var anim := Animation.new()
 			anim.length = T
 			# NPC clips always loop; extra clips (Jog_Fwd, Jump) keep the source loop mode.
@@ -212,7 +271,7 @@ func _run() -> void:
 			for f in frames + 1:
 				var time := minf(f / FPS, T)
 				var idle_arms := {}
-				if m.has("gesture_scale"):
+				if m.has("gesture_scale") or m.has("upperarm_to_idle"):
 					_sample("Idle", fmod(time, rig.anim.get_animation("Idle").length))
 					for bn in ARM:
 						var b := sk.find_bone(bn)

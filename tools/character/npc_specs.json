@@ -133,6 +133,14 @@
    "breaths_per_clip": 1,
    "gesture_scale": 0.65
   },
+  "Jog_Fwd": {
+   "note": "R12.4: the UAL jog is a stylised sprint (trunk 25-31 deg forward, 91 deg arm swing). Real jogging: trunk ~5-12 deg, moderate arm swing.",
+   "lean_back_deg": 26,
+   "head_back_deg": -5,
+   "leg_swing_scale": 0.6,
+   "flight_cm": 5,
+   "upperarm_to_idle": 0.65
+  },
   "Walk": {
    "lean_back_deg": 5,
    "head_back_deg": 7

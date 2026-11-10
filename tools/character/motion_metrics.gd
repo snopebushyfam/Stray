@@ -90,9 +90,9 @@ func _run() -> void:
 	root.add_child(ual)
 	var usk: Skeleton3D = ual.find_children("*", "Skeleton3D", true, false)[0]
 	var uap: AnimationPlayer = ual.find_children("*", "AnimationPlayer", true, false)[0]
-	for a in ["Idle", "Idle_Talking", "Walk", "Walk_Formal"]:
+	for a in ["Idle", "Idle_Talking", "Walk", "Walk_Formal", "Jog_Fwd"]:
 		print("SRC ", line("UAL " + a, measure(ual, usk, uap, a)))
-	for id in ["passerby_m", "passerby_f", "bouncer"]:
+	for id in ["passerby_m", "passerby_f", "bouncer", "player"]:
 		var n: Node3D = StrayNpcHuman.create(id)
 		root.add_child(n)
 		var sk: Skeleton3D = n.find_children("*", "Skeleton3D", true, false)[0]
