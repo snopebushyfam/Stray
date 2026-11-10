@@ -99,6 +99,9 @@ func _ready() -> void:
 	clock = StrayGameClock.new(phone_cfg.get("clock", {}))
 	clock.hour_changed.connect(func(_h): _sync_daylight())
 	_sync_daylight()
+	# R13: city life follows the clock (pedestrian profile -> traffic density).
+	pedestrians.profile_changed.connect(func(_n, p): traffic.active_share = float(p.get("traffic_active", 1.0)))
+	pedestrians.clock = clock
 	interactions = StrayInteractions.new()
 	interactions.name = "Interactions"
 	interactions.clock = clock

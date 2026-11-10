@@ -7,23 +7,28 @@
   "lanes": [
    {
     "v": -11.9,
-    "dir": 1
+    "dir": 1,
+    "count": 6
    },
    {
     "v": -13.1,
-    "dir": -1
+    "dir": -1,
+    "count": 5
    },
    {
     "v": 12.6,
-    "dir": 1
+    "dir": 1,
+    "count": 4
    },
    {
     "v": 14.4,
-    "dir": -1
+    "dir": -1,
+    "count": 3
    },
    {
     "v": 16.0,
-    "dir": 1
+    "dir": 1,
+    "count": 2
    }
   ],
   "speed_min": 1.05,
@@ -79,7 +84,8 @@
   "anim_idle": "Idle",
   "anim_talk": "Idle_Talking",
   "walk_natural_speed": 0.97,
-  "lanes_note": "west lanes stay clear of lamp poles (v=-10.0) and the NACHTFLUG queue/ropes (v=-14.1..-14.8)"
+  "lanes_note": "west lanes stay clear of lamp poles (v=-10.0) and the NACHTFLUG queue/ropes (v=-14.1..-14.8)",
+  "lanes_count_note": "R13: per-lane 'count' (west 11 incl. NACHTFLUG + spawn side, east 9); 20 walkers (was 15), measured cost docs/R13_CITY_LIFE.md"
  },
  "club_queue": {
   "count": 5,
@@ -163,7 +169,27 @@
   ],
   "headlight_emission": 4.0,
   "taillight_emission": 3.0,
-  "police_cars": 1
+  "police_cars": 1,
+  "taxi": {
+   "enabled": true,
+   "lane": 1,
+   "color": [
+    0.86,
+    0.82,
+    0.62
+   ],
+   "stop_s": [
+    29.0,
+    35.0
+   ],
+   "pull_v": 7.6,
+   "stop_seconds": [
+    6.0,
+    11.0
+   ],
+   "chance": 0.7,
+   "note": "R13: northbound outer lane, stops at the east kerb in the gap between the parked cars at s=17.8 and s=44.3"
+  }
  },
  "r12_pilot": {
   "enabled": true,
@@ -173,5 +199,477 @@
   "queue_type": "passerby_f",
   "bouncer_type": "bouncer",
   "note": "R12 NPC pilot: only these three NPCs use the MakeHuman models (assets/characters/r12_npc); all others stay R10. docs/R12_NPC_PILOT.md"
+ },
+ "ambient": {
+  "note": "R13 city life (src/p001/ambient_life.gd, docs/R13_CITY_LIFE.md). Spots are street-frame [s, v]; every slot lies outside the lane bands (lanes +-0.6 m), >= 1.5 m from the player's interaction points (KIOSK, club door, queue end, ATMs, spawn) and clear of the queue, rope posts, fridge and lamps (checked by tests/integration/p001/city_life_test.gd). West spots lie at v -15.8..-16.2 (>= 0.4 m from the facades) (shop fronts), keeping the corridor around v -15.0 between the lanes and the facades free for the player (U-Bahn exit -> crossing, tests/integration/p001/kiosk_crossing_test.gd).",
+  "default_profile": "night",
+  "yield_radius": 1.4,
+  "follow_gap": 1.6,
+  "offstage_min_player_distance": 30.0,
+  "lod_distance": 40.0,
+  "lod_every_frames": 3,
+  "warm_up_seconds": 150.0,
+  "groups": {
+   "club_front": {
+    "kind": "club",
+    "slots": [
+     [
+      57.4,
+      -15.8
+     ],
+     [
+      58.4,
+      -16.2
+     ],
+     [
+      59.4,
+      -15.8
+     ]
+    ],
+    "priority": 60.0
+   },
+   "club_north": {
+    "kind": "club",
+    "slots": [
+     [
+      73.8,
+      -15.8
+     ],
+     [
+      74.8,
+      -16.2
+     ],
+     [
+      75.8,
+      -15.8
+     ]
+    ]
+   },
+   "shop_east_84": {
+    "kind": "group",
+    "slots": [
+     [
+      83.6,
+      17.3
+     ],
+     [
+      84.6,
+      17.9
+     ],
+     [
+      85.6,
+      17.3
+     ]
+    ]
+   },
+   "shop_east_30": {
+    "kind": "group",
+    "slots": [
+     [
+      29.4,
+      17.3
+     ],
+     [
+      30.4,
+      17.9
+     ],
+     [
+      31.4,
+      17.3
+     ]
+    ]
+   },
+   "shop_west_6": {
+    "kind": "group",
+    "slots": [
+     [
+      4.6,
+      -15.8
+     ],
+     [
+      5.6,
+      -16.1
+     ],
+     [
+      6.6,
+      -15.8
+     ]
+    ]
+   },
+   "shop_west_27": {
+    "kind": "group",
+    "slots": [
+     [
+      26.4,
+      -15.8
+     ],
+     [
+      27.4,
+      -16.2
+     ],
+     [
+      28.4,
+      -15.8
+     ]
+    ],
+    "priority": 40.0
+   },
+   "kiosk_talk": {
+    "kind": "group",
+    "slots": [
+     [
+      52.8,
+      17.2
+     ],
+     [
+      53.9,
+      17.4
+     ]
+    ]
+   },
+   "kiosk_counter": {
+    "kind": "kiosk",
+    "slots": [
+     [
+      46.3,
+      17.4
+     ]
+    ],
+    "face": [
+     0.0,
+     1.0
+    ]
+   },
+   "kiosk_wait": {
+    "kind": "kiosk",
+    "slots": [
+     [
+      44.3,
+      17.1
+     ]
+    ],
+    "face": [
+     0.55,
+     0.85
+    ]
+   },
+   "meet_e1": {
+    "kind": "meet",
+    "slots": [
+     [
+      37.4,
+      17.3
+     ],
+     [
+      38.5,
+      17.3
+     ]
+    ]
+   },
+   "meet_e2": {
+    "kind": "meet",
+    "slots": [
+     [
+      69.4,
+      17.4
+     ],
+     [
+      70.5,
+      17.4
+     ]
+    ]
+   },
+   "meet_w1": {
+    "kind": "meet",
+    "slots": [
+     [
+      30.0,
+      -15.9
+     ],
+     [
+      31.1,
+      -15.9
+     ]
+    ],
+    "priority": 20.0
+   },
+   "meet_w2": {
+    "kind": "meet",
+    "slots": [
+     [
+      46.0,
+      -15.9
+     ],
+     [
+      47.1,
+      -15.9
+     ]
+    ]
+   },
+   "look_e1": {
+    "kind": "look",
+    "slots": [
+     [
+      21.5,
+      17.7
+     ]
+    ],
+    "face": [
+     0.0,
+     -1.0
+    ]
+   },
+   "look_e2": {
+    "kind": "look",
+    "slots": [
+     [
+      61.0,
+      17.9
+     ]
+    ],
+    "face": [
+     0.0,
+     -1.0
+    ]
+   },
+   "look_e3": {
+    "kind": "look",
+    "slots": [
+     [
+      93.0,
+      17.6
+     ]
+    ],
+    "face": [
+     0.0,
+     -1.0
+    ]
+   },
+   "look_w1": {
+    "kind": "look",
+    "slots": [
+     [
+      13.0,
+      -16.0
+     ]
+    ],
+    "face": [
+     0.0,
+     1.0
+    ]
+   },
+   "look_w2": {
+    "kind": "look",
+    "slots": [
+     [
+      38.0,
+      -16.0
+     ]
+    ],
+    "face": [
+     0.0,
+     1.0
+    ]
+   },
+   "look_w3": {
+    "kind": "look",
+    "slots": [
+     [
+      80.0,
+      -16.0
+     ]
+    ],
+    "face": [
+     0.0,
+     1.0
+    ]
+   }
+  },
+  "durations": {
+   "meet": [
+    20.0,
+    45.0
+   ],
+   "group": [
+    60.0,
+    160.0
+   ],
+   "club": [
+    80.0,
+    220.0
+   ],
+   "linger": [
+    10.0,
+    28.0
+   ],
+   "kiosk_buy": [
+    6.0,
+    11.0
+   ],
+   "kiosk_wait": [
+    25.0,
+    25.0
+   ],
+   "meet_wait": [
+    40.0,
+    40.0
+   ],
+   "leave": [
+    8.0,
+    30.0
+   ],
+   "talk_swap": [
+    5.0,
+    12.0
+   ],
+   "look": [
+    4.0,
+    9.0
+   ]
+  },
+  "schedule": [
+   {
+    "weekday": "So",
+    "from": "05:00",
+    "until": "12:00",
+    "profile": "sunday_morning"
+   },
+   {
+    "from": "05:00",
+    "until": "08:00",
+    "profile": "early"
+   },
+   {
+    "from": "08:00",
+    "until": "18:00",
+    "profile": "day"
+   },
+   {
+    "from": "18:00",
+    "until": "22:00",
+    "profile": "evening"
+   },
+   {
+    "from": "22:00",
+    "until": "05:00",
+    "profile": "night"
+   }
+  ],
+  "profiles": {
+   "day": {
+    "active": 16,
+    "queue": 0,
+    "stay_scale": 0.6,
+    "traffic_active": 1.0,
+    "weights": {
+     "pass": 5,
+     "linger": 2,
+     "meet": 2,
+     "group": 1,
+     "kiosk": 4,
+     "club": 0
+    },
+    "max": {
+     "group": 3,
+     "meet": 4,
+     "linger": 2,
+     "kiosk": 2,
+     "club": 0
+    }
+   },
+   "evening": {
+    "active": 18,
+    "queue": 3,
+    "stay_scale": 1.0,
+    "traffic_active": 0.9,
+    "weights": {
+     "pass": 3,
+     "linger": 2,
+     "meet": 3,
+     "group": 3,
+     "kiosk": 3,
+     "club": 2
+    },
+    "max": {
+     "group": 3,
+     "meet": 4,
+     "linger": 2,
+     "kiosk": 2,
+     "club": 3
+    }
+   },
+   "night": {
+    "active": 20,
+    "queue": 5,
+    "stay_scale": 1.0,
+    "traffic_active": 0.75,
+    "weights": {
+     "pass": 4,
+     "linger": 1,
+     "meet": 2,
+     "group": 2,
+     "kiosk": 4,
+     "club": 4
+    },
+    "max": {
+     "group": 3,
+     "meet": 4,
+     "linger": 2,
+     "kiosk": 2,
+     "club": 4
+    }
+   },
+   "early": {
+    "active": 8,
+    "queue": 1,
+    "stay_scale": 0.5,
+    "traffic_active": 0.4,
+    "weights": {
+     "pass": 5,
+     "linger": 1,
+     "meet": 0,
+     "group": 0,
+     "kiosk": 1,
+     "club": 1
+    },
+    "max": {
+     "group": 0,
+     "meet": 2,
+     "linger": 1,
+     "kiosk": 1,
+     "club": 1
+    }
+   },
+   "sunday_morning": {
+    "active": 9,
+    "queue": 0,
+    "stay_scale": 0.6,
+    "traffic_active": 0.5,
+    "weights": {
+     "pass": 5,
+     "linger": 2,
+     "meet": 1,
+     "group": 0,
+     "kiosk": 2,
+     "club": 0
+    },
+    "max": {
+     "group": 2,
+     "meet": 2,
+     "linger": 2,
+     "kiosk": 2,
+     "club": 0
+    }
+   }
+  },
+  "queue_life": {
+   "swap_min": 12.0,
+   "swap_max": 35.0,
+   "turn_deg": 14.0,
+   "hide_min_player_distance": 30.0
+  },
+  "max_note": "profile 'max': at most this many people doing the same activity at once, so there are always passers-by",
+  "priority_note": "group 'priority' is added to the choice score (1 person already there = 30): club_front (in sight of the door and of people coming from the south) fills first",
+  "vanish_distance": 70.0
  }
 }
