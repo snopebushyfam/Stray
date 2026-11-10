@@ -200,4 +200,6 @@ func _physics_process(delta: float) -> void:
 			if moving != w.walking:
 				w.anim.play(ped.get("anim_walk", "Walk") if moving else ped.get("anim_idle", "Idle"), 0.25)
 				w.walking = moving
-			w.anim.speed_scale = clampf(w.cur_speed / float(ped.get("walk_natural_speed", 0.97)), 0.5, 2.0) if moving else 1.0
+			# R12 NPCs carry their measured walk speed (no foot sliding); R10 uses the config value.
+			var natural: float = float(w.anim.get_parent().get_meta("walk_natural_speed", ped.get("walk_natural_speed", 0.97)))
+			w.anim.speed_scale = clampf(w.cur_speed / natural, 0.5, 2.0) if moving else 1.0

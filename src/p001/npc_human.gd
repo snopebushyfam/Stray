@@ -22,6 +22,10 @@ static func create(id: String) -> Node3D:
 	var ap := AnimationPlayer.new()
 	ap.name = "AnimationPlayer"
 	model.add_child(ap)
-	ap.add_animation_library("", load(DIR + id + "_anims.res"))
+	var lib: AnimationLibrary = load(DIR + id + "_anims.res")
+	ap.add_animation_library("", lib)
+	# R12.2: measured stance-foot speed of the baked walk (playback scaling without foot sliding).
+	if lib.has_meta("walk_natural_speed"):
+		model.set_meta("walk_natural_speed", lib.get_meta("walk_natural_speed"))
 	model.set_meta("npc_type", id)
 	return model

@@ -1,0 +1,13 @@
+SRC UAL Idle                 stance 2.06 (0.36m) lean  +8.0 head +16.4 knee 24.2 armswing  3.8 headmove  3.6cm pelvis  1.2cm hand  4.5cm plant 0.00m/s len 2.50s
+SRC UAL Idle_Talking         stance 2.06 (0.36m) lean  +7.5 head +15.8 knee 24.4 armswing 19.2 headmove  3.9cm pelvis  0.8cm hand 17.1cm plant 0.00m/s len 2.93s
+SRC UAL Walk                 stance 1.02 (0.18m) lean +11.6 head +19.9 knee 41.1 armswing 36.0 headmove  8.7cm pelvis  8.8cm hand 39.1cm plant 0.88m/s len 1.33s
+SRC UAL Walk_Formal          stance 1.02 (0.18m) lean  +9.8 head +17.8 knee 40.9 armswing  6.8 headmove  4.8cm pelvis  5.3cm hand 10.6cm plant 0.81m/s len 1.33s
+NPC passerby_m Idle          stance 1.24 (0.25m) lean  +3.1 head +20.5 knee 16.6 armswing  4.5 headmove  7.9cm pelvis  3.4cm hand  5.7cm plant 0.00m/s len 5.00s
+NPC passerby_m Idle_Talking  stance 1.24 (0.25m) lean  +2.8 head +20.4 knee 13.9 armswing 14.8 headmove  5.0cm pelvis  0.7cm hand 11.8cm plant -0.00m/s len 2.93s
+NPC passerby_m Walk          stance 1.02 (0.21m) lean  +6.8 head +25.3 knee 41.1 armswing 35.1 headmove 10.0cm pelvis  8.6cm hand 31.3cm plant 0.78m/s len 1.33s
+NPC passerby_f Idle          stance 1.24 (0.25m) lean  +3.1 head +20.5 knee 16.6 armswing  4.6 headmove  7.9cm pelvis  3.4cm hand  5.6cm plant 0.00m/s len 5.00s
+NPC passerby_f Idle_Talking  stance 1.24 (0.25m) lean  +2.8 head +20.4 knee 13.9 armswing 15.0 headmove  5.0cm pelvis  0.7cm hand 11.9cm plant 0.00m/s len 2.93s
+NPC passerby_f Walk          stance 1.02 (0.21m) lean  +6.8 head +25.3 knee 41.1 armswing 35.6 headmove 10.0cm pelvis  8.6cm hand 31.5cm plant 0.78m/s len 1.33s
+NPC bouncer Idle             stance 1.24 (0.25m) lean  +3.1 head +20.5 knee 16.6 armswing  4.5 headmove  7.9cm pelvis  3.4cm hand  5.7cm plant 0.00m/s len 5.00s
+NPC bouncer Idle_Talking     stance 1.24 (0.25m) lean  +2.8 head +20.4 knee 13.9 armswing 14.7 headmove  5.0cm pelvis  0.7cm hand 11.9cm plant -0.00m/s len 2.93s
+NPC bouncer Walk             stance 1.02 (0.21m) lean  +6.8 head +25.3 knee 41.1 armswing 35.0 headmove  9.9cm pelvis  8.5cm hand 31.2cm plant 0.78m/s len 1.33s

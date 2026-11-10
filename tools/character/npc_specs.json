@@ -76,8 +76,34 @@
     "shoes04/shoes04.mhclo"
    ],
    "retarget": {
-    "arm_adduction_deg": 8.0
+    "arm_adduction_deg": 15.0
    }
+  }
+ },
+ "motion": {
+  "note": "R12.2 bake-time motion polish (bake_npc_anims.gd). stance_scale: lateral foot distance factor; knee_deg: target mean knee bend; lean_back_deg / head_back_deg: trunk/head straightening; sway_cm: weight shift amplitude; cycles: source cycles per baked clip; gesture_scale: share of the talking arm motion kept.",
+  "Idle": {
+   "cycles": 2,
+   "stance_scale": 0.65,
+   "knee_deg": 2,
+   "lean_back_deg": 6,
+   "head_back_deg": 8,
+   "sway_cm": 1.6,
+   "breaths_per_clip": 2,
+   "head_turn_deg": 3
+  },
+  "Idle_Talking": {
+   "cycles": 1,
+   "stance_scale": 0.65,
+   "knee_deg": 3,
+   "lean_back_deg": 5.5,
+   "head_back_deg": 7,
+   "breaths_per_clip": 1,
+   "gesture_scale": 0.65
+  },
+  "Walk": {
+   "lean_back_deg": 5,
+   "head_back_deg": 7
   }
  }
 }
