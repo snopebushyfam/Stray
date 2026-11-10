@@ -49,6 +49,9 @@ var finger_flex := {"index": [0.04, 0.06, 0.04], "middle": [0.06, 0.08, 0.05], "
 var _vt_q: Array[Quaternion] = []
 ## Share of the rest finger spread removed (0 = MakeHuman rest, 1 = fingers parallel to the middle).
 var finger_spread_reduce := 0.6
+## Bones not transferred from the driver (they keep their rest pose relative to the parent).
+## R12.5: CMU motion capture has unreliable wrist data (hands bent flat) -> ["hand_l", "hand_r"].
+var skip_bones: Array = []
 ## Relaxed local rotations for finger bones (relative to their parent), from the palm normal.
 var _finger_local: Dictionary = {}
 
@@ -80,7 +83,7 @@ func setup(human_scene: PackedScene, driver_scene: PackedScene) -> bool:
 		var bn := dst.get_bone_name(i).to_lower()
 		# Fingers are not transferred: the two rigs' finger rest poses differ (UAL curled, MakeHuman
 		# flat), so rotation deltas turned the hands into claws. They get a fixed relaxed curl instead.
-		_map[i] = -1 if _is_finger(bn) else int(lower.get(bn, -1))
+		_map[i] = -1 if _is_finger(bn) or bn in skip_bones else int(lower.get(bn, -1))
 		if _map[i] >= 0:
 			mapped_bones += 1
 		_dst_rest_q.append(dst.get_bone_global_rest(i).basis.get_rotation_quaternion())

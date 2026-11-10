@@ -77,6 +77,22 @@
     "shoes05/shoes05.mhclo"
    ],
    "anims": ["Idle", "Walk", "Jog_Fwd", "Jump"],
+   "drivers": {
+    "Walk": "res://assets/characters/mocap_cmu/cmu_walk.glb",
+    "Jog_Fwd": "res://assets/characters/mocap_cmu/cmu_jog_fwd.glb"
+   },
+   "drivers_note": "R12.5: real motion capture (CMU 35_01 walk, 35_17 run/jog) instead of the stylised UAL clips. Idle stays the polished UAL idle (the CMU standing clips looked hunched and turned), Jump stays UAL.",
+   "driver_retarget": {
+    "arm_adduction_deg": 0.0,
+    "clavicle_weight": 1.0,
+    "skip_bones": ["hand_l", "hand_r"]
+   },
+   "driver_motion": {
+    "note": "R12.5: offsets of the CMU T-pose frame, measured (head/spine_03 forward tilt vs. the accepted UAL idle at ~0 deg): Walk trunk -7.3, Jog head -12.",
+    "Walk": {"lean_back_deg": -8, "head_back_deg": 6},
+    "Jog_Fwd": {"lean_back_deg": -6, "head_back_deg": -6}
+   },
+   "loop_from_source": ["Jump"],
    "retarget": {
     "arm_adduction_deg": 8.0
    }

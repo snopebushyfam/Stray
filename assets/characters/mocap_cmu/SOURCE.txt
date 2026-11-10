@@ -1,0 +1,11 @@
+Motion capture clips (R12.5), converted with tools/character/convert_cmu_bvh.py:
+  cmu_walk.glb     <- CMU 35_01 "walk"     (loop frames 93-228 @120 fps)
+  cmu_jog_fwd.glb  <- CMU 35_17 "run/jog"  (loop frames 19-108 @120 fps)
+
+Source: Carnegie Mellon University Graphics Lab Motion Capture Database, http://mocap.cs.cmu.edu
+Terms (mocap.cs.cmu.edu/faqs.php, "How can I use this data?"): "The motion capture data may be
+copied, modified, or redistributed without permission."
+BVH conversion: B. Hahne (cgspeed.com, 2010 MotionBuilder-friendly release), retrieved from
+https://github.com/una-dinosauria/cmu-mocap (data/035/*.bvh); the release README states both CMU and
+the converter allow any use. Acknowledgement requested by CMU: "The data used in this project was
+obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217."

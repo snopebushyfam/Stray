@@ -229,27 +229,54 @@ func _raise_for(a: String, m: Dictionary) -> float:
 	return maxf(total / maxf(n, 1), 0.0)
 
 
+## Driver rigs of the NPC being baked, by driver scene path (UAL or a mocap clip, R12.5).
+var rigs := {}
+
+
+## Makes the rig for `driver_path` current (created on first use). Mocap drivers use the type's
+## "driver_retarget" tuning instead of "retarget" (the UAL-specific corrections do not apply).
+func _use_rig(id: String, spec: Dictionary, driver_path: String) -> bool:
+	if not rigs.has(driver_path):
+		var r := StrayHumanRig.new()
+		var rt: Dictionary = spec.get("retarget" if driver_path == UAL else "driver_retarget", {})
+		for k in rt:
+			r.set(k, rt[k])
+		root.add_child(r)
+		if not r.setup(load(DIR + id + ".glb"), load(driver_path)):
+			push_error("bake: setup failed for %s with %s" % [id, driver_path])
+			return false
+		r.anim.stop()
+		rigs[driver_path] = r
+	if rig != rigs[driver_path]:
+		rig = rigs[driver_path]
+		sk = rig.dst
+		src_cache.clear()
+	return true
+
+
 func _run() -> void:
 	var specs: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tools/character/npc_specs.json"))
 	for id in NPCS:
 		var spec: Dictionary = specs.get("npcs", {}).get(String(id), {})
-		rig = StrayHumanRig.new()
-		# Per-type retarget tuning (R12.1): npc_specs.json -> npcs.<id>.retarget
-		var rt: Dictionary = spec.get("retarget", {})
-		for k in rt:
-			rig.set(k, rt[k])
-		root.add_child(rig)
-		if not rig.setup(load(DIR + String(id) + ".glb"), load(UAL)):
-			push_error("bake: setup failed for " + id)
+		rigs.clear()
+		rig = null
+		if not _use_rig(id, spec, UAL):
 			continue
-		rig.anim.stop()
-		sk = rig.dst
-		src_cache.clear()
 		var motion: Dictionary = specs.get("motion", {})
 		var base_path := String(rig.human.get_path_to(sk))
 		var lib := AnimationLibrary.new()
+		var drivers: Dictionary = spec.get("drivers", {})
 		for a in spec.get("anims", ANIMS):
-			var m: Dictionary = (motion.get(a, {}) as Dictionary).merged(spec.get("motion", {}).get(a, {}), true)
+			# R12.5: a clip may come from its own driver (CMU motion capture); its polish settings are
+			# "driver_motion" only - the global UAL corrections are not applied to real human motion.
+			var drv := String(drivers.get(a, UAL))
+			if not _use_rig(id, spec, drv):
+				continue
+			var m: Dictionary
+			if drv == UAL:
+				m = (motion.get(a, {}) as Dictionary).merged(spec.get("motion", {}).get(a, {}), true)
+			else:
+				m = spec.get("driver_motion", {}).get(a, {})
 			var L := rig.anim.get_animation(a).length
 			var T := L * float(m.get("cycles", 1))
 			var raise := _raise_for(a, m)
@@ -257,8 +284,8 @@ func _run() -> void:
 			leg_ground = _lowest_ankle(a)
 			var anim := Animation.new()
 			anim.length = T
-			# NPC clips always loop; extra clips (Jog_Fwd, Jump) keep the source loop mode.
-			anim.loop_mode = Animation.LOOP_LINEAR if a in ANIMS else rig.anim.get_animation(a).loop_mode
+			# Clips loop, except those listed in "loop_from_source" (the player's Jump keeps the UAL mode).
+			anim.loop_mode = rig.anim.get_animation(a).loop_mode if a in spec.get("loop_from_source", []) else Animation.LOOP_LINEAR
 			var rot_tracks := {}
 			for b in sk.get_bone_count():
 				var tr := anim.add_track(Animation.TYPE_ROTATION_3D)
@@ -305,6 +332,8 @@ func _run() -> void:
 		var out: String = DIR + String(id) + "_anims.res"
 		var err := ResourceSaver.save(lib, out, ResourceSaver.FLAG_COMPRESS)
 		print("BAKE %s natural_speed=%s err=%d" % [id, lib.get_meta("natural_speed"), err])
-		rig.queue_free()
+		for r in rigs.values():
+			r.queue_free()
+		rigs.clear()
 		await process_frame
 	quit(0)
