@@ -1,5 +1,6 @@
 ## Regression test (R7 tablet feedback 2026-11-09): on tablets there was no way to run (Shift only).
-## Now: joystick pushed to the edge runs (touch only), and a "Rennen" toggle runs too.
+## Now (R12.5): the "Rennen" toggle runs and switches running off again; the stick alone only walks
+## (the R7 "stick at the edge runs" sprinted during normal steering).
 ## Run: godot --headless --path . -s res://tests/integration/p001/touch_run_test.gd
 extends SceneTree
 
@@ -49,9 +50,15 @@ func _run() -> void:
 	check(absf(v - walk) < 0.3, "keyboard full forward walks (%.2f m/s)" % v)
 	p.touch_mode = true
 	v = await _speed_after(m, 1.0)
-	check(absf(v - run) < 0.3, "touch: stick at the edge runs (%.2f m/s)" % v)
+	check(absf(v - walk) < 0.3, "touch: stick at the edge walks, no automatic sprint (%.2f m/s)" % v)
 	v = await _speed_after(m, 0.6)
 	check(v < walk + 0.1, "touch: stick half way walks (%.2f m/s)" % v)
+	p.run_toggle = true
+	v = await _speed_after(m, 1.0)
+	check(absf(v - run) < 0.3, "touch: toggle on + full stick runs (%.2f m/s)" % v)
+	p.run_toggle = false
+	v = await _speed_after(m, 1.0)
+	check(absf(v - walk) < 0.3, "touch: toggle off again -> walks (%.2f m/s)" % v)
 	p.run_toggle = true
 	v = await _speed_after(m, 0.6)
 	# half stick + toggle: run speed scaled by the stick (R12.5 run speed 3.8 -> ~1.9 m/s), faster than full walking

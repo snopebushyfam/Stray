@@ -18,7 +18,8 @@
  "touch_look_sensitivity_deg_per_px": 0.25,
  "touch_look_min_x_ratio": 0.45,
  "touch_look_max_step_px": 60.0,
- "touch_run_from_stick": 0.9,
+ "touch_run_from_stick": 0.0,
+ "touch_run_from_stick_note": "0 = off (R12.5): on touch screens only the Rennen toggle runs; >0 = stick past this share also runs.",
  "max_step_height": 0.3,
  "spawn_clearance": 0.05,
  "controls": {

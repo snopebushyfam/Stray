@@ -284,14 +284,16 @@ func touch_look_delta(pos: Vector2) -> Vector2:
 	return d.limit_length(cap)
 
 
-## True while the character should run: Shift/gamepad "run", the touch toggle, or (touch only)
-## the joystick pushed to its edge.
+## True while the character should run: Shift/gamepad "run" or the touch "Rennen" toggle.
+## Optional (touch only): joystick pushed past `touch_run_from_stick` also runs - off by default since
+## R12.5 (tablet report: the stick sprinted at once and the toggle could not switch running off).
 func wants_run() -> bool:
 	if Input.is_action_pressed("run") or run_toggle:
 		return true
-	if touch_mode and input_enabled:
+	var edge := float(cfg.get("touch_run_from_stick", 0.0))
+	if touch_mode and input_enabled and edge > 0.0:
 		var v := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		return v.length() >= float(cfg.get("touch_run_from_stick", 0.9))
+		return v.length() >= edge
 	return false
 
 

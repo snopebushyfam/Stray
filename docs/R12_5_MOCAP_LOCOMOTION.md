@@ -46,6 +46,15 @@ Bilder: `production/qa/evidence/r12_5_mocap/` – `jog_side_mocap.png` / `walk_s
 6 Phasen), `jog_side_before_r12_4.png` (vorher), `user_video_frame_before.png`, Spielerkamera `1_idle` … `4_jump`,
 Web-Export in Chromium. Tests: 29 Suites, 437 Prüfungen, `ALL_TESTS_EXIT=0`.
 
+## Nachtrag: Rennen auf dem Touchscreen
+
+Nutzer-Meldung: „wenn ich normal den Stick bewege sprintet die Figur sofort; mit dem Rennen-Knopf geht er nicht
+normal.“ Ursache: R7-Regel „Stick am Rand (≥ 90 %) = rennen“ – beim normalen Steuern ist der Stick fast immer am Rand,
+und der Knopf konnte Rennen nur einschalten, nicht verhindern. Jetzt: Stick = gehen (analog), Rennen nur über den
+Knopf; der Knopf zeigt „Rennen: AN“ / „Rennen: AUS“ (`player_config.json` `touch_run_from_stick` 0 = aus).
+`touch_run_test` prüft Stick am Rand → gehen, Knopf an → rennen, Knopf aus → wieder gehen.
+Beleg: `web_touch_run_toggle.png` (Web-Export, Touch-Emulation, Knopf AUS → AN → AUS).
+
 ## Offen
 
 - Hände beim Joggen offen statt locker geschlossen.
@@ -55,4 +64,4 @@ Web-Export in Chromium. Tests: 29 Suites, 437 Prüfungen, `ALL_TESTS_EXIT=0`.
 
 ## Build
 
-`build/stray_web_itch.zip`, SHA-256 `e1c5c11b1674f7ffa1ee018da4113d4e0245edfab410908d87d87763ccbada41`.
+`build/stray_web_itch.zip`, SHA-256 `e2a66ef74c9bcf90ee0df8b8b789f42a12a2fd91ea1ad325339dc6c786bbc96b`.
