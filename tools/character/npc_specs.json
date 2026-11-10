@@ -7,7 +7,7 @@
     "age": 0.56,
     "muscle": 0.45,
     "weight": 0.58,
-    "height": 0.6,
+    "height": 0.52,
     "proportions": 0.5,
     "race": {
      "african": 0.85,
@@ -54,13 +54,14 @@
    }
   },
   "bouncer": {
+   "note": "R12.3: rebuilt after user feedback (R12.2 bouncer read as a monster). Average build (muscle/weight 0.55), ~1.86 m, black tee + dark jeans (male_casualsuit06 tinted) instead of the padded suit.",
    "phenotype": {
     "gender": 1.0,
-    "age": 0.62,
-    "muscle": 0.8,
-    "weight": 0.72,
-    "height": 0.72,
-    "proportions": 0.55,
+    "age": 0.6,
+    "muscle": 0.55,
+    "weight": 0.55,
+    "height": 0.6,
+    "proportions": 0.5,
     "race": {
      "african": 0.1,
      "asian": 0.05,
@@ -72,11 +73,14 @@
    "eyebrows": "eyebrow005/eyebrow005.mhclo",
    "eyelashes": "eyelashes01/eyelashes01.mhclo",
    "clothes": [
-    "male_elegantsuit01/male_elegantsuit01.mhclo",
+    "male_casualsuit06/male_casualsuit06.mhclo",
     "shoes04/shoes04.mhclo"
    ],
+   "tint": {
+    "clothes0": [0.16, 0.16, 0.17]
+   },
    "retarget": {
-    "arm_adduction_deg": 15.0
+    "arm_adduction_deg": 6.0
    }
   }
  },

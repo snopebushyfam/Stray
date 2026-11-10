@@ -46,12 +46,21 @@ info["skin_mhmat"] = spec["skin"]
 info["skin_material_type"] = "GAMEENGINE"
 info["eyes_material_type"] = "MAKESKIN"
 settings = HumanService.get_default_deserialization_settings()
-settings.update({"feet_on_ground": False, "subdiv_levels": 0, "mask_helpers": True, "detailed_helpers": False,
+settings.update({"feet_on_ground": False, "subdiv_levels": 0, "mask_helpers": True, "detailed_helpers": True,
                  "extra_vertex_groups": True, "override_rig": "game_engine", "clothes_deep_search": False,
                  "bodypart_deep_search": False})
 basemesh = HumanService.deserialize_from_dict(info, settings)
 arm = [o for o in bpy.data.objects if o.type == "ARMATURE"][0]
-meshes = [o for o in bpy.data.objects if o.type == "MESH"]
+# R12.3: R12-R12.2 built with detailed_helpers=False, which deletes the joint-* vertex groups MPFB fits
+# the rig from - every NPC got the DEFAULT joint positions (upperarm_l x 0.170, same head height for
+# a 1.6 m woman and a 1.95 m man). Animations then pivoted shoulders and neck around wrong joints
+# (bulging "shoulder pads", squashed neck). detailed_helpers=True above; the refit is a safety net.
+from bl_ext.user_default.mpfb.services.rigservice import RigService  # noqa: E402
+RigService.refit_existing_armature(arm, basemesh)
+bpy.context.view_layer.update()
+print("R12 rig refit: head z %.3f upperarm_l x %.3f" % ((arm.matrix_world @ arm.data.bones["head"].head_local).z,
+      (arm.matrix_world @ arm.data.bones["upperarm_l"].head_local).x))
+meshes =[o for o in bpy.data.objects if o.type == "MESH"]
 print("R12 objects", [(o.name, len(o.data.vertices)) for o in meshes])
 
 
@@ -156,6 +165,9 @@ for o in meshes:
         tmp = img.copy()
         tmp.scale(w, h)
         px = np.array(tmp.pixels[:], dtype=np.float32).reshape(h, w, 4)
+        tint = spec.get("tint", {}).get(key)
+        if tint:
+            px[:, :, :3] *= np.array(tint, dtype=np.float32)  # e.g. white tee -> black tee (R12.3)
         atlas[y:y + h, x:x + w] = px
         bpy.data.images.remove(tmp)
     else:
