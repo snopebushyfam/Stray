@@ -134,8 +134,8 @@ func _ready() -> void:
 	interactions.club_left.connect(func(): save_game("club_left"))
 	if "--qa-npc" in OS.get_cmdline_user_args():
 		_qa_npc_view.call_deferred()  # QA only (R12.1): look at the bouncer + queue head, no menu
-	if "--r11" in OS.get_cmdline_user_args():
-		player.set_character_variant("r11")  # evidence / testing: start with the R11 figure
+	if "--r10" in OS.get_cmdline_user_args():
+		player.set_character_variant("r10")  # evidence / testing: start with the R10 figure
 	if "--autoshots" in OS.get_cmdline_user_args():
 		_run_autoshots.call_deferred()
 	elif "--r9shots" in OS.get_cmdline_user_args():
@@ -177,7 +177,7 @@ func _setup_menu_and_save() -> void:
 		_start_playing(String(menu.txt.get("loaded", "")) if ok else String(menu.txt.get("load_failed", ""))))
 	menu.character_label = _character_label()
 	menu.character_toggle.connect(func():
-		player.set_character_variant("r10" if player.character_variant == "r11" else "r11")
+		player.set_character_variant("r10" if player.character_variant == "human" else "human")
 		menu.character_label = _character_label()
 		menu.show_pause(StraySaveGame.exists(save_path)))
 	menu.main_menu.connect(func():
@@ -214,7 +214,7 @@ func _qa_npc_view() -> void:
 
 
 func _character_label() -> String:
-	return "Figur: Mensch (R11, Test)" if player.character_variant == "r11" else "Figur: Standard (R10)"
+	return "Figur: Mensch" if player.character_variant == "human" else "Figur: Puppe (R10)"
 
 
 func _run_menushots() -> void:

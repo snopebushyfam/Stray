@@ -18,7 +18,9 @@ extends SceneTree
 
 const UAL := "res://assets/characters/quaternius_ual/UAL1_Standard.glb"
 const DIR := "res://assets/characters/r12_npc/"
-const NPCS := ["passerby_m", "passerby_f", "bouncer"]
+const NPCS := ["passerby_m", "passerby_f", "bouncer", "player"]
+## Default clip set; a type may list its own in npc_specs.json "anims" (R12.4: the player needs
+## Idle, Walk, Jog_Fwd and Jump).
 const ANIMS := ["Idle", "Walk", "Idle_Talking"]
 const FPS := 30.0
 const MM := preload("res://tools/character/motion_metrics.gd")
@@ -189,14 +191,15 @@ func _run() -> void:
 		var motion: Dictionary = specs.get("motion", {})
 		var base_path := String(rig.human.get_path_to(sk))
 		var lib := AnimationLibrary.new()
-		for a in ANIMS:
+		for a in spec.get("anims", ANIMS):
 			var m: Dictionary = (motion.get(a, {}) as Dictionary).merged(spec.get("motion", {}).get(a, {}), true)
 			var L := rig.anim.get_animation(a).length
 			var T := L * float(m.get("cycles", 1))
 			var raise := _raise_for(a, m)
 			var anim := Animation.new()
 			anim.length = T
-			anim.loop_mode = Animation.LOOP_LINEAR
+			# NPC clips always loop; extra clips (Jog_Fwd, Jump) keep the source loop mode.
+			anim.loop_mode = Animation.LOOP_LINEAR if a in ANIMS else rig.anim.get_animation(a).loop_mode
 			var rot_tracks := {}
 			for b in sk.get_bone_count():
 				var tr := anim.add_track(Animation.TYPE_ROTATION_3D)
@@ -234,10 +237,15 @@ func _run() -> void:
 		var nsk: Skeleton3D = n.find_children("*", "Skeleton3D", true, false)[0]
 		var wm: Dictionary = MM.measure(n, nsk, ap, "Walk", 120)
 		lib.set_meta("walk_natural_speed", snappedf(float(wm.plant_speed), 0.01))
+		# R12.4: every locomotion clip's stance-foot speed (the player also scales Jog_Fwd with it).
+		var nat := {"Walk": lib.get_meta("walk_natural_speed")}
+		if lib.has_animation("Jog_Fwd"):
+			nat["Jog_Fwd"] = snappedf(float(MM.measure(n, nsk, ap, "Jog_Fwd", 90).plant_speed), 0.01)
+		lib.set_meta("natural_speed", nat)
 		n.queue_free()
 		var out: String = DIR + String(id) + "_anims.res"
 		var err := ResourceSaver.save(lib, out, ResourceSaver.FLAG_COMPRESS)
-		print("BAKE %s walk_natural_speed=%.2f err=%d" % [id, lib.get_meta("walk_natural_speed"), err])
+		print("BAKE %s natural_speed=%s err=%d" % [id, lib.get_meta("natural_speed"), err])
 		rig.queue_free()
 		await process_frame
 	quit(0)

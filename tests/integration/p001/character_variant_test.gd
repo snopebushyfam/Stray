@@ -1,6 +1,6 @@
-## Integration test (R11): the optional MakeHuman player figure - default stays R10, switching to
-## R11 animates the human skeleton (walk), feet stay near the ground, the choice is saved, and
-## switching back restores R10. Run: godot --headless --path . -s res://tests/integration/p001/character_variant_test.gd
+## Integration test (R11, R12.4): the MakeHuman player figure is the default ("human": fitted rig,
+## baked animations); walking/running play the baked clips and move the skeleton, feet stay near
+## the ground, the choice is saved, R10 can be selected and restored, old "r11" saves load "human". Run: godot --headless --path . -s res://tests/integration/p001/character_variant_test.gd
 extends SceneTree
 
 const PATH := "user://test_character_variant.json"
@@ -26,6 +26,10 @@ func _frames(n: int) -> void:
 		await process_frame
 
 
+func _skel(p: StrayPlayer) -> Skeleton3D:
+	return p._visual.get_node("Character").find_children("*", "Skeleton3D", true, false)[0]
+
+
 func _run() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
 	var m: Node = load("res://src/p001/main.tscn").instantiate()
@@ -33,18 +37,15 @@ func _run() -> void:
 	root.add_child(m)
 	await _frames(30)
 	var p: StrayPlayer = m.player
-	check(p.character_variant == "r10" and not (p._visual.get_node("Character") is StrayHumanRig), "default figure is R10")
-	p.set_character_variant("r11")
-	await _frames(5)
-	var rig := p._visual.get_node("Character") as StrayHumanRig
-	check(rig != null and rig.mapped_bones >= 20, "R11 figure loaded (%d mapped bones)" % (rig.mapped_bones if rig else 0))
+	var ch: Node = p._visual.get_node("Character")
+	check(p.character_variant == "human" and String(ch.get_meta("npc_type", "")) == "player", "default figure is the human player model")
+	check(p._anim != null and p._anim.has_animation("Jog_Fwd") and p._anim.has_animation("Jump"), "baked Idle/Walk/Jog_Fwd/Jump present")
 	Input.action_press("move_forward")
 	await _frames(60)
-	check(p.anim_state == "walk" and rig.anim.current_animation == "Walk", "walk animation plays on R11 (%s)" % p.anim_state)
-	var sk := rig.dst
+	check(p.anim_state == "walk" and p._anim.current_animation == "Walk", "walk animation plays (%s)" % p.anim_state)
+	var sk := _skel(p)
 	var thigh := sk.find_bone("thigh_l")
-	var moved := not sk.get_bone_pose_rotation(thigh).is_equal_approx(sk.get_bone_rest(thigh).basis.get_rotation_quaternion())
-	check(moved, "human thigh is animated (not frozen in rest pose)")
+	var q0 := sk.get_bone_pose_rotation(thigh)
 	var feet_ok := true
 	var lowest := INF
 	for i in 30:
@@ -54,14 +55,18 @@ func _run() -> void:
 			lowest = minf(lowest, y)
 			if y < -0.08 or y > 0.45:
 				feet_ok = false
+	check(not sk.get_bone_pose_rotation(thigh).is_equal_approx(q0), "human thigh is animated (not frozen)")
 	check(feet_ok and lowest < 0.2, "feet stay near the ground while walking (lowest ankle %.2f m)" % lowest)
 	Input.action_release("move_forward")
-	check(m.save_game("test"), "saved with R11")
-	p.set_character_variant("r10")
-	check(m.load_game() and p.character_variant == "r11", "R11 choice restored by loading")
 	p.set_character_variant("r10")
 	await _frames(5)
-	check(not (p._visual.get_node("Character") is StrayHumanRig) and p._anim != null, "back to R10 with its animations")
+	check(p.character_variant == "r10" and not p._visual.get_node("Character").has_meta("npc_type") and p._anim != null, "R10 figure selectable with its animations")
+	check(m.save_game("test"), "saved with R10")
+	p.set_character_variant("human")
+	check(m.load_game() and p.character_variant == "r10", "R10 choice restored by loading")
+	p.set_character_variant("r11")
+	await _frames(5)
+	check(p.character_variant == "human", "old R11 choice maps to the human figure")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
 	print("RESULT character_variant_test passed=%d failed=%d" % [_passed, _failed])
 	quit(1 if _failed > 0 else 0)

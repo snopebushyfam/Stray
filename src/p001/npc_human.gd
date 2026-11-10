@@ -27,5 +27,7 @@ static func create(id: String) -> Node3D:
 	# R12.2: measured stance-foot speed of the baked walk (playback scaling without foot sliding).
 	if lib.has_meta("walk_natural_speed"):
 		model.set_meta("walk_natural_speed", lib.get_meta("walk_natural_speed"))
+	if lib.has_meta("natural_speed"):
+		model.set_meta("natural_speed", lib.get_meta("natural_speed"))
 	model.set_meta("npc_type", id)
 	return model

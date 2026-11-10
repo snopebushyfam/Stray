@@ -18,8 +18,10 @@ var _visual: Node3D
 var _gravity: float = 9.81
 var _frames: int = 0
 var _look_touch_index: int = -1
-## Visible character: "r10" (default, dressed mannequin) or "r11" (MakeHuman prototype).
-var character_variant := "r10"
+## Visible character: "human" (default since R12.4: MakeHuman figure with fitted rig and baked
+## animations, assets/characters/r12_npc/player.*) or "r10" (dressed mannequin, fallback).
+## Old saves with "r11" (runtime-retarget prototype) load as "human".
+var character_variant := "human"
 ## Number of ledges climbed (kerbs, median) - diagnostics / tests.
 var step_count := 0
 ## Touch controls active (set by main.gd): pushing the joystick to its edge then runs.
@@ -32,6 +34,8 @@ var _anim: AnimationPlayer
 var _anim_names: Dictionary = {}
 ## Name of the locomotion state currently shown ("idle", "walk", "run", "air"), "" without a rig.
 var anim_state: String = ""
+## Natural (no foot sliding) speed per locomotion clip of the current figure, m/s.
+var _natural_speed: Dictionary = {}
 ## Footstep sounds (Kenney CC0, concrete); one is played per stride while on the floor.
 var footstep_streams: Array[AudioStream] = []
 var footstep_count: int = 0
@@ -122,15 +126,16 @@ func _load_character(c: Dictionary, h: float) -> bool:
 	if scene == null:
 		return false
 	var model: Node3D
-	var human_path := String(c.get("human_scene", ""))
-	if character_variant == "r11" and ResourceLoader.exists(human_path):
-		# R11 prototype: MakeHuman character driven by the UAL animations (human_rig.gd).
-		var rig := StrayHumanRig.new()
-		if rig.setup(load(human_path), scene):
-			model = rig
-		else:
-			rig.free()
+	if character_variant == "r11":
+		character_variant = "human"
+	var natural: Dictionary = (c.get("natural_speed_mps", {}) as Dictionary).duplicate()
+	if character_variant == "human":
+		model = StrayNpcHuman.create(String(c.get("human_id", "player")))
+		if model == null:
 			character_variant = "r10"
+		elif model.has_meta("natural_speed"):
+			natural.merge(model.get_meta("natural_speed"), true)  # measured on the baked clips
+	_natural_speed = natural
 	if model == null:
 		model = scene.instantiate()
 		# R10: dressed with an everyday outfit (look "player"), see character_look.gd.
@@ -149,8 +154,8 @@ func _load_character(c: Dictionary, h: float) -> bool:
 	return true
 
 
-## Swaps the visible character between "r10" (dressed mannequin, default) and "r11" (MakeHuman
-## prototype). Animation state, collision and camera are untouched.
+## Swaps the visible character between "human" (default) and "r10" (dressed mannequin).
+## Animation state, collision and camera are untouched.
 func set_character_variant(v: String) -> void:
 	if v == character_variant and _visual.get_node_or_null("Character") != null:
 		return
@@ -181,7 +186,7 @@ func _update_animation() -> void:
 	if _anim == null:
 		return
 	var c: Dictionary = cfg.get("character", {})
-	var natural: Dictionary = c.get("natural_speed_mps", {})
+	var natural: Dictionary = _natural_speed
 	var h_speed := Vector2(velocity.x, velocity.z).length()
 	if not is_on_floor():
 		_set_anim("air", 1.0)

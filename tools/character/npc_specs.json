@@ -53,6 +53,34 @@
     "arm_adduction_deg": 4.0
    }
   },
+  "player": {
+   "note": "R12.4: the player's figure (look of the R11 prototype: young man, hoodie-style casual suit, jeans) built with the R12.3 pipeline (rig fitted to the body, baked animations).",
+   "phenotype": {
+    "gender": 1.0,
+    "age": 0.5,
+    "muscle": 0.5,
+    "weight": 0.48,
+    "height": 0.55,
+    "proportions": 0.6,
+    "race": {
+     "african": 0.1,
+     "asian": 0.1,
+     "caucasian": 0.8
+    }
+   },
+   "skin": "young_caucasian_male/young_caucasian_male.mhmat",
+   "hair": "short02/short02.mhclo",
+   "eyebrows": "eyebrow001/eyebrow001.mhclo",
+   "eyelashes": "eyelashes02/eyelashes02.mhclo",
+   "clothes": [
+    "male_casualsuit05/male_casualsuit05.mhclo",
+    "shoes05/shoes05.mhclo"
+   ],
+   "anims": ["Idle", "Walk", "Jog_Fwd", "Jump"],
+   "retarget": {
+    "arm_adduction_deg": 8.0
+   }
+  },
   "bouncer": {
    "note": "R12.3: rebuilt after user feedback (R12.2 bouncer read as a monster). Average build (muscle/weight 0.55), ~1.86 m, black tee + dark jeans (male_casualsuit06 tinted) instead of the padded suit.",
    "phenotype": {

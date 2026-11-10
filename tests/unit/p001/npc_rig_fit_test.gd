@@ -6,7 +6,7 @@
 ## Run: godot --headless --path . -s res://tests/unit/p001/npc_rig_fit_test.gd
 extends SceneTree
 
-const IDS := ["passerby_m", "passerby_f", "bouncer"]
+const IDS := ["passerby_m", "passerby_f", "bouncer", "player"]
 const HEAD_RATIO_MIN := 0.88  # anatomy: head joint (top of neck) ~0.9 of standing height
 const HEAD_RATIO_MAX := 0.94
 const SHOULDER_RATIO_MAX := 0.125  # shoulder joint half-width / height upper bound (sanity check)
